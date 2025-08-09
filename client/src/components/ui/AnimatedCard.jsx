@@ -4,39 +4,84 @@ import { forwardRef } from 'react';
 
 const AnimatedCard = forwardRef(({ 
   children, 
-  delay = 0, 
-  className = "", 
+  className = '', 
+  variant = 'default',
   hover = true,
-  onClick,
-  direction = "up",
-  duration = 0.6,
+  delay = 0,
+  direction = 'up',
   ...props 
 }, ref) => {
-  const directions = {
-    up: { y: 20 },
-    down: { y: -20 },
-    left: { x: -20 },
-    right: { x: 20 }
+  const getVariantClasses = () => {
+    switch (variant) {
+      case 'elevated':
+        return 'bg-white rounded-xl shadow-lg border border-gray-100';
+      case 'outlined':
+        return 'bg-white rounded-lg border-2 border-gray-200';
+      case 'filled':
+        return 'bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100';
+      case 'glass':
+        return 'bg-white/80 backdrop-blur-sm rounded-xl border border-white/20 shadow-xl';
+      default:
+        return 'bg-white rounded-lg shadow-sm border border-gray-200';
+    }
   };
 
-  const hoverEffects = {
-    scale: 1.02,
-    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-    transition: { duration: 0.3 }
+  const getInitialPosition = () => {
+    switch (direction) {
+      case 'up':
+        return { opacity: 0, y: 30 };
+      case 'down':
+        return { opacity: 0, y: -30 };
+      case 'left':
+        return { opacity: 0, x: 30 };
+      case 'right':
+        return { opacity: 0, x: -30 };
+      case 'scale':
+        return { opacity: 0, scale: 0.9 };
+      default:
+        return { opacity: 0, y: 30 };
+    }
   };
+
+  const getAnimatePosition = () => {
+    switch (direction) {
+      case 'up':
+      case 'down':
+        return { opacity: 1, y: 0 };
+      case 'left':
+      case 'right':
+        return { opacity: 1, x: 0 };
+      case 'scale':
+        return { opacity: 1, scale: 1 };
+      default:
+        return { opacity: 1, y: 0 };
+    }
+  };
+
+  const hoverAnimation = hover ? {
+    whileHover: { 
+      scale: 1.02,
+      y: -2,
+      transition: { duration: 0.2 }
+    },
+    whileTap: { 
+      scale: 0.98,
+      transition: { duration: 0.1 }
+    }
+  } : {};
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, ...directions[direction] }}
-      animate={{ opacity: 1, x: 0, y: 0 }}
-      transition={{ duration, delay, ease: "easeOut" }}
-      whileHover={hover ? hoverEffects : {}}
-      whileTap={onClick ? { scale: 0.98 } : {}}
-      onClick={onClick}
-      className={`bg-white rounded-2xl shadow-soft hover:shadow-medium transition-all duration-300 ${
-        onClick ? 'cursor-pointer' : ''
-      } ${className}`}
+      initial={getInitialPosition()}
+      animate={getAnimatePosition()}
+      transition={{ 
+        duration: 0.5, 
+        delay,
+        ease: "easeOut"
+      }}
+      {...hoverAnimation}
+      className={`${getVariantClasses()} ${className}`}
       {...props}
     >
       {children}

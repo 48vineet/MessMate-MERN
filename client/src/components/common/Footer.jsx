@@ -1,265 +1,163 @@
 // src/components/common/Footer.jsx
-import { motion , AnimatePresence } from 'framer-motion';
-
+import { Link } from 'react-router-dom';
 import { 
   HeartIcon,
-  MapPinIcon,
-  PhoneIcon,
   EnvelopeIcon,
-  GlobeAltIcon,
-  ArrowUpIcon
+  PhoneIcon,
+  MapPinIcon
 } from '@heroicons/react/24/outline';
-import { Button } from '../ui';
-import { useState } from 'react';
 
 const Footer = () => {
-  const [showScrollTop, setShowScrollTop] = useState(false);
   const currentYear = new Date().getFullYear();
 
-  const footerSections = [
-    {
-      title: 'Quick Links',
-      links: [
-        { label: 'Dashboard', href: '/dashboard' },
-        { label: 'Today\'s Menu', href: '/menu' },
-        { label: 'My Bookings', href: '/bookings' },
-        { label: 'Feedback', href: '/feedback' },
-        { label: 'Wallet', href: '/wallet' }
-      ]
-    },
-    {
-      title: 'Support',
-      links: [
-        { label: 'Help Center', href: '/help' },
-        { label: 'Contact Us', href: '/contact' },
-        { label: 'FAQ', href: '/faq' },
-        { label: 'Terms of Service', href: '/terms' },
-        { label: 'Privacy Policy', href: '/privacy' }
-      ]
-    },
-    {
-      title: 'Features',
-      links: [
-        { label: 'QR Code Booking', href: '/qr-code' },
-        { label: 'Real-time Updates', href: '/features' },
-        { label: 'Analytics', href: '/analytics' },
-        { label: 'Mobile App', href: '/mobile' },
-        { label: 'Notifications', href: '/notifications' }
-      ]
-    }
-  ];
-
-  const contactInfo = [
-    { icon: MapPinIcon, text: 'College Campus, Mess Block A', label: 'Address' },
-    { icon: PhoneIcon, text: '+91 98765 43210', label: 'Phone' },
-    { icon: EnvelopeIcon, text: 'support@messmate.com', label: 'Email' },
-    { icon: GlobeAltIcon, text: 'www.messmate.com', label: 'Website' }
-  ];
-
-  const socialLinks = [
-    { name: 'Facebook', url: '#', icon: '📘' },
-    { name: 'Twitter', url: '#', icon: '🐦' },
-    { name: 'Instagram', url: '#', icon: '📷' },
-    { name: 'LinkedIn', url: '#', icon: '💼' }
-  ];
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const footerLinks = {
+    quickLinks: [
+      { name: 'Dashboard', href: '/dashboard' },
+      { name: 'Menu', href: '/menu' },
+      { name: 'My Bookings', href: '/bookings' },
+      { name: 'Wallet', href: '/wallet' }
+    ],
+    support: [
+      { name: 'Help & Support', href: '/help-support' },
+      { name: 'Contact Us', href: '/contact' },
+      { name: 'FAQ', href: '/help-support' }
+    ],
+    legal: [
+      { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'Terms of Service', href: '/terms' }
+    ]
   };
 
-  // Show scroll to top button when user scrolls down
-  useState(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.pageYOffset > 300);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const socialLinks = [
+    { name: 'WhatsApp', href: 'https://wa.me/917038738012', icon: '📱' },
+    { name: 'Email', href: 'mailto:7038vineet@gmail.com', icon: '📧' },
+    { name: 'Phone', href: 'tel:+917038738012', icon: '📞' },
+    { name: 'GitHub', href: 'https://github.com/48vineet', icon: '🐙' },
+    { name: 'LinkedIn', href: 'https://linkedin.com/in/48-vineet', icon: '💼' }
+  ];
 
   return (
-    <footer className="bg-gray-900 text-white relative">
-      {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
+    <footer className="bg-gray-900 text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand Section */}
-          <div className="lg:col-span-1">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-            >
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-xl">M</span>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
-                    MessMate
-                  </h3>
-                  <p className="text-sm text-gray-400">Smart Mess Management</p>
-                </div>
+          {/* Company Info */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center mb-4">
+              <div className="h-10 w-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                <span className="text-white font-bold text-lg">M</span>
               </div>
-              
-              <p className="text-gray-400 mb-6 leading-relaxed">
-                Revolutionizing mess management with smart technology, 
-                making dining experiences seamless and enjoyable for students.
-              </p>
-              
-              <div className="flex space-x-3">
-                {socialLinks.map((social, index) => (
-                  <motion.a
-                    key={social.name}
-                    href={social.url}
-                    whileHover={{ scale: 1.1, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gradient-to-r hover:from-primary-500 hover:to-secondary-500 transition-all duration-300"
-                    title={social.name}
-                  >
-                    <span className="text-lg">{social.icon}</span>
-                  </motion.a>
-                ))}
+              <span className="text-2xl font-bold">MessMate</span>
+            </div>
+            <p className="text-gray-400 mb-6 max-w-md">
+              Revolutionizing hostel dining with smart technology, seamless payments, 
+              and an amazing user experience. Making every meal memorable for students.
+            </p>
+            
+            {/* Contact Info */}
+            <div className="space-y-2 text-sm text-gray-400">
+              <div className="flex items-center">
+                <EnvelopeIcon className="h-4 w-4 mr-2" />
+                <a href="mailto:7038vineet@gmail.com" className="hover:text-white transition-colors">
+                  7038vineet@gmail.com
+                </a>
               </div>
-            </motion.div>
-          </div>
-
-          {/* Links Sections */}
-          {footerSections.map((section, sectionIndex) => (
-            <motion.div
-              key={section.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: (sectionIndex + 1) * 0.1 }}
-              viewport={{ once: true }}
-            >
-              <h4 className="font-bold text-lg mb-6 text-white">{section.title}</h4>
-              <ul className="space-y-3">
-                {section.links.map((link, linkIndex) => (
-                  <motion.li 
-                    key={link.label}
-                    initial={{ opacity: 0, x: -10 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: linkIndex * 0.05 }}
-                    viewport={{ once: true }}
-                  >
-                    <a
-                      href={link.href}
-                      className="text-gray-400 hover:text-white hover:translate-x-2 transition-all duration-300 inline-block"
-                    >
-                      {link.label}
-                    </a>
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Contact Info */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          viewport={{ once: true }}
-          className="mt-12 pt-8 border-t border-gray-800"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {contactInfo.map((info, index) => (
-              <motion.div 
-                key={info.label}
-                whileHover={{ scale: 1.05 }}
-                className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all duration-300"
-              >
-                <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
-                  <info.icon className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">{info.label}</p>
-                  <p className="text-sm text-white font-medium">{info.text}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* App Download Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          viewport={{ once: true }}
-          className="mt-8 p-6 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 rounded-2xl border border-primary-500/20"
-        >
-          <div className="text-center">
-            <h4 className="text-xl font-bold text-white mb-2">Download MessMate App</h4>
-            <p className="text-gray-400 mb-4">Get the mobile app for faster access and push notifications</p>
-            <div className="flex justify-center space-x-4">
-              <Button 
-                variant="outline" 
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                📱 Download App
-              </Button>
-              <Button 
-                variant="outline" 
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                🌐 Web App
-              </Button>
+              <div className="flex items-center">
+                <PhoneIcon className="h-4 w-4 mr-2" />
+                <a href="tel:+917038738012" className="hover:text-white transition-colors">
+                  +91 70387 38012
+                </a>
+              </div>
+              <div className="flex items-center">
+                <MapPinIcon className="h-4 w-4 mr-2" />
+                <span>Tech Park, Bangalore, India</span>
+              </div>
             </div>
           </div>
-        </motion.div>
 
-        {/* Bottom Bar */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          viewport={{ once: true }}
-          className="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center"
-        >
-          <div className="flex items-center space-x-2 text-sm text-gray-400 mb-4 md:mb-0">
-            <span>© {currentYear} MessMate. Made with</span>
-            <HeartIcon className="h-4 w-4 text-red-500 animate-pulse" />
-            <span>by <strong className="text-primary-400">Vineet Mali DEV</strong></span>
+          {/* Quick Links */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase mb-4">
+              Quick Links
+            </h3>
+            <ul className="space-y-3">
+              {footerLinks.quickLinks.map((link) => (
+                <li key={link.name}>
+                  <Link 
+                    to={link.href}
+                    className="text-base text-gray-300 hover:text-white transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
-          
-          <div className="flex flex-wrap justify-center space-x-6">
-            <a href="/privacy" className="text-sm text-gray-400 hover:text-white transition-colors">
-              Privacy Policy
-            </a>
-            <a href="/terms" className="text-sm text-gray-400 hover:text-white transition-colors">
-              Terms of Service
-            </a>
-            <a href="/cookies" className="text-sm text-gray-400 hover:text-white transition-colors">
-              Cookie Policy
-            </a>
-            <a href="/sitemap" className="text-sm text-gray-400 hover:text-white transition-colors">
-              Sitemap
-            </a>
+
+          {/* Support Links */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase mb-4">
+              Support
+            </h3>
+            <ul className="space-y-3">
+              {footerLinks.support.map((link) => (
+                <li key={link.name}>
+                  <Link 
+                    to={link.href}
+                    className="text-base text-gray-300 hover:text-white transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
-        </motion.div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="mt-8 pt-8 border-t border-gray-800">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            {/* Copyright */}
+            <div className="flex items-center text-gray-400 mb-4 md:mb-0">
+              <span>© {currentYear} MessMate. All rights reserved.</span>
+              <span className="mx-2">•</span>
+              <span className="flex items-center">
+                Made with <HeartIcon className="h-4 w-4 text-red-500 mx-1" /> for students
+              </span>
+            </div>
+
+            {/* Social Links */}
+            <div className="flex items-center space-x-4">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.name}
+                  href={social.href}
+                  className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={social.name}
+                >
+                  <span className="text-lg">{social.icon}</span>
+                  <span className="sr-only">{social.name}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Legal Links */}
+          <div className="mt-4 pt-4 border-t border-gray-800 flex flex-wrap justify-center space-x-6">
+            {footerLinks.legal.map((link) => (
+              <Link
+                key={link.name}
+                to={link.href}
+                className="text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
-
-      {/* Scroll to Top Button */}
-      <AnimatePresence>
-        {showScrollTop && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={scrollToTop}
-            className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            <ArrowUpIcon className="h-6 w-6 text-white" />
-          </motion.button>
-        )}
-      </AnimatePresence>
-
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
     </footer>
   );
 };

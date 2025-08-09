@@ -1,124 +1,164 @@
 // src/components/admin/BookingManagement.jsx
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  MagnifyingGlassIcon,
   CalendarDaysIcon,
-  ClockIcon,
-  UserIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
   CheckCircleIcon,
   XCircleIcon,
-  ExclamationTriangleIcon
+  ClockIcon,
+  EyeIcon,
+  QrCodeIcon
 } from '@heroicons/react/24/outline';
-import { 
-  AnimatedCard, 
-  Button, 
-  Badge, 
-  Avatar,
-  Input,
-  Modal,
-  Tabs,
-  TabPanel
-} from '../ui';
-import { useState } from 'react';
+import api from '../../utils/api';
+import { toast } from 'react-hot-toast';
 
 const BookingManagement = () => {
+  const [bookings, setBookings] = useState([]);
+  const [filteredBookings, setFilteredBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [mealFilter, setMealFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('today');
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [bookingsPerPage] = useState(20);
+  const [totalBookings, setTotalBookings] = useState(0);
 
-  const bookings = [
-    {
-      id: 1,
-      userId: 'USR001',
-      userName: 'John Doe',
-      email: 'john@example.com',
-      meal: 'Lunch',
-      mealItem: 'Dal Rice',
-      date: '2025-07-18',
-      time: '12:30 PM',
-      status: 'confirmed',
-      amount: 45,
-      bookingTime: '2025-07-17 09:30:00',
-      specialRequests: 'Less spicy'
-    },
-    {
-      id: 2,
-      userId: 'USR002',
-      userName: 'Jane Smith',
-      email: 'jane@example.com',
-      meal: 'Dinner',
-      mealItem: 'Roti Sabzi',
-      date: '2025-07-18',
-      time: '7:00 PM',
-      status: 'pending',
-      amount: 35,
-      bookingTime: '2025-07-17 14:15:00',
-      specialRequests: 'Extra roti'
-    },
-    {
-      id: 3,
-      userId: 'USR003',
-      userName: 'Mike Johnson',
-      email: 'mike@example.com',
-      meal: 'Breakfast',
-      mealItem: 'Poha',
-      date: '2025-07-18',
-      time: '8:00 AM',
-      status: 'confirmed',
-      amount: 25,
-      bookingTime: '2025-07-17 20:45:00',
-      specialRequests: null
-    },
-    {
-      id: 4,
-      userId: 'USR004',
-      userName: 'Sarah Wilson',
-      email: 'sarah@example.com',
-      meal: 'Lunch',
-      mealItem: 'Rajma Chawal',
-      date: '2025-07-17',
-      time: '1:00 PM',
-      status: 'cancelled',
-      amount: 45,
-      bookingTime: '2025-07-17 10:30:00',
-      specialRequests: 'Vegetarian'
-    }
-  ];
+  useEffect(() => {
+    fetchBookings();
+  }, [dateFilter]);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'confirmed': return 'success';
-      case 'pending': return 'warning';
-      case 'cancelled': return 'danger';
-      case 'completed': return 'info';
-      default: return 'gray';
+  useEffect(() => {
+    filterBookings();
+  }, [bookings, searchTerm, statusFilter, mealFilter]);
+
+  const fetchBookings = async () => {
+    setLoading(true);
+    try {
+      console.log('Fetching bookings with date filter:', dateFilter);
+      
+      // Temporarily get all bookings to see if any exist
+      const response = await api.get('/bookings');
+      console.log('Bookings API response:', response.data);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      
+      if (response.data.success) {
+        setBookings(response.data.data);
+        setTotalBookings(response.data.total);
+        console.log('Set bookings:', response.data.data);
+        console.log('Total bookings:', response.data.total);
+        console.log('Bookings array length:', response.data.data.length);
+      } else {
+        console.error('API returned success: false:', response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      toast.error('Failed to load bookings');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredBookings = bookings.filter(booking => {
-    const matchesSearch = booking.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         booking.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         booking.mealItem.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDate = selectedDate === 'all' || booking.date === selectedDate;
-    const matchesStatus = selectedStatus === 'all' || booking.status === selectedStatus;
-    return matchesSearch && matchesDate && matchesStatus;
-  });
+  const filterBookings = () => {
+    let filtered = bookings;
 
-  const handleStatusChange = (bookingId, newStatus) => {
-    console.log('Status change:', bookingId, newStatus);
-    // Update booking status logic here
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(booking =>
+        booking.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.bookingId?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(booking => booking.status === statusFilter);
+    }
+
+    // Meal filter
+    if (mealFilter !== 'all') {
+      filtered = filtered.filter(booking => booking.mealType === mealFilter);
+    }
+
+    setFilteredBookings(filtered);
+    setCurrentPage(1);
   };
 
-  const handleViewDetails = (booking) => {
-    setSelectedBooking(booking);
-    setIsDetailModalOpen(true);
+  const handleStatusUpdate = async (bookingId, newStatus) => {
+    try {
+      await api.patch(`/bookings/${bookingId}/status`, { status: newStatus });
+      setBookings(prev => prev.map(booking =>
+        booking._id === bookingId ? { ...booking, status: newStatus } : booking
+      ));
+      toast.success(`Booking ${newStatus} successfully`);
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      toast.error('Failed to update booking status');
+    }
   };
 
-  const todayBookings = bookings.filter(booking => booking.date === new Date().toISOString().split('T')[0]);
-  const pendingBookings = bookings.filter(booking => booking.status === 'pending');
-  const confirmedBookings = bookings.filter(booking => booking.status === 'confirmed');
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      pending: { color: 'bg-yellow-100 text-yellow-800', icon: ClockIcon },
+      confirmed: { color: 'bg-green-100 text-green-800', icon: CheckCircleIcon },
+      cancelled: { color: 'bg-red-100 text-red-800', icon: XCircleIcon },
+      completed: { color: 'bg-blue-100 text-blue-800', icon: CheckCircleIcon },
+      'no-show': { color: 'bg-gray-100 text-gray-800', icon: XCircleIcon }
+    };
+
+    const config = statusConfig[status] || statusConfig.pending;
+    const IconComponent = config.icon;
+
+    return (
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+        <IconComponent className="h-3 w-3 mr-1" />
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
+  const getMealIcon = (mealType) => {
+    switch (mealType) {
+      case 'breakfast': return '🌅';
+      case 'lunch': return '☀️';
+      case 'dinner': return '🌙';
+      default: return '🍽️';
+    }
+  };
+
+  const getCurrentPageBookings = () => {
+    const indexOfLastBooking = currentPage * bookingsPerPage;
+    const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
+    return filteredBookings.slice(indexOfFirstBooking, indexOfLastBooking);
+  };
+
+  const totalPages = Math.ceil(filteredBookings.length / bookingsPerPage);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-300 rounded w-1/4"></div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="space-y-4">
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="h-16 bg-gray-300 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -129,130 +169,109 @@ const BookingManagement = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Booking Management</h1>
-              <p className="text-gray-600">Manage meal bookings and reservations</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Booking Management</h1>
+          <p className="text-gray-600">Manage all meal bookings and reservations</p>
+        </motion.div>
+
+        {/* Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search bookings..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" leftIcon={<CalendarDaysIcon className="h-4 w-4" />}>
-                Export Data
-              </Button>
-              <Button variant="primary" leftIcon={<ClockIcon className="h-4 w-4" />}>
-                Live View
-              </Button>
-            </div>
+
+            {/* Date Filter */}
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="today">Today</option>
+              <option value="tomorrow">Tomorrow</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="no-show">No Show</option>
+            </select>
+
+            {/* Meal Filter */}
+            <select
+              value={mealFilter}
+              onChange={(e) => setMealFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Meals</option>
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+            </select>
+
+            <button
+              onClick={fetchBookings}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Refresh
+            </button>
           </div>
         </motion.div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <AnimatedCard className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-blue-500 mr-4">
-                <CalendarDaysIcon className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Today's Bookings</p>
-                <p className="text-2xl font-bold text-gray-900">{todayBookings.length}</p>
-              </div>
-            </div>
-          </AnimatedCard>
-
-          <AnimatedCard delay={0.1} className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-yellow-500 mr-4">
-                <ExclamationTriangleIcon className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">{pendingBookings.length}</p>
-              </div>
-            </div>
-          </AnimatedCard>
-
-          <AnimatedCard delay={0.2} className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-500 mr-4">
-                <CheckCircleIcon className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Confirmed</p>
-                <p className="text-2xl font-bold text-gray-900">{confirmedBookings.length}</p>
-              </div>
-            </div>
-          </AnimatedCard>
-
-          <AnimatedCard delay={0.3} className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-purple-500 mr-4">
-                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">₹{bookings.reduce((sum, booking) => sum + booking.amount, 0)}</p>
-              </div>
-            </div>
-          </AnimatedCard>
-        </div>
-
-        {/* Search and Filter */}
-        <AnimatedCard delay={0.4} className="p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-2">
-              <Input
-                placeholder="Search by name, email, or meal..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                leftIcon={<MagnifyingGlassIcon className="h-5 w-5" />}
-              />
-            </div>
-            <div>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="all">All Status</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="pending">Pending</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-          </div>
-        </AnimatedCard>
-
         {/* Bookings Table */}
-        <AnimatedCard delay={0.5} className="overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+        >
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-lg font-bold text-gray-900">
+              Bookings ({filteredBookings.length})
+            </h2>
+          </div>
+
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Customer
+                    Booking ID
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Meal Details
+                    User
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Meal
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date & Time
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
+                    Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -260,65 +279,107 @@ const BookingManagement = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredBookings.map((booking, index) => (
+                {getCurrentPageBookings().map((booking, index) => (
                   <motion.tr
-                    key={booking.id}
+                    key={booking._id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 + index * 0.1 }}
+                    transition={{ delay: index * 0.05 }}
                     className="hover:bg-gray-50"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        #{booking.bookingId || booking._id.slice(-8)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <Avatar name={booking.userName} size="sm" className="mr-3" />
+                        <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-white font-medium text-xs">
+                            {booking.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                          </span>
+                        </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{booking.userName}</div>
-                          <div className="text-sm text-gray-500">{booking.email}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {booking.user?.name || 'Unknown User'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {booking.user?.email}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{booking.mealItem}</div>
-                      <div className="text-sm text-gray-500">{booking.meal}</div>
+                      <div className="flex items-center">
+                        <span className="text-2xl mr-2">{getMealIcon(booking.mealType)}</span>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 capitalize">
+                            {booking.mealType}
+                          </div>
+                          {booking.menuItems && (
+                            <div className="text-sm text-gray-500">
+                              {booking.menuItems.length} items
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{booking.date}</div>
-                      <div className="text-sm text-gray-500">{booking.time}</div>
+                      <div className="text-sm text-gray-900">
+                        {new Date(booking.date).toLocaleDateString('en-IN')}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {booking.mealTime ? new Date(booking.mealTime).toLocaleTimeString('en-IN', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) : 'Not set'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant={getStatusColor(booking.status)}>
-                        {booking.status}
-                      </Badge>
+                      <div className="text-sm font-medium text-green-600">
+                        ₹{booking.totalAmount || booking.amount || 0}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{booking.amount}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getStatusBadge(booking.status)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewDetails(booking)}
+                        <button
+                          onClick={() => setSelectedBooking(booking)}
+                          className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                          title="View Details"
                         >
-                          View
-                        </Button>
+                          <EyeIcon className="h-4 w-4" />
+                        </button>
+                        
                         {booking.status === 'pending' && (
                           <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleStatusChange(booking.id, 'confirmed')}
+                            <button
+                              onClick={() => handleStatusUpdate(booking._id, 'confirmed')}
+                              className="text-green-600 hover:text-green-900 p-1 rounded transition-colors"
+                              title="Confirm Booking"
                             >
-                              <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleStatusChange(booking.id, 'cancelled')}
+                              <CheckCircleIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleStatusUpdate(booking._id, 'cancelled')}
+                              className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
+                              title="Cancel Booking"
                             >
-                              <XCircleIcon className="h-4 w-4 text-red-500" />
-                            </Button>
+                              <XCircleIcon className="h-4 w-4" />
+                            </button>
                           </>
+                        )}
+                        
+                        {booking.status === 'confirmed' && (
+                          <button
+                            onClick={() => handleStatusUpdate(booking._id, 'completed')}
+                            className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                            title="Mark Complete"
+                          >
+                            <CheckCircleIcon className="h-4 w-4" />
+                          </button>
                         )}
                       </div>
                     </td>
@@ -327,85 +388,160 @@ const BookingManagement = () => {
               </tbody>
             </table>
           </div>
-        </AnimatedCard>
 
-        {/* Booking Details Modal */}
-        <Modal
-          isOpen={isDetailModalOpen}
-          onClose={() => setIsDetailModalOpen(false)}
-          title="Booking Details"
-          size="md"
-        >
-          {selectedBooking && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Customer</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedBooking.userName}</p>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-700">
+                  Showing {((currentPage - 1) * bookingsPerPage) + 1} to {Math.min(currentPage * bookingsPerPage, filteredBookings.length)} of {filteredBookings.length} results
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedBooking.email}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Meal</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedBooking.mealItem}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Type</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedBooking.meal}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Date</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedBooking.date}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Time</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedBooking.time}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <Badge variant={getStatusColor(selectedBooking.status)} className="mt-1">
-                    {selectedBooking.status}
-                  </Badge>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Amount</label>
-                  <p className="mt-1 text-sm text-gray-900">₹{selectedBooking.amount}</p>
-                </div>
-              </div>
-              
-              {selectedBooking.specialRequests && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Special Requests</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedBooking.specialRequests}</p>
-                </div>
-              )}
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Booking Time</label>
-                <p className="mt-1 text-sm text-gray-900">{new Date(selectedBooking.bookingTime).toLocaleString()}</p>
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsDetailModalOpen(false)}
-                >
-                  Close
-                </Button>
-                {selectedBooking.status === 'pending' && (
-                  <Button 
-                    variant="primary"
-                    onClick={() => handleStatusChange(selectedBooking.id, 'confirmed')}
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
-                    Confirm Booking
-                  </Button>
-                )}
+                    Previous
+                  </button>
+                  <span className="px-3 py-1 text-sm">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
           )}
-        </Modal>
+        </motion.div>
+
+        {/* Booking Details Modal */}
+        {selectedBooking && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-xl p-6 max-w-lg w-full max-h-screen overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Booking Details</h3>
+                <button
+                  onClick={() => setSelectedBooking(null)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <XCircleIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">Booking ID</label>
+                  <p className="mt-1 text-gray-900">#{selectedBooking.bookingId || selectedBooking._id.slice(-8)}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">User</label>
+                  <p className="mt-1 text-gray-900">{selectedBooking.user?.name}</p>
+                  <p className="text-sm text-gray-600">{selectedBooking.user?.email}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">Meal Details</label>
+                  <div className="mt-1 flex items-center">
+                    <span className="text-2xl mr-2">{getMealIcon(selectedBooking.mealType)}</span>
+                    <span className="text-gray-900 capitalize">{selectedBooking.mealType}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">Date & Time</label>
+                  <p className="mt-1 text-gray-900">
+                    {new Date(selectedBooking.date).toLocaleDateString('en-IN', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                  {selectedBooking.mealTime && (
+                    <p className="text-sm text-gray-600">
+                      {new Date(selectedBooking.mealTime).toLocaleTimeString('en-IN')}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">Amount</label>
+                  <p className="mt-1 text-lg font-bold text-green-600">
+                    ₹{selectedBooking.totalAmount || selectedBooking.amount || 0}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">Status</label>
+                  <div className="mt-1">{getStatusBadge(selectedBooking.status)}</div>
+                </div>
+
+                {selectedBooking.specialInstructions && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Special Instructions</label>
+                    <p className="mt-1 text-gray-900">{selectedBooking.specialInstructions}</p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">Booking Time</label>
+                  <p className="mt-1 text-gray-900">
+                    {new Date(selectedBooking.createdAt).toLocaleString('en-IN')}
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                {selectedBooking.status === 'pending' && (
+                  <div className="flex space-x-3 pt-4">
+                    <button
+                      onClick={() => {
+                        handleStatusUpdate(selectedBooking._id, 'confirmed');
+                        setSelectedBooking(null);
+                      }}
+                      className="flex-1 py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleStatusUpdate(selectedBooking._id, 'cancelled');
+                        setSelectedBooking(null);
+                      }}
+                      className="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
+                {selectedBooking.status === 'confirmed' && (
+                  <div className="pt-4">
+                    <button
+                      onClick={() => {
+                        handleStatusUpdate(selectedBooking._id, 'completed');
+                        setSelectedBooking(null);
+                      }}
+                      className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Mark as Completed
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </div>
   );

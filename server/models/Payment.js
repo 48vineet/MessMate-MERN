@@ -1,5 +1,5 @@
 // server/models/Payment.js
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const paymentSchema = new mongoose.Schema(
   {
@@ -11,7 +11,12 @@ const paymentSchema = new mongoose.Schema(
     booking: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Booking',
-      required: true
+      // required: true (removed to make optional)
+    },
+    transactionId: {
+      type: String,
+      required: true,
+      unique: true
     },
     amount: {
       type: Number,
@@ -23,15 +28,36 @@ const paymentSchema = new mongoose.Schema(
       default: 'INR'
     },
     provider: {
-      // e.g. 'razorpay', 'stripe', 'cash'
+      // e.g. 'razorpay', 'stripe', 'cash', 'upi'
       type: String,
       required: true
+    },
+    paymentMethod: {
+      type: String,
+      enum: ['upi', 'card', 'netbanking', 'wallet', 'cash'],
+      default: 'upi'
+    },
+    paymentType: {
+      type: String,
+      enum: ['wallet-recharge', 'meal-booking', 'refund', 'other'],
+      default: 'wallet-recharge'
     },
     providerPaymentId: String,   // ID returned by the payment gateway
     status: {
       type: String,
-      enum: ['pending', 'succeeded', 'failed', 'refunded'],
+      enum: ['pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded'],
       default: 'pending'
+    },
+    upiDetails: {
+      upiId: String,
+      merchantName: String,
+      merchantTransactionId: String,
+      upiTransactionId: String
+    },
+    metadata: {
+      userAgent: String,
+      ipAddress: String,
+      source: String
     },
     receiptEmail: String,
     meta: mongoose.Schema.Types.Mixed // any gateway-specific data
@@ -39,4 +65,4 @@ const paymentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model('Payment', paymentSchema);
+module.exports = mongoose.model('Payment', paymentSchema);

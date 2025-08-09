@@ -1,246 +1,221 @@
-// hooks/usePayment.js
-import { useState, useCallback } from 'react';
-import { useApi } from './useApi';
-import { useSocket } from './useSocket';
-import { useToast } from './useToast';
-import QRCode from 'qrcode';
+// src/hooks/usePayment.jsx
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { usePayment as usePaymentContext } from '../context/PaymentContext';
+import { toast } from 'react-hot-toast';
 
-export const usePayment = () => {
+const usePayment = () => {
+  return usePaymentContext();
+};
+
+export const useWallet = () => {
+  const { wallet, fetchWallet, rechargeWallet, loading } = usePaymentContext();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refreshWallet = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const result = await fetchWallet();
+      return result;
+    } catch (error) {
+      console.error('Error refreshing wallet:', error);
+      return { success: false, error: error.message };
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchWallet]);
+
+  useEffect(() => {
+    refreshWallet();
+  }, [refreshWallet]);
+
+  return { 
+    wallet, 
+    loading: loading || refreshing, 
+    refreshWallet, 
+    rechargeWallet 
+  };
+};
+
+export const useQRPayment = () => {
+  const { generateUPIQR, checkPaymentStatus } = usePaymentContext();
+  const [qrCode, setQrCode] = useState(null);
+  const [transactionId, setTransactionId] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('pending');
+  const [polling, setPolling] = useState(false);
+  const [error, setError] = useState(null);
+  const intervalRef = useRef(null);
+  const timeoutRef = useRef(null);
+
+  const generateQR = useCallback(async (amount, purpose, bookingId = null) => {
+    if (!amount || amount <= 0) {
+      const errorMsg = 'Invalid amount provided';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+
+    setError(null);
+    setPaymentStatus('pending');
+
+    try {
+      const result = await generateUPIQR(amount, purpose, bookingId);
+      
+      if (result.success) {
+        setQrCode(result.qrCode);
+        setTransactionId(result.transactionId);
+        toast.success('QR code generated successfully');
+      } else {
+        setError(result.error);
+      }
+      
+      return result;
+    } catch (error) {
+      const errorMessage = error.message || 'Failed to generate QR code';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  }, [generateUPIQR]);
+
+  const startPolling = useCallback((txnId) => {
+    if (polling || !txnId) return;
+    
+    setPolling(true);
+    
+    intervalRef.current = setInterval(async () => {
+      try {
+        const result = await checkPaymentStatus(txnId);
+        
+        if (result.success) {
+          setPaymentStatus(result.status);
+          
+          if (result.status === 'success') {
+            toast.success('Payment successful!');
+            clearInterval(intervalRef.current);
+            setPolling(false);
+          } else if (result.status === 'failed') {
+            toast.error('Payment failed');
+            clearInterval(intervalRef.current);
+            setPolling(false);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking payment status:', error);
+      }
+    }, 3000);
+
+    // Stop polling after 5 minutes
+    timeoutRef.current = setTimeout(() => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      setPolling(false);
+      toast.warning('Payment verification timeout');
+    }, 300000);
+  }, [checkPaymentStatus, polling]);
+
+  const stopPolling = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setPolling(false);
+  }, []);
+
+  const resetPayment = useCallback(() => {
+    stopPolling();
+    setQrCode(null);
+    setTransactionId(null);
+    setPaymentStatus('pending');
+    setError(null);
+  }, [stopPolling]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopPolling();
+    };
+  }, [stopPolling]);
+
+  return { 
+    qrCode, 
+    transactionId, 
+    paymentStatus, 
+    polling,
+    error,
+    generateQR, 
+    startPolling,
+    stopPolling,
+    resetPayment
+  };
+};
+
+export const usePaymentHistory = (filters = {}) => {
+  const { fetchPaymentHistory } = usePaymentContext();
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [paymentData, setPaymentData] = useState(null);
-  const { paymentAPI } = useApi();
-  const { onPaymentUpdate, sendPaymentUpdate } = useSocket();
-  const { showToast } = useToast();
 
-  // Your UPI Configuration
-  const UPI_ID = "7038738012-2@ybl";
-  const MERCHANT_NAME = "MessMate";
+  const fetchHistory = useCallback(async (newFilters = {}) => {
+    setLoading(true);
+    setError(null);
 
-  // Generate UPI payment
-  const generateUPIPayment = useCallback(async (amount, orderId, description = 'MessMate Payment') => {
     try {
-      setLoading(true);
-      setError(null);
-
-      // Generate UPI URL
-      const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`${description} - ${orderId}`)}`;
+      const result = await fetchPaymentHistory({ ...filters, ...newFilters });
       
-      // Generate QR Code
-      const qrCode = await QRCode.toDataURL(upiUrl, {
-        width: 256,
-        margin: 2,
-        color: {
-          dark: '#1f2937',
-          light: '#ffffff'
-        },
-        errorCorrectionLevel: 'H'
-      });
-
-      // Generate transaction reference
-      const transactionRef = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      const payment = {
-        upiId: UPI_ID,
-        merchantName: MERCHANT_NAME,
-        amount: amount,
-        orderId: orderId,
-        transactionRef: transactionRef,
-        upiUrl: upiUrl,
-        qrCode: qrCode,
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes
-      };
-
-      setPaymentData(payment);
-      return payment;
-
-    } catch (err) {
-      setError(err.message);
-      showToast('Failed to generate payment', 'error');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [showToast]);
-
-  // Verify payment
-  const verifyPayment = useCallback(async (transactionRef, upiTransactionId) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await paymentAPI.verifyPayment({
-        transactionRef,
-        upiTransactionId,
-        status: 'completed'
-      });
-
-      if (response.success) {
-        // Send real-time update
-        sendPaymentUpdate({
-          type: 'payment_verification',
-          transactionRef,
-          upiTransactionId,
-          status: 'submitted'
-        });
-
-        showToast('Payment submitted for verification!', 'success');
-        return response.data;
+      if (result.success) {
+        setPayments(result.payments || []);
+      } else {
+        setError(result.error || 'Failed to fetch payment history');
       }
-    } catch (err) {
-      setError(err.message);
-      showToast('Failed to verify payment', 'error');
-      throw err;
+      
+      return result;
+    } catch (error) {
+      const errorMessage = error.message || 'Failed to fetch payment history';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
-  }, [paymentAPI, sendPaymentUpdate, showToast]);
+  }, [fetchPaymentHistory, filters]);
 
-  // Get payment history
-  const getPaymentHistory = useCallback(async (params = {}) => {
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  return { payments, loading, error, refetch: fetchHistory };
+};
+
+export const useRefund = () => {
+  const { requestRefund } = usePaymentContext();
+  const [requesting, setRequesting] = useState(false);
+
+  const handleRefundRequest = useCallback(async (paymentId, reason, amount = null) => {
+    if (!paymentId || !reason) {
+      const errorMsg = 'Payment ID and reason are required';
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+
+    setRequesting(true);
+
     try {
-      setLoading(true);
-      setError(null);
-
-      const response = await paymentAPI.getPayments(params);
-      return response.data || [];
-    } catch (err) {
-      setError(err.message);
-      throw err;
+      const result = await requestRefund(paymentId, reason, amount);
+      return result;
+    } catch (error) {
+      const errorMessage = error.message || 'Failed to request refund';
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
-      setLoading(false);
+      setRequesting(false);
     }
-  }, [paymentAPI]);
+  }, [requestRefund]);
 
-  // Get UPI details
-  const getUPIDetails = useCallback(async () => {
-    try {
-      const response = await paymentAPI.getUPIDetails();
-      return response.data;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
-  }, [paymentAPI]);
-
-  // Open UPI app
-  const openUPIApp = useCallback((appName = 'phonepe') => {
-    if (!paymentData) {
-      showToast('No payment data available', 'error');
-      return;
-    }
-
-    const deepLinks = {
-      phonepe: 'phonepe://pay',
-      googlepay: 'gpay://upi/pay',
-      paytm: 'paytm://pay',
-      bhim: 'bhim://pay'
-    };
-
-    const baseDeepLink = deepLinks[appName.toLowerCase()] || deepLinks.phonepe;
-    const upiParams = `?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${paymentData.amount}&cu=INR&tn=${encodeURIComponent(`MessMate Payment - ${paymentData.orderId}`)}`;
-    
-    const deepLinkUrl = `${baseDeepLink}${upiParams}`;
-    
-    // Try to open app-specific deep link
-    const link = document.createElement('a');
-    link.href = deepLinkUrl;
-    link.click();
-    
-    // Fallback to generic UPI URL after a delay
-    setTimeout(() => {
-      window.open(paymentData.upiUrl, '_blank');
-    }, 1000);
-
-  }, [paymentData, showToast]);
-
-  // Copy UPI ID
-  const copyUPIId = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(UPI_ID);
-      showToast('UPI ID copied to clipboard!', 'success');
-    } catch (err) {
-      showToast('Failed to copy UPI ID', 'error');
-    }
-  }, [showToast]);
-
-  // Download QR Code
-  const downloadQRCode = useCallback(() => {
-    if (!paymentData?.qrCode) {
-      showToast('No QR code available', 'error');
-      return;
-    }
-
-    const link = document.createElement('a');
-    link.download = `messmate-payment-qr-${paymentData.orderId}.png`;
-    link.href = paymentData.qrCode;
-    link.click();
-    
-    showToast('QR code downloaded!', 'success');
-  }, [paymentData, showToast]);
-
-  // Share payment details
-  const sharePayment = useCallback(async () => {
-    if (!paymentData) {
-      showToast('No payment data available', 'error');
-      return;
-    }
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'MessMate Payment',
-          text: `Pay ₹${paymentData.amount} to ${MERCHANT_NAME}`,
-          url: paymentData.upiUrl
-        });
-      } catch (err) {
-        console.log('Share failed:', err);
-        copyUPIId();
-      }
-    } else {
-      copyUPIId();
-    }
-  }, [paymentData, copyUPIId, showToast]);
-
-  // Check if payment is expired
-  const isPaymentExpired = useCallback(() => {
-    if (!paymentData?.expiresAt) return false;
-    return new Date() > new Date(paymentData.expiresAt);
-  }, [paymentData]);
-
-  // Get time remaining
-  const getTimeRemaining = useCallback(() => {
-    if (!paymentData?.expiresAt) return 0;
-    const now = new Date().getTime();
-    const expiry = new Date(paymentData.expiresAt).getTime();
-    return Math.max(0, expiry - now);
-  }, [paymentData]);
-
-  return {
-    // State
-    loading,
-    error,
-    paymentData,
-    
-    // Actions
-    generateUPIPayment,
-    verifyPayment,
-    getPaymentHistory,
-    getUPIDetails,
-    openUPIApp,
-    copyUPIId,
-    downloadQRCode,
-    sharePayment,
-    
-    // Utilities
-    isPaymentExpired,
-    getTimeRemaining,
-    
-    // Constants
-    UPI_ID,
-    MERCHANT_NAME
-  };
+  return { handleRefundRequest, requesting };
 };
 
 export default usePayment;

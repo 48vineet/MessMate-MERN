@@ -1,4 +1,5 @@
 // controllers/userController.js
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
 const Payment = require('../models/Payment');
@@ -39,14 +40,14 @@ exports.getUsers = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      users: users, // Changed from 'data' to 'users' to match frontend expectation
       count: users.length,
       total,
       pagination: {
         page,
         limit,
         pages: Math.ceil(total / limit)
-      },
-      data: users
+      }
     });
   } catch (error) {
     console.error('Get users error:', error);
@@ -238,12 +239,126 @@ exports.addMoney = async (req, res) => {
   }
 };
 
+// @desc    Update user status (Admin only)
+// @route   PATCH /api/users/:id/status
+// @access  Private/Admin
+exports.updateUserStatus = async (req, res) => {
+  try {
+    const { isActive } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Don't allow deactivating other admins
+    if (user.role === 'admin' && !isActive && req.user.id !== req.params.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot deactivate other admin users'
+      });
+    }
+
+    user.isActive = isActive;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
+      data: user
+    });
+  } catch (error) {
+    console.error('Update user status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error updating user status'
+    });
+  }
+};
+
+// @desc    Bulk user actions (Admin only)
+// @route   PATCH /api/users/bulk-action
+// @access  Private/Admin
+exports.bulkUserAction = async (req, res) => {
+  try {
+    const { userIds, action } = req.body;
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'User IDs are required'
+      });
+    }
+
+    let updateData = {};
+    let message = '';
+
+    switch (action) {
+      case 'activate':
+        updateData = { isActive: true };
+        message = 'Users activated successfully';
+        break;
+      case 'deactivate':
+        updateData = { isActive: false };
+        message = 'Users deactivated successfully';
+        break;
+      case 'delete':
+        // Don't allow deleting admins
+        const usersToDelete = await User.find({ _id: { $in: userIds } });
+        const adminUsers = usersToDelete.filter(user => user.role === 'admin');
+        
+        if (adminUsers.length > 0) {
+          return res.status(403).json({
+            success: false,
+            message: 'Cannot delete admin users'
+          });
+        }
+        
+        await User.deleteMany({ _id: { $in: userIds } });
+        res.status(200).json({
+          success: true,
+          message: 'Users deleted successfully'
+        });
+        return;
+      default:
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid action'
+        });
+    }
+
+    await User.updateMany(
+      { _id: { $in: userIds } },
+      updateData
+    );
+
+    res.status(200).json({
+      success: true,
+      message
+    });
+  } catch (error) {
+    console.error('Bulk user action error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error performing bulk action'
+    });
+  }
+};
+
 // @desc    Get user statistics
-// @route   GET /api/users/:id/stats
+// @route   GET /api/users/:id/stats or GET /api/users/stats (current user)
 // @access  Private
 exports.getUserStats = async (req, res) => {
   try {
-    const userId = req.params.id;
+    // Debug logging
+    console.log('DEBUG getUserStats - req.user:', req.user);
+    console.log('DEBUG getUserStats - req.params:', req.params);
+    // If no ID parameter, use current user
+    const userId = req.params.id || req.user.id;
+    console.log('DEBUG getUserStats - userId:', userId);
 
     // Check authorization
     if (req.user.role !== 'admin' && req.user.id !== userId) {
@@ -254,6 +369,7 @@ exports.getUserStats = async (req, res) => {
     }
 
     const user = await User.findById(userId).select('-password');
+    console.log('DEBUG getUserStats - user:', user);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -261,20 +377,23 @@ exports.getUserStats = async (req, res) => {
       });
     }
 
+    // Always use ObjectId for aggregation
+    const objectUserId = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
+
     // Get booking statistics
-    const totalBookings = await Booking.countDocuments({ user: userId });
+    const totalBookings = await Booking.countDocuments({ user: objectUserId });
     const confirmedBookings = await Booking.countDocuments({ 
-      user: userId, 
+      user: objectUserId, 
       status: 'confirmed' 
     });
     const cancelledBookings = await Booking.countDocuments({ 
-      user: userId, 
+      user: objectUserId, 
       status: 'cancelled' 
     });
 
     // Get payment statistics
     const totalSpent = await Payment.aggregate([
-      { $match: { user: mongoose.Types.ObjectId(userId), status: 'completed' } },
+      { $match: { user: objectUserId, status: 'completed' } },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
 
@@ -283,7 +402,7 @@ exports.getUserStats = async (req, res) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
     const attendanceStats = await Attendance.getUserAttendanceSummary(
-      userId, 
+      objectUserId, 
       thirtyDaysAgo, 
       new Date()
     );
@@ -305,7 +424,7 @@ exports.getUserStats = async (req, res) => {
       },
       financial: {
         totalSpent: totalSpent.length > 0 ? totalSpent[0].total : 0,
-        walletBalance: user.wallet.balance,
+        walletBalance: user.wallet?.balance || 0,
         averageOrderValue: totalBookings > 0 ? 
           ((totalSpent.length > 0 ? totalSpent[0].total : 0) / totalBookings).toFixed(2) : 0
       },
@@ -315,13 +434,14 @@ exports.getUserStats = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: stats
+      stats: stats
     });
   } catch (error) {
-    console.error('Get user stats error:', error);
+    console.error('Get user stats error:', error, error?.stack);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching user statistics'
+      message: 'Server error fetching user statistics',
+      error: error.message
     });
   }
 };

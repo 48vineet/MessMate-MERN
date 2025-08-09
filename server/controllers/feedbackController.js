@@ -297,6 +297,78 @@ exports.addHelpfulVote = async (req, res) => {
   }
 };
 
+// @desc    Update feedback (Admin only)
+// @route   PUT /api/feedback/:id
+// @access  Private/Admin
+exports.updateFeedback = async (req, res) => {
+  try {
+    const { status, priority, isPublic, adminNotes } = req.body;
+
+    const feedback = await Feedback.findById(req.params.id);
+
+    if (!feedback) {
+      return res.status(404).json({
+        success: false,
+        message: 'Feedback not found'
+      });
+    }
+
+    // Update allowed fields
+    if (status) feedback.status = status;
+    if (priority) feedback.priority = priority;
+    if (typeof isPublic === 'boolean') feedback.isPublic = isPublic;
+    if (adminNotes) feedback.adminNotes = adminNotes;
+
+    await feedback.save();
+
+    const updatedFeedback = await Feedback.findById(feedback._id)
+      .populate('user', 'name email studentId')
+      .populate('booking', 'bookingId mealType')
+      .populate('menuItem', 'name mealType');
+
+    res.status(200).json({
+      success: true,
+      message: 'Feedback updated successfully',
+      data: updatedFeedback
+    });
+  } catch (error) {
+    console.error('Update feedback error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error updating feedback'
+    });
+  }
+};
+
+// @desc    Delete feedback (Admin only)
+// @route   DELETE /api/feedback/:id
+// @access  Private/Admin
+exports.deleteFeedback = async (req, res) => {
+  try {
+    const feedback = await Feedback.findById(req.params.id);
+
+    if (!feedback) {
+      return res.status(404).json({
+        success: false,
+        message: 'Feedback not found'
+      });
+    }
+
+    await Feedback.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Feedback deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete feedback error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error deleting feedback'
+    });
+  }
+};
+
 // @desc    Get feedback statistics (Admin only)
 // @route   GET /api/feedback/stats
 // @access  Private/Admin

@@ -1,243 +1,397 @@
 // src/components/payments/UPIPayment.jsx
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
-import { Button, Modal, Badge, Input } from '../ui';
-import { QrCodeIcon, DocumentDuplicateIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import QRCode from 'qrcode';
+import { 
+  CurrencyRupeeIcon,
+  QrCodeIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ArrowLeftIcon,
+  CreditCardIcon
+} from '@heroicons/react/24/outline';
+import { useNavigate, useLocation } from 'react-router-dom';
+import api from '../../utils/api';
+import { toast } from 'react-hot-toast';
 
-const UPIPayment = ({ isOpen, onClose, amount, orderId, onPaymentSuccess }) => {
-  const [qrCodeImage, setQrCodeImage] = useState('');
-  const [transactionId, setTransactionId] = useState('');
+const UPIPayment = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { amount, purpose, bookingId } = location.state || {};
+  
+  const [paymentData, setPaymentData] = useState({
+    amount: amount || 0,
+    upiId: '7038738012-2@ybl',
+    purpose: purpose || 'Wallet Recharge'
+  });
+  const [processing, setProcessing] = useState(false);
+  const [qrGenerated, setQrGenerated] = useState(false);
+  const [qrCode, setQrCode] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('pending');
-  const [copied, setCopied] = useState(false);
+  const [transactionId, setTransactionId] = useState('');
 
-  // Your UPI Configuration
-  const UPI_ID = "7038738012-2@ybl";
-  const MERCHANT_NAME = "MessMate";
-
-  const upiApps = [
-    {
-      name: 'PhonePe',
-      icon: '📱',
-      color: 'bg-purple-500',
-      deepLink: 'phonepe://pay'
-    },
-    {
-      name: 'Google Pay',
-      icon: '🌐', 
-      color: 'bg-green-500',
-      deepLink: 'gpay://upi/pay'
-    },
-    {
-      name: 'Paytm',
-      icon: '💳',
-      color: 'bg-blue-500', 
-      deepLink: 'paytm://pay'
-    },
-    {
-      name: 'BHIM UPI',
-      icon: '🏦',
-      color: 'bg-orange-500',
-      deepLink: 'bhim://pay'
-    }
+  const predefinedAmounts = [50, 100, 200, 500, 1000, 2000];
+  const popularUPIApps = [
+    { name: 'PhonePe', icon: '📱', color: 'bg-purple-600' },
+    { name: 'Google Pay', icon: '🎯', color: 'bg-blue-600' },
+    { name: 'Paytm', icon: '💙', color: 'bg-blue-800' },
+    { name: 'BHIM', icon: '🏛️', color: 'bg-orange-600' }
   ];
 
-  const generatePayment = async () => {
+  useEffect(() => {
+    if (!amount && !bookingId) {
+      navigate('/wallet');
+    }
+  }, [amount, bookingId, navigate]);
+
+  const handleAmountSelect = (selectedAmount) => {
+    setPaymentData(prev => ({ ...prev, amount: selectedAmount }));
+  };
+
+  const generateQR = async () => {
+    if (!paymentData.amount || paymentData.amount < 1) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+
+    setProcessing(true);
     try {
-      // Generate UPI URL with your PhonePe ID
-      const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`MessMate Payment - ${orderId}`)}`;
+      const response = await api.post('/payments/generate-qr', {
+        amount: paymentData.amount,
+        purpose: paymentData.purpose,
+        bookingId: bookingId || null
+      });
+
+      setQrCode(response.data.data.qrCode);
+      setTransactionId(response.data.data.paymentId);
+      setQrGenerated(true);
+      toast.success('QR Code generated! Scan to pay');
       
-      // Generate QR Code
-      const qrCode = await QRCode.toDataURL(upiUrl, {
-        width: 256,
-        margin: 2,
-        color: {
-          dark: '#1f2937',
-          light: '#ffffff'
+      // Start polling for payment status
+      pollPaymentStatus(response.data.data.paymentId);
+    } catch (error) {
+      console.error('QR generation error:', error);
+      toast.error('Failed to generate QR code');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const pollPaymentStatus = (txnId) => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await api.get(`/payments/status/${txnId}`);
+        const status = response.data.status;
+        
+        if (status === 'success') {
+          setPaymentStatus('success');
+          clearInterval(interval);
+          toast.success('Payment successful!');
+          setTimeout(() => {
+            navigate('/wallet', { state: { paymentSuccess: true } });
+          }, 3000);
+        } else if (status === 'failed') {
+          setPaymentStatus('failed');
+          clearInterval(interval);
+          toast.error('Payment failed');
         }
-      });
-      
-      setQrCodeImage(qrCode);
-      setPaymentStatus('payment_generated');
-    } catch (error) {
-      console.error('Payment generation error:', error);
+      } catch (error) {
+        console.error('Status check error:', error);
+      }
+    }, 3000);
+
+    // Clear interval after 5 minutes
+    setTimeout(() => clearInterval(interval), 300000);
+  };
+
+  const handleManualUPI = async () => {
+    if (!paymentData.upiId || !paymentData.amount) {
+      toast.error('Please enter UPI ID and amount');
+      return;
     }
-  };
 
-  const copyUPIId = () => {
-    navigator.clipboard.writeText(UPI_ID);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const openUPIApp = (app) => {
-    const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`MessMate Payment - ${orderId}`)}`;
-    
-    // Try to open specific app deep link
-    const specificUrl = `${app.deepLink}?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`MessMate Payment - ${orderId}`)}`;
-    
-    // Fallback to generic UPI URL
-    window.open(specificUrl, '_blank') || window.open(upiUrl, '_blank');
-  };
-
-  const submitPayment = async () => {
-    if (!transactionId) return;
-
-    // Here you would typically call your backend to store the transaction
-    // For now, we'll simulate success
+    setProcessing(true);
     try {
-      setPaymentStatus('submitted');
-      onPaymentSuccess({
-        transactionId,
-        amount,
-        orderId,
-        upiId: UPI_ID,
-        timestamp: new Date().toISOString()
+      const response = await api.post('/payments/upi-transfer', {
+        upiId: paymentData.upiId,
+        amount: paymentData.amount,
+        purpose: paymentData.purpose,
+        bookingId: bookingId || null
       });
+
+      if (response.data.success) {
+        setPaymentStatus('success');
+        toast.success('Payment initiated successfully!');
+        setTimeout(() => {
+          navigate('/wallet', { state: { paymentSuccess: true } });
+        }, 2000);
+      }
     } catch (error) {
-      console.error('Payment verification error:', error);
+      console.error('UPI payment error:', error);
+      toast.error(error.response?.data?.message || 'Payment failed');
+    } finally {
+      setProcessing(false);
     }
   };
+
+  if (paymentStatus === 'success') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-xl p-8 max-w-md w-full text-center shadow-xl"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring" }}
+            className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+          >
+            <CheckCircleIcon className="h-12 w-12 text-green-600" />
+          </motion.div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Payment Successful!</h2>
+          <p className="text-gray-600 mb-6">
+            ₹{paymentData.amount} has been successfully processed.
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            Transaction ID: {transactionId}
+          </p>
+          <button
+            onClick={() => navigate('/wallet')}
+            className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Continue
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="UPI Payment" size="md">
-      <div className="space-y-6">
-        {/* Payment Amount */}
-        <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-          <h3 className="text-3xl font-bold text-gray-900 mb-2">₹{amount}</h3>
-          <p className="text-gray-600">Order ID: {orderId}</p>
-        </div>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-md mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeftIcon className="h-5 w-5" />
+            </button>
+            <h1 className="text-xl font-bold text-gray-900">UPI Payment</h1>
+            <div></div>
+          </div>
+          
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CurrencyRupeeIcon className="h-8 w-8 text-white" />
+            </div>
+            <p className="text-gray-600">{paymentData.purpose}</p>
+          </div>
+        </motion.div>
 
-        {paymentStatus === 'pending' && (
-          <div className="text-center space-y-4">
+        {!qrGenerated ? (
+          <>
+            {/* Amount Selection */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 bg-white border-2 border-gray-200 rounded-lg"
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
             >
-              <QrCodeIcon className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-              <h4 className="font-semibold text-gray-900 mb-2">Ready to Pay?</h4>
-              <p className="text-gray-600 mb-4">Click below to generate UPI payment QR code</p>
-              <Button variant="primary" onClick={generatePayment} className="w-full">
-                Generate UPI Payment
-              </Button>
-            </motion.div>
-          </div>
-        )}
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Enter Amount</h2>
+              
+              <div className="mb-4">
+                <div className="relative">
+                  <CurrencyRupeeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="number"
+                    value={paymentData.amount}
+                    onChange={(e) => setPaymentData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-lg font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0"
+                    min="1"
+                  />
+                </div>
+              </div>
 
-        {paymentStatus === 'payment_generated' && qrCodeImage && (
+              {/* Quick Amount Buttons */}
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {predefinedAmounts.map((amt) => (
+                  <button
+                    key={amt}
+                    onClick={() => handleAmountSelect(amt)}
+                    className={`py-2 px-4 rounded-lg border font-medium transition-colors ${
+                      paymentData.amount === amt
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+                    }`}
+                  >
+                    ₹{amt}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={generateQR}
+                disabled={processing || paymentData.amount < 1}
+                className={`w-full py-3 rounded-lg font-semibold transition-all ${
+                  processing || paymentData.amount < 1
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transform hover:scale-105'
+                }`}
+              >
+                {processing ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Generating QR...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <QrCodeIcon className="h-5 w-5 mr-2" />
+                    Generate QR Code
+                  </div>
+                )}
+              </button>
+            </motion.div>
+
+            {/* Popular UPI Apps */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Pay with UPI Apps</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {popularUPIApps.map((app) => (
+                  <button
+                    key={app.name}
+                    onClick={generateQR}
+                    disabled={paymentData.amount < 1}
+                    className={`flex items-center p-3 rounded-lg border transition-colors ${
+                      paymentData.amount < 1
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-gray-50 border-gray-300'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 ${app.color} rounded-lg flex items-center justify-center mr-3`}>
+                      <span className="text-white text-lg">{app.icon}</span>
+                    </div>
+                    <span className="font-medium text-gray-900">{app.name}</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Manual UPI Transfer */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Manual UPI Transfer</h3>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">UPI ID</label>
+                <input
+                  type="text"
+                  value={paymentData.upiId}
+                  onChange={(e) => setPaymentData(prev => ({ ...prev, upiId: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="username@upi"
+                />
+              </div>
+
+              <button
+                onClick={handleManualUPI}
+                disabled={processing || !paymentData.upiId || paymentData.amount < 1}
+                className={`w-full py-3 rounded-lg font-semibold transition-colors ${
+                  processing || !paymentData.upiId || paymentData.amount < 1
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {processing ? 'Processing...' : 'Pay via UPI'}
+              </button>
+            </motion.div>
+          </>
+        ) : (
+          /* QR Code Display */
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
           >
-            {/* QR Code */}
-            <div className="text-center p-6 bg-white border-2 border-gray-200 rounded-lg">
-              <img 
-                src={qrCodeImage} 
-                alt="UPI QR Code" 
-                className="w-48 h-48 mx-auto mb-4 border-2 border-gray-300 rounded-lg"
-              />
-              <p className="text-sm text-gray-600 mb-4">Scan with any UPI app</p>
-            </div>
-
-            {/* UPI ID Display */}
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Pay to UPI ID</p>
-                  <p className="text-lg font-mono font-bold text-gray-900">{UPI_ID}</p>
-                  <p className="text-sm text-gray-600">{MERCHANT_NAME}</p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={copyUPIId}
-                  leftIcon={copied ? <CheckCircleIcon className="h-4 w-4" /> : <DocumentDuplicateIcon className="h-4 w-4" />}
-                >
-                  {copied ? 'Copied!' : 'Copy UPI ID'}
-                </Button>
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Scan QR to Pay</h2>
+              
+              <div className="w-64 h-64 bg-white border-2 border-gray-200 rounded-lg flex items-center justify-center mx-auto mb-6">
+                {qrCode ? (
+                  <img src={qrCode} alt="Payment QR Code" className="max-w-full max-h-full" />
+                ) : (
+                  <QrCodeIcon className="h-24 w-24 text-gray-300" />
+                )}
               </div>
-            </div>
 
-            {/* UPI Apps */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Pay with UPI Apps</h4>
-              <div className="grid grid-cols-2 gap-3">
-                {upiApps.map((app, index) => (
-                  <motion.button
-                    key={app.name}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => openUPIApp(app)}
-                    className="p-3 rounded-lg border-2 border-gray-200 hover:border-gray-300 transition-all duration-200"
-                  >
-                    <div className={`w-10 h-10 ${app.color} rounded-full flex items-center justify-center text-lg mb-2 mx-auto`}>
-                      {app.icon}
-                    </div>
-                    <p className="text-sm font-medium text-gray-900">{app.name}</p>
-                  </motion.button>
-                ))}
+              <div className="mb-6">
+                <p className="text-2xl font-bold text-gray-900 mb-2">₹{paymentData.amount}</p>
+                <p className="text-gray-600">{paymentData.purpose}</p>
+                <p className="text-sm text-gray-500 mt-2">Transaction ID: {transactionId}</p>
               </div>
-            </div>
 
-            {/* Manual Payment Instructions */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-medium text-blue-800 mb-2">📱 Manual Payment Steps:</h4>
-              <ol className="text-sm text-blue-700 space-y-1 list-decimal ml-4">
-                <li>Open your UPI app (PhonePe, Google Pay, etc.)</li>
-                <li>Scan the QR code above OR enter UPI ID: <strong>{UPI_ID}</strong></li>
-                <li>Enter amount: <strong>₹{amount}</strong></li>
-                <li>Complete the payment</li>
-                <li>Enter the transaction ID below</li>
-              </ol>
-            </div>
+              <div className="flex items-center justify-center text-yellow-600 mb-4">
+                <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
+                <span className="text-sm">Waiting for payment...</span>
+              </div>
 
-            {/* Payment Confirmation */}
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h4 className="font-medium text-yellow-800 mb-3">After Payment</h4>
-              <p className="text-sm text-yellow-700 mb-4">
-                Enter your UPI transaction ID below to confirm payment
+              <p className="text-xs text-gray-500 mb-6">
+                Open any UPI app and scan this QR code to complete the payment
               </p>
-              <div className="space-y-3">
-                <Input
-                  placeholder="Enter UPI Transaction ID (e.g., 123456789012)"
-                  value={transactionId}
-                  onChange={(e) => setTransactionId(e.target.value)}
-                />
-                <Button 
-                  variant="primary" 
-                  onClick={submitPayment}
-                  disabled={!transactionId}
-                  className="w-full"
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setQrGenerated(false);
+                    setQrCode('');
+                  }}
+                  className="flex-1 py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  Confirm Payment
-                </Button>
+                  Back
+                </button>
+                <button
+                  onClick={() => navigate('/wallet')}
+                  className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </motion.div>
         )}
 
-        {paymentStatus === 'submitted' && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center p-6 bg-green-50 border border-green-200 rounded-lg"
-          >
-            <div className="text-6xl mb-4">✅</div>
-            <h4 className="font-bold text-green-800 mb-2">Payment Submitted!</h4>
-            <p className="text-green-700 mb-4">
-              Your payment to <strong>{UPI_ID}</strong> has been submitted for verification. 
-              You'll receive a confirmation once it's verified by our team.
-            </p>
-            <Badge variant="success">Transaction ID: {transactionId}</Badge>
-          </motion.div>
-        )}
+        {/* Footer Info */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mt-6 text-center"
+        >
+          <div className="flex items-center justify-center text-green-600 mb-2">
+            <CheckCircleIcon className="h-4 w-4 mr-2" />
+            <span className="text-sm">Secure & Encrypted Payment</span>
+          </div>
+          <p className="text-xs text-gray-500">
+            Your payment is protected by bank-grade security
+          </p>
+        </motion.div>
       </div>
-    </Modal>
+    </div>
   );
 };
 

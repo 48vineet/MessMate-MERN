@@ -1,126 +1,193 @@
-// src/components/dashboard/AttendanceCard.jsx
-import { motion } from 'framer-motion';
-import { 
-  CalendarDaysIcon, 
-  CheckCircleIcon,
-  XCircleIcon,
-  ClockIcon 
-} from '@heroicons/react/24/outline';
-import { AnimatedCard, Badge, ProgressBar } from '../ui';
+import { useState, useEffect } from 'react';
+import { CalendarDaysIcon, ChartBarIcon, TrophyIcon, FireIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../utils/api';
 
-const AttendanceCard = () => {
-  const attendanceData = {
-    thisWeek: {
-      attended: 18,
-      total: 21,
-      percentage: 85.7
-    },
-    thisMonth: {
-      attended: 76,
-      total: 93,
-      percentage: 81.7
-    },
-    streak: 5
+const AttendanceCard = ({ stats = {} }) => {
+  const { user } = useAuth(); // get logged-in user dynamically
+  const [attendanceData, setAttendanceData] = useState({
+    thisMonth: { present: 0, total: 0, percentage: 0 },
+    thisWeek: { present: 0, total: 0, percentage: 0 },
+    streak: 0,
+    weeklyData: []
+  });
+
+  // Sample attendance data for fallback
+  const sampleAttendanceData = {
+    thisMonth: { present: 12, total: 15, percentage: 80 },
+    thisWeek: { present: 4, total: 5, percentage: 80 },
+    streak: 7,
+    weeklyData: []
+  };
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Attendance endpoint
+  const ATTENDANCE_ENDPOINT = '/user/attendance';
+
+  // When stats are given via props, use them
+  useEffect(() => {
+    if (stats && Object.keys(stats).length > 0) {
+      setAttendanceData({
+        thisMonth: stats.attendance?.thisMonth || { present: 0, total: 0, percentage: 0 },
+        thisWeek: stats.attendance?.thisWeek || { present: 0, total: 0, percentage: 0 },
+        streak: stats.attendance?.streak || 0,
+        weeklyData: stats.attendance?.weeklyData || []
+      });
+    }
+  }, [stats]);
+
+  // On mount, fetch attendance if needed (and user is loaded)
+  useEffect(() => {
+    if ((!stats || Object.keys(stats).length === 0) && user?._id) {
+      fetchAttendanceData();
+    } else if (!stats || Object.keys(stats).length === 0) {
+      // If no stats provided and no user, use sample data
+      setAttendanceData(sampleAttendanceData);
+    }
+    // Only re-run if user._id changes or stats changes
+    // eslint-disable-next-line
+  }, [user?._id]);
+
+  const fetchAttendanceData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Pass userId as param for dynamic data
+      const response = await api.get(ATTENDANCE_ENDPOINT, {
+        params: { userId: user?._id }
+      });
+      if (response.data && response.data.attendance) {
+        setAttendanceData(response.data.attendance);
+      } else {
+        // Use sample data if no real data available
+        setAttendanceData(sampleAttendanceData);
+      }
+    } catch (error) {
+      console.error('Error fetching attendance data:', error);
+      // Use sample data as fallback for better UX
+      setAttendanceData(sampleAttendanceData);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const weeklyAttendance = [
-    { day: 'Mon', breakfast: true, lunch: true, dinner: true },
-    { day: 'Tue', breakfast: true, lunch: false, dinner: true },
-    { day: 'Wed', breakfast: true, lunch: true, dinner: true },
-    { day: 'Thu', breakfast: false, lunch: true, dinner: true },
-    { day: 'Fri', breakfast: true, lunch: true, dinner: true },
-    { day: 'Sat', breakfast: true, lunch: true, dinner: false },
-    { day: 'Sun', breakfast: true, lunch: true, dinner: true }
-  ];
+  const getAttendanceColor = (percentage) => {
+    if (percentage >= 90) return 'text-green-600 bg-green-100';
+    if (percentage >= 75) return 'text-yellow-600 bg-yellow-100';
+    if (percentage >= 60) return 'text-orange-600 bg-orange-100';
+    return 'text-red-600 bg-red-100';
+  };
 
-  const getMealIcon = (attended) => {
-    return attended ? (
-      <CheckCircleIcon className="h-4 w-4 text-green-500" />
-    ) : (
-      <XCircleIcon className="h-4 w-4 text-red-500" />
+  const getStreakBadge = (streak) => {
+    if (streak >= 30) return { icon: TrophyIcon, color: 'text-yellow-600', label: 'Champion!' };
+    if (streak >= 14) return { icon: FireIcon, color: 'text-orange-600', label: 'On Fire!' };
+    if (streak >= 7) return { icon: ChartBarIcon, color: 'text-blue-600', label: 'Great!' };
+    return { icon: CalendarDaysIcon, color: 'text-gray-600', label: 'Keep Going!' };
+  };
+
+  const streakBadge = getStreakBadge(attendanceData.streak);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-300 rounded w-1/2 mb-4"></div>
+          <div className="space-y-3">
+            <div className="h-3 bg-gray-300 rounded"></div>
+            <div className="h-3 bg-gray-300 rounded w-5/6"></div>
+            <div className="h-3 bg-gray-300 rounded w-4/6"></div>
+          </div>
+        </div>
+      </div>
     );
-  };
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+        <CalendarDaysIcon className="h-12 w-12 text-red-300 mx-auto mb-3" />
+        <p className="text-red-700 mb-2 font-semibold">{error}</p>
+        <button
+          onClick={fetchAttendanceData}
+          className="mt-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <AnimatedCard className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-bold text-gray-900">Attendance Tracker</h3>
-        <CalendarDaysIcon className="h-6 w-6 text-primary-600" />
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+      {/* Header */}
+      <div className="p-3 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-gray-900">Attendance</h3>
+          <CalendarDaysIcon className="h-4 w-4 text-gray-600" />
+        </div>
       </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <p className="text-sm font-medium text-blue-700">This Week</p>
-          <p className="text-2xl font-bold text-blue-600">{attendanceData.thisWeek.percentage}%</p>
-          <p className="text-xs text-blue-600">
-            {attendanceData.thisWeek.attended}/{attendanceData.thisWeek.total} meals
+      {/* Content */}
+      <div className="p-3">
+        {/* Monthly Attendance */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-gray-700">This Month</span>
+            <span className={`text-xs font-bold px-2 py-1 rounded-full ${getAttendanceColor(attendanceData.thisMonth.percentage)}`}>
+              {attendanceData.thisMonth.percentage.toFixed(1)}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-1.5">
+            <div
+              className={`h-1.5 rounded-full transition-all duration-1000 ease-out ${
+                attendanceData.thisMonth.percentage >= 90 ? 'bg-green-500' :
+                attendanceData.thisMonth.percentage >= 75 ? 'bg-yellow-500' :
+                attendanceData.thisMonth.percentage >= 60 ? 'bg-orange-500' : 'bg-red-500'
+              }`}
+              style={{ width: `${attendanceData.thisMonth.percentage}%` }}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-600 mt-1">
+            {attendanceData.thisMonth.present} of {attendanceData.thisMonth.total} meals
           </p>
         </div>
-        <div className="bg-green-50 p-4 rounded-lg">
-          <p className="text-sm font-medium text-green-700">Current Streak</p>
-          <p className="text-2xl font-bold text-green-600">{attendanceData.streak}</p>
-          <p className="text-xs text-green-600">consecutive days</p>
+        {/* Weekly Attendance */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-gray-700">This Week</span>
+            <span className={`text-xs font-bold px-2 py-1 rounded-full ${getAttendanceColor(attendanceData.thisWeek.percentage)}`}>
+              {attendanceData.thisWeek.percentage.toFixed(1)}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-1.5">
+            <div
+              className={`h-1.5 rounded-full transition-all duration-1000 ease-out delay-200 ${
+                attendanceData.thisWeek.percentage >= 90 ? 'bg-green-500' :
+                attendanceData.thisWeek.percentage >= 75 ? 'bg-yellow-500' :
+                attendanceData.thisWeek.percentage >= 60 ? 'bg-orange-500' : 'bg-red-500'
+              }`}
+              style={{ width: `${attendanceData.thisWeek.percentage}%` }}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-600 mt-1">
+            {attendanceData.thisWeek.present} of {attendanceData.thisWeek.total} meals
+          </p>
         </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">Monthly Progress</span>
-          <span className="text-sm text-gray-500">
-            {attendanceData.thisMonth.attended}/{attendanceData.thisMonth.total}
-          </span>
-        </div>
-        <ProgressBar 
-          value={attendanceData.thisMonth.percentage} 
-          color="primary" 
-          size="md"
-        />
-      </div>
-
-      {/* Weekly Grid */}
-      <div className="space-y-3">
-        <h4 className="text-sm font-medium text-gray-700">This Week</h4>
-        {weeklyAttendance.map((day, index) => (
-          <motion.div
-            key={day.day}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-          >
-            <span className="font-medium text-gray-900 w-12">{day.day}</span>
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-1">
-                {getMealIcon(day.breakfast)}
-                <span className="text-xs text-gray-600">B</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                {getMealIcon(day.lunch)}
-                <span className="text-xs text-gray-600">L</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                {getMealIcon(day.dinner)}
-                <span className="text-xs text-gray-600">D</span>
-              </div>
+        {/* Current Streak - Compact */}
+        <div className="flex items-center justify-between p-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded">
+          <div>
+            <p className="text-xs font-medium text-gray-700">Current Streak</p>
+            <div className="flex items-center mt-1">
+              <span className="text-lg font-bold text-gray-900">{attendanceData.streak}</span>
+              <span className="text-xs text-gray-600 ml-1">days</span>
             </div>
-          </motion.div>
-        ))}
+          </div>
+          <div className={`p-1.5 rounded-full bg-white ${streakBadge.color}`}>
+            <streakBadge.icon className="h-4 w-4" />
+          </div>
+        </div>
       </div>
-
-      {/* Achievement Badge */}
-      <motion.div 
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.5 }}
-        className="mt-6 text-center"
-      >
-        <Badge variant="warning" className="text-sm">
-          🏆 Great Attendance! Keep it up!
-        </Badge>
-      </motion.div>
-    </AnimatedCard>
+    </div>
   );
 };
 

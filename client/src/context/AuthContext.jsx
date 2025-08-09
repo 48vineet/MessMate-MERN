@@ -1,176 +1,250 @@
-// src/context/AuthContext.js
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+// src/context/AuthContext.jsx
+import { createContext, useContext, useReducer, useEffect } from 'react';
 import api from '../utils/api';
+import authReducer, { AUTH_ACTIONS } from './authReducer';
 
-// ✅ Export the context so it can be imported elsewhere
-export const AuthContext = createContext();
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+// Initial state
+const initialState = {
+  user: null,
+  isAuthenticated: false,
+  loading: true,
+  error: null,
+  token: localStorage.getItem('messmate_token') || null
 };
 
+// Create context
+const AuthContext = createContext();
+
+// Auth Provider component
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Initialize user from localStorage on app start
+  // Set axios default headers when token changes
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const userData = localStorage.getItem('user');
-        
-        if (token && userData) {
-          setUser(JSON.parse(userData));
-          // Verify token validity
-          const response = await api.get('/auth/verify', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          if (response.data.success) {
-            setUser(response.data.user);
-          } else {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            setUser(null);
-          }
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (state.token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
+      localStorage.setItem('messmate_token', state.token);
+    } else {
+      delete api.defaults.headers.common['Authorization'];
+      localStorage.removeItem('messmate_token');
+    }
+  }, [state.token]);
 
-    initializeAuth();
+  // Check if user is authenticated on app start
+  useEffect(() => {
+    checkAuthStatus();
   }, []);
 
-  // Login function
-  const login = useCallback(async (credentials) => {
+  const checkAuthStatus = async () => {
+    const token = localStorage.getItem('messmate_token');
+    
+    if (!token) {
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
+      return;
+    }
+
     try {
-      setLoading(true);
-      setError(null);
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      const response = await api.get('/auth/me');
       
+      if (response.data.success && response.data.user) {
+        dispatch({
+          type: AUTH_ACTIONS.LOGIN_SUCCESS,
+          payload: {
+            user: response.data.user,
+            token: token
+          }
+        });
+      } else {
+        throw new Error('Invalid token');
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      localStorage.removeItem('messmate_token');
+      delete api.defaults.headers.common['Authorization'];
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
+    }
+  };
+
+  const login = async (credentials) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
       const response = await api.post('/auth/login', credentials);
       
       if (response.data.success) {
-        const { token, user } = response.data;
+        const { user, token } = response.data;
         
-        // Store in localStorage
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Update state
-        setUser(user);
-        
+        dispatch({
+          type: AUTH_ACTIONS.LOGIN_SUCCESS,
+          payload: { user, token }
+        });
+
         return { success: true, user };
       } else {
         throw new Error(response.data.message || 'Login failed');
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Login failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Register function
-  const register = useCallback(async (userData) => {
-    try {
-      setLoading(true);
-      setError(null);
       
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_FAILURE,
+        payload: errorMessage
+      });
+
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
       const response = await api.post('/auth/register', userData);
       
       if (response.data.success) {
-        const { token, user } = response.data;
+        const { user, token } = response.data;
         
-        // Store in localStorage
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Update state
-        setUser(user);
-        
+        dispatch({
+          type: AUTH_ACTIONS.LOGIN_SUCCESS,
+          payload: { user, token }
+        });
+
         return { success: true, user };
       } else {
         throw new Error(response.data.message || 'Registration failed');
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Logout function
-  const logout = useCallback(async () => {
-    try {
-      setLoading(true);
       
-      // Call logout API to invalidate token on server
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_FAILURE,
+        payload: errorMessage
+      });
+
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const logout = async () => {
+    try {
       await api.post('/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear localStorage and state regardless of API response
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setUser(null);
-      setError(null);
-      setLoading(false);
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
+      localStorage.removeItem('messmate_token');
+      delete api.defaults.headers.common['Authorization'];
     }
-  }, []);
+  };
 
-  // Update user profile
-  const updateProfile = useCallback(async (profileData) => {
+  const updateProfile = async (profileData) => {
     try {
-      setLoading(true);
-      setError(null);
-      
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
       const response = await api.put('/auth/profile', profileData);
       
       if (response.data.success) {
-        const updatedUser = response.data.user;
-        
-        // Update localStorage
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        
-        // Update state
-        setUser(updatedUser);
-        
-        return { success: true, user: updatedUser };
+        dispatch({
+          type: AUTH_ACTIONS.UPDATE_USER,
+          payload: response.data.user
+        });
+
+        return { success: true, user: response.data.user };
       } else {
         throw new Error(response.data.message || 'Profile update failed');
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Profile update failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Reset password
-  const resetPassword = useCallback(async (email) => {
-    try {
-      setLoading(true);
-      setError(null);
       
-      const response = await api.post('/auth/reset-password', { email });
+      dispatch({
+        type: AUTH_ACTIONS.SET_ERROR,
+        payload: errorMessage
+      });
+
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const updateAvatar = async (avatarData) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
+      // Update the user state with new avatar
+      dispatch({
+        type: AUTH_ACTIONS.UPDATE_USER,
+        payload: { ...state.user, avatar: avatarData }
+      });
+
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Avatar update failed';
+      
+      dispatch({
+        type: AUTH_ACTIONS.SET_ERROR,
+        payload: errorMessage
+      });
+
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const changePassword = async (passwordData) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
+      const response = await api.put('/auth/change-password', passwordData);
+      
+      if (response.data.success) {
+        return { success: true };
+      } else {
+        throw new Error(response.data.message || 'Password change failed');
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Password change failed';
+      
+      dispatch({
+        type: AUTH_ACTIONS.SET_ERROR,
+        payload: errorMessage
+      });
+
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const forgotPassword = async (email) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
+      const response = await api.post('/auth/forgot-password', { email });
+      
+      if (response.data.success) {
+        return { success: true, message: response.data.message };
+      } else {
+        throw new Error(response.data.message || 'Password reset request failed');
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Password reset request failed';
+      
+      dispatch({
+        type: AUTH_ACTIONS.SET_ERROR,
+        payload: errorMessage
+      });
+
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const resetPassword = async (token, newPassword) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
+      const response = await api.post('/auth/reset-password', {
+        token,
+        password: newPassword
+      });
       
       if (response.data.success) {
         return { success: true, message: response.data.message };
@@ -179,37 +253,39 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Password reset failed';
-      setError(errorMessage);
+      
+      dispatch({
+        type: AUTH_ACTIONS.SET_ERROR,
+        payload: errorMessage
+      });
+
       return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  };
 
-  // Check if user has specific role
-  const hasRole = useCallback((role) => {
-    return user?.role === role;
-  }, [user]);
-
-  // Check if user has any of the specified roles
-  const hasAnyRole = useCallback((roles) => {
-    return user?.role && roles.includes(user.role);
-  }, [user]);
+  const clearError = () => {
+    dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+  };
 
   const value = {
-    user,
-    loading,
-    error,
+    // State
+    user: state.user,
+    isAuthenticated: state.isAuthenticated,
+    loading: state.loading,
+    error: state.error,
+    token: state.token,
+    
+    // Actions
     login,
     register,
     logout,
     updateProfile,
+    updateAvatar,
+    changePassword,
+    forgotPassword,
     resetPassword,
-    hasRole,
-    hasAnyRole,
-    isAuthenticated: !!user,
-    isAdmin: user?.role === 'admin',
-    isStudent: user?.role === 'student'
+    clearError,
+    checkAuthStatus
   };
 
   return (
@@ -219,5 +295,15 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// ✅ Export as default for compatibility
-export default AuthProvider;
+// Custom hook to use auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  
+  return context;
+};
+
+export default AuthContext;

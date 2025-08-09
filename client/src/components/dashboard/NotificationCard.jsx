@@ -1,260 +1,258 @@
-// src/components/dashboard/NotificationCard.jsx
-import { motion } from 'framer-motion';
-import { 
-  BellIcon, 
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  CheckCircleIcon,
-  XMarkIcon,
-  EllipsisVerticalIcon
+// src/components/dashboard/AttendanceCard.jsx
+import { useState, useEffect, useRef } from 'react';
+import {
+  CalendarDaysIcon, ChartBarIcon, TrophyIcon, FireIcon
 } from '@heroicons/react/24/outline';
-import { AnimatedCard, Button, Badge, Dropdown, DropdownItem } from '../ui';
-import { useState } from 'react';
+import api from '../../utils/api';
 
-const NotificationCard = () => {
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'info',
-      title: 'Menu Update',
-      message: 'Tomorrow\'s lunch menu has been updated with special items!',
-      time: '2 minutes ago',
-      isRead: false,
-      priority: 'normal'
-    },
-    {
-      id: 2,
-      type: 'warning',
-      title: 'Low Wallet Balance',
-      message: 'Your wallet balance is below ₹100. Consider adding money.',
-      time: '5 minutes ago',
-      isRead: false,
-      priority: 'medium'
-    },
-    {
-      id: 3,
-      type: 'success',
-      title: 'Booking Confirmed',
-      message: 'Your lunch booking for tomorrow has been confirmed.',
-      time: '1 hour ago',
-      isRead: true,
-      priority: 'normal'
-    },
-    {
-      id: 4,
-      type: 'error',
-      title: 'Booking Cancelled',
-      message: 'Your dinner booking was cancelled due to insufficient balance.',
-      time: '3 hours ago',
-      isRead: false,
-      priority: 'high'
-    },
-    {
-      id: 5,
-      type: 'info',
-      title: 'New Feature',
-      message: 'QR code scanning is now available for faster check-ins!',
-      time: '1 day ago',
-      isRead: true,
-      priority: 'low'
-    }
-  ]);
+const AttendanceCard = ({ stats = {} }) => {
+  const [attendanceData, setAttendanceData] = useState({
+    thisMonth: { present: 0, total: 0, percentage: 0 },
+    thisWeek: { present: 0, total: 0, percentage: 0 },
+    streak: 0,
+    weeklyData: []
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const errorShownRef = useRef({});
 
-  const getNotificationIcon = (type) => {
-    const iconClasses = "h-5 w-5";
-    switch (type) {
-      case 'success':
-        return <CheckCircleIcon className={`${iconClasses} text-green-500`} />;
-      case 'warning':
-        return <ExclamationTriangleIcon className={`${iconClasses} text-yellow-500`} />;
-      case 'error':
-        return <XMarkIcon className={`${iconClasses} text-red-500`} />;
-      default:
-        return <InformationCircleIcon className={`${iconClasses} text-blue-500`} />;
-    }
-  };
+  // CORRECT: Do not double /api here
+  const ATTENDANCE_ENDPOINT = '/user/attendance';
 
-  const getNotificationBg = (type, isRead) => {
-    const baseClasses = "p-4 rounded-lg border-l-4 transition-all duration-300";
-    if (isRead) {
-      return `${baseClasses} bg-gray-50 border-l-gray-300`;
+  useEffect(() => {
+    if (stats && Object.keys(stats).length > 0) {
+      setAttendanceData({
+        thisMonth: stats.attendance?.thisMonth || { present: 0, total: 0, percentage: 0 },
+        thisWeek: stats.attendance?.thisWeek || { present: 0, total: 0, percentage: 0 },
+        streak: stats.attendance?.streak || 0,
+        weeklyData: stats.attendance?.weeklyData || []
+      });
+    } else {
+      // Only fetch once on mount
+      fetchAttendanceData();
     }
-    
-    switch (type) {
-      case 'success':
-        return `${baseClasses} bg-green-50 border-l-green-500`;
-      case 'warning':
-        return `${baseClasses} bg-yellow-50 border-l-yellow-500`;
-      case 'error':
-        return `${baseClasses} bg-red-50 border-l-red-500`;
-      default:
-        return `${baseClasses} bg-blue-50 border-l-blue-500`;
+    // eslint-disable-next-line
+  }, []); // Remove stats from dependency array to avoid infinite loop
+
+  useEffect(() => {
+    if (error && !errorShownRef.current[error]) {
+      // Show error popup only once per error type
+      window.__attendanceErrorShown = window.__attendanceErrorShown || {};
+      if (!window.__attendanceErrorShown[error]) {
+        window.__attendanceErrorShown[error] = true;
+        errorShownRef.current[error] = true;
+        // You can use a toast here if you want
+        // toast.error(error);
+      }
+    }
+  }, [error]);
+
+  const fetchAttendanceData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get(ATTENDANCE_ENDPOINT);
+      if (response.data && response.data.attendance) {
+        setAttendanceData(response.data.attendance);
+      } else {
+        setError('No attendance data available.');
+      }
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        setError('Attendance API not found. Contact your administrator.');
+      } else if (error?.response?.data?.message) {
+        setError(error.response.data.message);
+      } else {
+        setError('Failed to fetch attendance data.');
+      }
+      console.error('Error fetching attendance data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getPriorityBadge = (priority) => {
-    switch (priority) {
-      case 'high':
-        return <Badge variant="danger" className="text-xs">High</Badge>;
-      case 'medium':
-        return <Badge variant="warning" className="text-xs">Medium</Badge>;
-      case 'low':
-        return <Badge variant="gray" className="text-xs">Low</Badge>;
-      default:
-        return null;
-    }
+  const getAttendanceColor = (percentage) => {
+    if (percentage >= 90) return 'text-green-600 bg-green-100';
+    if (percentage >= 75) return 'text-yellow-600 bg-yellow-100';
+    if (percentage >= 60) return 'text-orange-600 bg-orange-100';
+    return 'text-red-600 bg-red-100';
   };
 
-  const markAsRead = (id) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
+  const getStreakBadge = (streak) => {
+    if (streak >= 30) return { icon: TrophyIcon, color: 'text-yellow-600', label: 'Champion!' };
+    if (streak >= 14) return { icon: FireIcon, color: 'text-orange-600', label: 'On Fire!' };
+    if (streak >= 7) return { icon: ChartBarIcon, color: 'text-blue-600', label: 'Great!' };
+    return { icon: CalendarDaysIcon, color: 'text-gray-600', label: 'Keep Going!' };
   };
 
-  const deleteNotification = (id) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
-  };
+  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const streakBadge = getStreakBadge(attendanceData.streak);
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, isRead: true }))
-    );
-  };
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  return (
-    <AnimatedCard className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className="relative">
-            <BellIcon className="h-6 w-6 text-primary-600" />
-            {unreadCount > 0 && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
-              >
-                {unreadCount}
-              </motion.span>
-            )}
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-900">Notifications</h3>
-            <p className="text-sm text-gray-600">{unreadCount} unread</p>
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-300 rounded w-1/2 mb-4"></div>
+          <div className="space-y-3">
+            <div className="h-3 bg-gray-300 rounded"></div>
+            <div className="h-3 bg-gray-300 rounded w-5/6"></div>
+            <div className="h-3 bg-gray-300 rounded w-4/6"></div>
           </div>
         </div>
-        
-        <Dropdown
-          trigger={
-            <Button variant="ghost" size="sm">
-              <EllipsisVerticalIcon className="h-4 w-4" />
-            </Button>
-          }
-        >
-          <DropdownItem onClick={markAllAsRead}>
-            Mark all as read
-          </DropdownItem>
-          <DropdownItem onClick={() => setNotifications([])}>
-            Clear all
-          </DropdownItem>
-        </Dropdown>
       </div>
+    );
+  }
 
-      {/* Notifications List */}
-      <div className="space-y-3 max-h-96 overflow-y-auto">
-        {notifications.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-8 text-gray-500"
-          >
-            <BellIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p>No notifications yet</p>
-          </motion.div>
-        ) : (
-          notifications.map((notification, index) => (
-            <motion.div
-              key={notification.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={getNotificationBg(notification.type, notification.isRead)}
-            >
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0 mt-1">
-                  {getNotificationIcon(notification.type)}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className={`text-sm font-medium ${
-                      notification.isRead ? 'text-gray-600' : 'text-gray-900'
-                    }`}>
-                      {notification.title}
-                    </p>
-                    <div className="flex items-center space-x-2">
-                      {getPriorityBadge(notification.priority)}
-                      {!notification.isRead && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <p className={`text-sm ${
-                    notification.isRead ? 'text-gray-500' : 'text-gray-700'
-                  }`}>
-                    {notification.message}
-                  </p>
-                  
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-gray-500">{notification.time}</span>
-                    <div className="flex items-center space-x-1">
-                      {!notification.isRead && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => markAsRead(notification.id)}
-                          className="text-xs"
-                        >
-                          Mark as read
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteNotification(notification.id)}
-                        className="text-xs text-red-500 hover:text-red-700"
-                      >
-                        <XMarkIcon className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+        <CalendarDaysIcon className="h-12 w-12 text-red-300 mx-auto mb-3" />
+        <p className="text-red-700 mb-2 font-semibold">{error}</p>
+        <button
+          onClick={fetchAttendanceData}
+          className="mt-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-xl shadow-sm border border-gray-200"
+    >
+      {/* Header */}
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-gray-900">Attendance</h3>
+          <CalendarDaysIcon className="h-5 w-5 text-gray-600" />
+        </div>
+      </div>
+      {/* Content */}
+      <div className="p-6">
+        {/* Monthly Attendance */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">This Month</span>
+            <span className={`text-sm font-bold px-2 py-1 rounded-full ${getAttendanceColor(attendanceData.thisMonth.percentage)}`}>
+              {attendanceData.thisMonth.percentage.toFixed(1)}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              initial={{ width: 0 }}
+              animate={{ width: `${attendanceData.thisMonth.percentage}%` }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className={`h-2 rounded-full ${
+                attendanceData.thisMonth.percentage >= 90 ? 'bg-green-500' :
+                attendanceData.thisMonth.percentage >= 75 ? 'bg-yellow-500' :
+                attendanceData.thisMonth.percentage >= 60 ? 'bg-orange-500' : 'bg-red-500'
+              }`}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-600 mt-1">
+            {attendanceData.thisMonth.present} of {attendanceData.thisMonth.total} meals attended
+          </p>
+        </div>
+        {/* Weekly Attendance */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">This Week</span>
+            <span className={`text-sm font-bold px-2 py-1 rounded-full ${getAttendanceColor(attendanceData.thisWeek.percentage)}`}>
+              {attendanceData.thisWeek.percentage.toFixed(1)}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              initial={{ width: 0 }}
+              animate={{ width: `${attendanceData.thisWeek.percentage}%` }}
+              transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+              className={`h-2 rounded-full ${
+                attendanceData.thisWeek.percentage >= 90 ? 'bg-green-500' :
+                attendanceData.thisWeek.percentage >= 75 ? 'bg-yellow-500' :
+                attendanceData.thisWeek.percentage >= 60 ? 'bg-orange-500' : 'bg-red-500'
+              }`}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-600 mt-1">
+            {attendanceData.thisWeek.present} of {attendanceData.thisWeek.total} meals attended
+          </p>
+        </div>
+        {/* Current Streak */}
+        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-700">Current Streak</p>
+              <div className="flex items-center mt-1">
+                <span className="text-2xl font-bold text-gray-900">{attendanceData.streak}</span>
+                <span className="text-sm text-gray-600 ml-1">days</span>
               </div>
-            </motion.div>
-          ))
+            </div>
+            <div className={`p-3 rounded-full bg-white ${streakBadge.color}`}>
+              <streakBadge.icon className="h-6 w-6" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-600 mt-2">{streakBadge.label}</p>
+        </div>
+        {/* Weekly Pattern */}
+        {attendanceData.weeklyData && attendanceData.weeklyData.length > 0 && (
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-3">This Week's Pattern</h4>
+            <div className="grid grid-cols-7 gap-1">
+              {weekDays.map((day, index) => {
+                const dayData = attendanceData.weeklyData[index] || { attended: false, total: 0 };
+                return (
+                  <div
+                    key={day}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="text-center"
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium mb-1 ${
+                      dayData.attended ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {dayData.total > 0 ? (dayData.attended ? '✓' : '✗') : '-'}
+                    </div>
+                    <p className="text-xs text-gray-600">{day}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
+        {/* Attendance Goals */}
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Monthly Goals</h4>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Target Attendance</span>
+              <span className="font-medium">85%</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Current</span>
+              <span className={`font-medium ${
+                attendanceData.thisMonth.percentage >= 85 ? 'text-green-600' : 'text-orange-600'
+              }`}>
+                {attendanceData.thisMonth.percentage.toFixed(1)}%
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Status</span>
+              <span className={`font-medium ${
+                attendanceData.thisMonth.percentage >= 85 ? 'text-green-600' : 'text-orange-600'
+              }`}>
+                {attendanceData.thisMonth.percentage >= 85 ? 'On Track' : 'Need Improvement'}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
-
-      {/* Footer */}
-      {notifications.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-4 pt-4 border-t border-gray-200"
-        >
-          <Button variant="outline" size="sm" className="w-full">
-            View All Notifications
-          </Button>
-        </motion.div>
-      )}
-    </AnimatedCard>
+    </div>
   );
 };
 
-export default NotificationCard;
+export default AttendanceCard;

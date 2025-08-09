@@ -67,6 +67,70 @@ exports.generateUPIPayment = async (req, res) => {
   }
 };
 
+// @desc    Generate QR code for payment
+// @route   POST /api/payments/generate-qr
+// @access  Private
+exports.generateQR = async (req, res) => {
+  try {
+    const { amount, orderId, customerName, customerEmail } = req.body;
+    
+    // Generate transaction reference
+    const transactionRef = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Create UPI payment URL
+    const upiUrl = `upi://pay?pa=${process.env.UPI_ID}&pn=${encodeURIComponent(process.env.UPI_MERCHANT_NAME)}&tr=${transactionRef}&am=${amount}&cu=INR&tn=${encodeURIComponent(`${process.env.UPI_TRANSACTION_NOTE} - Order: ${orderId}`)}`;
+    
+    // Generate QR code for the UPI URL
+    const qrCodeData = await QRCode.toDataURL(upiUrl);
+    
+    // Create payment record
+    const payment = await Payment.create({
+      transactionId: transactionRef,
+      user: req.user.id,
+      amount: amount,
+      provider: 'upi',
+      paymentMethod: 'upi',
+      paymentType: 'wallet-recharge',
+      status: 'pending',
+      upiDetails: {
+        upiId: process.env.UPI_ID,
+        merchantName: process.env.UPI_MERCHANT_NAME,
+        merchantTransactionId: transactionRef
+      },
+      metadata: {
+        userAgent: req.get('User-Agent'),
+        ipAddress: req.ip,
+        source: 'web'
+      }
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        paymentId: payment._id,
+        upiId: process.env.UPI_ID,
+        merchantName: process.env.UPI_MERCHANT_NAME,
+        amount: amount,
+        transactionRef: transactionRef,
+        orderId: orderId,
+        upiUrl: upiUrl,
+        qrCode: qrCodeData,
+        paymentInstructions: {
+          mobile: "Open any UPI app and scan the QR code or use the UPI ID",
+          desktop: "Scan the QR code with your mobile UPI app"
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Generate QR payment error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate QR code',
+      error: error.message,
+    });
+  }
+};
+
 // @desc    Verify payment (manual)
 // @route   POST /api/payments/verify
 // @access  Private
@@ -302,6 +366,116 @@ exports.getUPIDetails = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get UPI details',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Get payment status by ID
+// @route   GET /api/payments/status/:id
+// @access  Private
+exports.getPaymentStatus = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment not found'
+      });
+    }
+    res.status(200).json({
+      success: true,
+      data: {
+        paymentId: payment._id,
+        status: payment.status,
+        amount: payment.amount,
+        provider: payment.provider,
+        paymentMethod: payment.paymentMethod,
+        paymentType: payment.paymentType,
+        createdAt: payment.createdAt,
+        updatedAt: payment.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error('Get payment status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get payment status',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get payment history for user
+// @route   GET /api/payments/history
+// @access  Private
+exports.getPaymentHistory = async (req, res) => {
+  try {
+    const { range = 'month' } = req.query;
+    
+    // Calculate date range
+    const now = new Date();
+    let startDate;
+    
+    switch (range) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case 'quarter':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case 'year':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    // Build query for user's payments
+    const query = {
+      user: req.user.id,
+      createdAt: { $gte: startDate }
+    };
+
+    // Get payments
+    const payments = await Payment.find(query)
+      .sort({ createdAt: -1 })
+      .populate('user', 'name email')
+      .lean();
+
+    // Transform data to match frontend expectations
+    const transactions = payments.map(payment => ({
+      _id: payment._id,
+      transactionId: payment.transactionId,
+      amount: payment.amount,
+      type: payment.paymentType === 'wallet-recharge' ? 'credit' : 'debit',
+      status: payment.status,
+      paymentMethod: payment.paymentMethod,
+      description: payment.paymentType === 'wallet-recharge' ? 'Wallet Recharge' : 'Payment',
+      date: payment.createdAt,
+      upiDetails: payment.upiDetails,
+      metadata: payment.metadata
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        transactions,
+        total: transactions.length,
+        range,
+        startDate: startDate.toISOString(),
+        endDate: now.toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Get payment history error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load payment history',
       error: error.message,
     });
   }

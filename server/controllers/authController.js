@@ -530,4 +530,159 @@ exports.updatePassword = async (req, res) => {
   }
 };
 
+// @desc    Admin create user
+// @route   POST /api/auth/admin/create-user
+// @access  Private/Admin
+exports.adminCreateUser = async (req, res) => {
+  try {
+    const { name, email, password, role, studentId, phone, hostel } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this email already exists'
+      });
+    }
+
+    // Check if student ID already exists (for students)
+    if (role === 'student' && studentId) {
+      const existingStudentId = await User.findOne({ studentId });
+      if (existingStudentId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Student ID already exists'
+        });
+      }
+    }
+
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: role || 'student',
+      studentId: role === 'student' ? studentId : undefined,
+      phone,
+      hostel,
+      isActive: true,
+      isVerified: true // Admin-created users are automatically verified
+    });
+
+    // Send welcome email
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM,
+        to: email,
+        subject: 'Welcome to MessMate! 🍽️',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;">
+              <h1 style="margin: 0; font-size: 28px;">Welcome to MessMate!</h1>
+              <p style="margin: 10px 0 0 0; font-size: 16px;">Smart Mess Management System</p>
+            </div>
+            <div style="padding: 30px; background: #f8f9fa;">
+              <h2 style="color: #333; margin-bottom: 20px;">Hello ${name}! 👋</h2>
+              <p style="color: #666; line-height: 1.6; font-size: 16px;">
+                Welcome to MessMate! Your account has been created by an administrator. You can now:
+              </p>
+              <ul style="color: #666; line-height: 1.8; font-size: 15px;">
+                <li>🍽️ Browse daily menu items</li>
+                <li>📅 Book your meals in advance</li>
+                <li>💳 Manage your wallet and payments</li>
+                <li>⭐ Rate and review meals</li>
+                <li>📊 Track your dining statistics</li>
+              </ul>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.CLIENT_URL}/login" 
+                   style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                  Login to MessMate
+                </a>
+              </div>
+              <p style="color: #888; font-size: 14px; text-align: center;">
+                Happy dining! 🎉<br>
+                The MessMate Team
+              </p>
+            </div>
+          </div>
+        `
+      });
+    } catch (emailError) {
+      console.log('Welcome email failed to send:', emailError);
+    }
+
+    // Remove password from response
+    user.password = undefined;
+
+    res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      data: user
+    });
+
+  } catch (error) {
+    console.error('Admin create user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during user creation',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// @desc    Upload avatar
+// @route   PUT /api/auth/upload-avatar
+// @access  Private
+exports.uploadAvatar = async (req, res) => {
+  try {
+    if (!req.cloudinaryResult) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image uploaded'
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Delete old avatar from Cloudinary if exists
+    if (user.avatar && user.avatar.public_id) {
+      try {
+        const { deleteFromCloudinary } = require('../middleware/upload');
+        await deleteFromCloudinary(user.avatar.public_id);
+      } catch (error) {
+        console.error('Error deleting old avatar:', error);
+        // Continue with upload even if deletion fails
+      }
+    }
+
+    // Update user avatar
+    user.avatar = {
+      public_id: req.cloudinaryResult.public_id,
+      url: req.cloudinaryResult.url
+    };
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Avatar uploaded successfully',
+      avatar: user.avatar
+    });
+  } catch (error) {
+    console.error('Upload avatar error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error uploading avatar'
+    });
+  }
+};
+
 module.exports = exports;

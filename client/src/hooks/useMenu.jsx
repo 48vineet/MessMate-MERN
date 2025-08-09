@@ -1,229 +1,155 @@
-// hooks/useMenu.js
-import { useState, useCallback, useEffect } from 'react';
-import { useApi } from './useApi';
-import { useSocket } from './useSocket';
-import { useToast } from './useToast';
+// src/hooks/useMenu.jsx
+import { useState, useEffect, useCallback } from 'react';
+import { useMenu as useMenuContext } from '../context/MenuContext';
+import { toast } from 'react-hot-toast';
 
-export const useMenu = () => {
-  const [menuItems, setMenuItems] = useState([]);
-  const [todayMenu, setTodayMenu] = useState(null);
+const useMenu = () => {
+  return useMenuContext();
+};
+
+export const useTodayMenu = () => {
+  const { fetchTodayMenu, loading, error } = useMenuContext();
+  const [todayMenu, setTodayMenu] = useState({});
+  const [lastFetch, setLastFetch] = useState(null);
+
+  const refetch = useCallback(async () => {
+    try {
+      const result = await fetchTodayMenu();
+      if (result.success) {
+        setTodayMenu(result.menus || {});
+        setLastFetch(new Date());
+      }
+      return result;
+    } catch (error) {
+      console.error('Error fetching today menu:', error);
+      return { success: false, error: error.message };
+    }
+  }, [fetchTodayMenu]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return { todayMenu, loading, error, refetch, lastFetch };
+};
+
+export const useMenuSearch = () => {
+  const { searchMenus } = useMenuContext();
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const search = useCallback(async (query, filters = {}) => {
+    if (!query || !query.trim()) {
+      setSearchResults([]);
+      setSearchQuery('');
+      return;
+    }
+
+    setSearching(true);
+    setSearchError(null);
+    setSearchQuery(query.trim());
+
+    try {
+      const result = await searchMenus(query.trim(), filters);
+      
+      if (result.success) {
+        setSearchResults(result.results || []);
+      } else {
+        setSearchError(result.error || 'Search failed');
+        setSearchResults([]);
+      }
+    } catch (error) {
+      setSearchError(error.message || 'Search failed');
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  }, [searchMenus]);
+
+  const clearSearch = useCallback(() => {
+    setSearchResults([]);
+    setSearchError(null);
+    setSearchQuery('');
+  }, []);
+
+  return { 
+    searchResults, 
+    searching, 
+    searchError, 
+    searchQuery,
+    search, 
+    clearSearch 
+  };
+};
+
+export const useWeeklyMenu = (startDate) => {
+  const { fetchWeeklyMenu } = useMenuContext();
+  const [weeklyMenus, setWeeklyMenus] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { menuAPI } = useApi();
-  const { onMenuUpdate } = useSocket();
-  const { showToast } = useToast();
 
-  // Fetch all menu items
-  const fetchMenuItems = useCallback(async (params = {}) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await menuAPI.getMenuItems(params);
-      setMenuItems(response.data || []);
-      
-      return response;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [menuAPI]);
+  const fetchWeekly = useCallback(async (date = startDate) => {
+    if (!date) return;
 
-  // Fetch today's menu
-  const fetchTodayMenu = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await menuAPI.getTodayMenu();
-      setTodayMenu(response.data);
-      
-      return response.data;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [menuAPI]);
+    setLoading(true);
+    setError(null);
 
-  // Get single menu item
-  const getMenuItem = useCallback(async (itemId) => {
     try {
-      setLoading(true);
-      setError(null);
+      const result = await fetchWeeklyMenu(date);
       
-      const response = await menuAPI.getMenuItem(itemId);
-      return response.data;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [menuAPI]);
-
-  // Create menu item (Admin only)
-  const createMenuItem = useCallback(async (itemData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await menuAPI.createMenuItem(itemData);
-      
-      if (response.success) {
-        setMenuItems(prev => [response.data, ...prev]);
-        showToast('Menu item created successfully!', 'success');
-        return response.data;
+      if (result.success) {
+        setWeeklyMenus(result.weeklyMenus || []);
+      } else {
+        setError(result.error || 'Failed to fetch weekly menu');
       }
-    } catch (err) {
-      setError(err.message);
-      showToast('Failed to create menu item', 'error');
-      throw err;
+    } catch (error) {
+      setError(error.message || 'Failed to fetch weekly menu');
     } finally {
       setLoading(false);
     }
-  }, [menuAPI, showToast]);
+  }, [fetchWeeklyMenu, startDate]);
 
-  // Update menu item (Admin only)
-  const updateMenuItem = useCallback(async (itemId, updateData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await menuAPI.updateMenuItem(itemId, updateData);
-      
-      if (response.success) {
-        setMenuItems(prev => 
-          prev.map(item => 
-            item._id === itemId ? { ...item, ...response.data } : item
-          )
-        );
-        
-        showToast('Menu item updated successfully!', 'success');
-        return response.data;
-      }
-    } catch (err) {
-      setError(err.message);
-      showToast('Failed to update menu item', 'error');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [menuAPI, showToast]);
-
-  // Delete menu item (Admin only)
-  const deleteMenuItem = useCallback(async (itemId) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await menuAPI.deleteMenuItem(itemId);
-      
-      if (response.success) {
-        setMenuItems(prev => prev.filter(item => item._id !== itemId));
-        showToast('Menu item deleted successfully!', 'success');
-        return true;
-      }
-    } catch (err) {
-      setError(err.message);
-      showToast('Failed to delete menu item', 'error');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [menuAPI, showToast]);
-
-  // Listen for real-time menu updates
   useEffect(() => {
-    const cleanup = onMenuUpdate?.((data) => {
-      if (data.type === 'availability_update') {
-        setMenuItems(prev => 
-          prev.map(item => 
-            item._id === data.itemId 
-              ? { ...item, isAvailable: data.isAvailable, currentQuantity: data.currentQuantity }
-              : item
-          )
-        );
-        
-        showToast(`Menu updated: ${data.itemName}`, 'info');
+    if (startDate) {
+      fetchWeekly(startDate);
+    }
+  }, [fetchWeekly, startDate]);
+
+  return { weeklyMenus, loading, error, refetch: fetchWeekly };
+};
+
+export const usePopularItems = () => {
+  const { fetchPopularItems } = useMenuContext();
+  const [popularItems, setPopularItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchPopular = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await fetchPopularItems();
+      
+      if (result.success) {
+        setPopularItems(result.popularItems || []);
+      } else {
+        setError(result.error || 'Failed to fetch popular items');
       }
-    });
+    } catch (error) {
+      setError(error.message || 'Failed to fetch popular items');
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchPopularItems]);
 
-    return cleanup;
-  }, [onMenuUpdate, showToast]);
+  useEffect(() => {
+    fetchPopular();
+  }, [fetchPopular]);
 
-  // Helper functions
-  const getMenuByMealType = useCallback((mealType) => {
-    return menuItems.filter(item => item.mealType === mealType);
-  }, [menuItems]);
-
-  const getAvailableItems = useCallback(() => {
-    return menuItems.filter(item => item.isAvailable && item.currentQuantity > 0);
-  }, [menuItems]);
-
-  const getItemsByCategory = useCallback((category) => {
-    return menuItems.filter(item => item.category === category);
-  }, [menuItems]);
-
-  const searchItems = useCallback((query) => {
-    const searchTerm = query.toLowerCase();
-    return menuItems.filter(item => 
-      item.name.toLowerCase().includes(searchTerm) ||
-      item.description.toLowerCase().includes(searchTerm) ||
-      item.ingredients?.some(ingredient => 
-        ingredient.toLowerCase().includes(searchTerm)
-      )
-    );
-  }, [menuItems]);
-
-  const getPopularItems = useCallback(() => {
-    return menuItems
-      .filter(item => item.stats?.totalOrders > 0)
-      .sort((a, b) => (b.stats?.totalOrders || 0) - (a.stats?.totalOrders || 0))
-      .slice(0, 10);
-  }, [menuItems]);
-
-  const getHighRatedItems = useCallback(() => {
-    return menuItems
-      .filter(item => (item.ratings?.average || 0) >= 4.0)
-      .sort((a, b) => (b.ratings?.average || 0) - (a.ratings?.average || 0));
-  }, [menuItems]);
-
-  return {
-    // State
-    menuItems,
-    todayMenu,
-    loading,
-    error,
-    
-    // Actions
-    fetchMenuItems,
-    fetchTodayMenu,
-    getMenuItem,
-    createMenuItem,
-    updateMenuItem,
-    deleteMenuItem,
-    
-    // Helper functions
-    getMenuByMealType,
-    getAvailableItems,
-    getItemsByCategory,
-    searchItems,
-    getPopularItems,
-    getHighRatedItems,
-    
-    // Computed values
-    breakfastItems: getMenuByMealType('breakfast'),
-    lunchItems: getMenuByMealType('lunch'),
-    dinnerItems: getMenuByMealType('dinner'),
-    snackItems: getMenuByMealType('snacks'),
-    availableItems: getAvailableItems(),
-    popularItems: getPopularItems(),
-    highRatedItems: getHighRatedItems()
-  };
+  return { popularItems, loading, error, refetch: fetchPopular };
 };
 
 export default useMenu;

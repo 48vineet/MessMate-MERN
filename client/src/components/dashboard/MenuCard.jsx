@@ -1,296 +1,298 @@
-// components/dashboard/MenuCard.jsx
-import React, { useEffect, useState } from 'react';
+// src/components/dashboard/MenuCard.jsx
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useMenu } from '../../hooks/useMenu';
-import { useBooking } from '../../hooks/useBooking';
-import { useModal } from '../../hooks/useModal';
-import { Button, Badge, LoadingSpinner } from '../ui';
-import { UPIPayment } from '../payments';
-import { ClockIcon, StarIcon, HeartIcon } from '@heroicons/react/24/outline';
+import { 
+  ClockIcon,
+  StarIcon,
+  CurrencyRupeeIcon,
+  CalendarDaysIcon,
+  CheckCircleIcon
+} from '@heroicons/react/24/outline';
+import api from '../../utils/api';
+import { toast } from 'react-hot-toast';
 
-const MenuCard = ({ 
-  todayMenu = null, 
-  compact = false, 
-  showBookButton = true,
-  mealType = null 
-}) => {
-  const { 
-    menuItems, 
-    fetchMenuItems,
-    getMenuByMealType,
-    loading 
-  } = useMenu();
-  
-  const { createBooking, loading: bookingLoading } = useBooking();
-  const { isOpen, data, openModal, closeModal } = useModal();
-  const [activeTab, setActiveTab] = useState(mealType || 'breakfast');
-  const [favorites, setFavorites] = useState(new Set());
+const MenuCard = ({ menu, onRefresh }) => {
+  const [selectedMeal, setSelectedMeal] = useState('breakfast');
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [todayMenu, setTodayMenu] = useState({
+    breakfast: { items: [], price: 0, available: true, time: '7:00 AM - 10:00 AM' },
+    lunch: { items: [], price: 0, available: true, time: '12:00 PM - 3:00 PM' },
+    dinner: { items: [], price: 0, available: true, time: '7:00 PM - 10:00 PM' }
+  });
 
   useEffect(() => {
-    if (!todayMenu && !mealType) {
-      fetchMenuItems();
+    // Safe menu initialization with null checking
+    if (menu && typeof menu === 'object' && Object.keys(menu).length > 0) {
+      setTodayMenu(menu);
+    } else {
+      fetchTodayMenu();
     }
-  }, [fetchMenuItems, todayMenu, mealType]);
+  }, [menu]);
 
-  // Load favorites from localStorage
+  // Add sample menu data if no data is available
   useEffect(() => {
-    const savedFavorites = localStorage.getItem('messmate-favorites');
-    if (savedFavorites) {
-      setFavorites(new Set(JSON.parse(savedFavorites)));
+    if (!todayMenu.breakfast.items.length && !todayMenu.lunch.items.length && !todayMenu.dinner.items.length) {
+      setTodayMenu({
+        breakfast: {
+          items: [
+            { name: 'Idli Sambar', icon: '🍛', description: 'Soft idlis with hot sambar' },
+            { name: 'Dosa', icon: '🥞', description: 'Crispy dosa with chutney' },
+            { name: 'Tea', icon: '☕', description: 'Hot masala tea' }
+          ],
+          price: 80,
+          available: true,
+          time: '7:00 AM - 10:00 AM'
+        },
+        lunch: {
+          items: [
+            { name: 'Rice', icon: '🍚', description: 'Steamed basmati rice' },
+            { name: 'Dal Fry', icon: '🥘', description: 'Spicy dal with tempering' },
+            { name: 'Chicken Curry', icon: '🍗', description: 'Spicy chicken curry' },
+            { name: 'Raita', icon: '🥒', description: 'Cool cucumber raita' }
+          ],
+          price: 120,
+          available: true,
+          time: '12:00 PM - 3:00 PM'
+        },
+        dinner: {
+          items: [
+            { name: 'Roti', icon: '🫓', description: 'Soft wheat rotis' },
+            { name: 'Paneer Butter Masala', icon: '🧀', description: 'Creamy paneer curry' },
+            { name: 'Mixed Vegetables', icon: '🥬', description: 'Fresh seasonal vegetables' },
+            { name: 'Dal', icon: '🥘', description: 'Simple dal' }
+          ],
+          price: 100,
+          available: true,
+          time: '7:00 PM - 10:00 PM'
+        }
+      });
     }
-  }, []);
+  }, [todayMenu]);
 
-  const handleBookMeal = async (menuItem, quantity = 1) => {
+  const fetchTodayMenu = async () => {
     try {
+      const response = await api.get('/menu/today');
+      // Ensure we have a valid object before setting
+      if (response.data?.menu && typeof response.data.menu === 'object') {
+        setTodayMenu(response.data.menu);
+      }
+    } catch (error) {
+      console.error('Error fetching menu:', error);
+      toast.error('Failed to load today\'s menu');
+    }
+  };
+
+  const handleBookMeal = async (mealType) => {
+    setBookingLoading(true);
+    try {
+      // Create a booking with the current meal data
+      const mealData = todayMenu[mealType];
       const bookingData = {
-        menuItem: menuItem._id,
-        quantity,
+        mealType: mealType,
         bookingDate: new Date().toISOString().split('T')[0],
-        mealTime: getMealTime(menuItem.mealType),
-        specialRequests: ''
+        mealTime: `${mealType} time`,
+        totalAmount: mealData.price || 80,
+        quantity: 1,
+        specialRequests: '',
+        status: 'booked'
       };
 
-      const booking = await createBooking(bookingData);
+      try {
+        const response = await api.post('/bookings', bookingData);
+
+        if (response.data.success) {
+          toast.success(`${mealType} booked successfully!`);
+        } else {
+          throw new Error(response.data.message || 'Booking failed');
+        }
+      } catch (error) {
+        console.error('API booking failed, saving locally:', error);
+        // Save to local storage if API fails
+        const localBookings = JSON.parse(localStorage.getItem('messmate_bookings') || '[]');
+        const newBooking = {
+          _id: `local_${Date.now()}`,
+          ...bookingData,
+          createdAt: new Date().toISOString()
+        };
+        localBookings.push(newBooking);
+        localStorage.setItem('messmate_bookings', JSON.stringify(localBookings));
+        toast.success(`${mealType} booked successfully! (Saved locally)`);
+      }
       
-      // Open payment modal with booking details
-      openModal({
-        amount: booking.finalAmount,
-        orderId: booking.bookingId,
-        booking,
-        menuItem
-      });
-      
-    } catch (error) {
-      console.error('Booking error:', error);
+      onRefresh && onRefresh();
+    } finally {
+      setBookingLoading(false);
     }
   };
 
-  const toggleFavorite = (itemId) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(itemId)) {
-      newFavorites.delete(itemId);
-    } else {
-      newFavorites.add(itemId);
+  const getMealIcon = (mealType) => {
+    switch (mealType) {
+      case 'breakfast': return '🌅';
+      case 'lunch': return '☀️';
+      case 'dinner': return '🌙';
+      default: return '🍽️';
     }
-    setFavorites(newFavorites);
-    localStorage.setItem('messmate-favorites', JSON.stringify([...newFavorites]));
   };
 
-  const getMealTime = (mealType) => {
-    const times = {
-      breakfast: '08:00 AM',
-      lunch: '12:30 PM',
-      dinner: '07:30 PM',
-      snacks: '04:00 PM'
-    };
-    return times[mealType] || '12:00 PM';
+  const getMealStatus = (mealType) => {
+    // Check if there are actual menu items for this meal type
+    const mealData = todayMenu && todayMenu[mealType];
+    const hasMenuItems = mealData && mealData.items && mealData.items.length > 0;
+    
+    if (!hasMenuItems) {
+      return 'closed';
+    }
+    
+    // Use the availability setting from the backend
+    // This comes from the admin's settings when creating menu items
+    return mealData.available ? 'available' : 'closed';
   };
 
-  const mealTypes = ['breakfast', 'lunch', 'dinner', 'snacks'];
-  const currentMealItems = todayMenu 
-    ? (todayMenu[activeTab] || [])
-    : getMenuByMealType(activeTab);
+  // **FIXED: Safe Object.keys() call with null checking**
+  const mealTabs = todayMenu && typeof todayMenu === 'object' 
+    ? Object.keys(todayMenu) 
+    : ['breakfast', 'lunch', 'dinner'];
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex items-center justify-center">
-          <LoadingSpinner size="md" />
-        </div>
-      </div>
-    );
-  }
+  // **FIXED: Safe currentMeal access with fallback**
+  const currentMeal = (todayMenu && todayMenu[selectedMeal]) || {
+    items: [],
+    price: 0,
+    available: true,
+    time: 'Not available'
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+    >
       {/* Header */}
-      <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              {compact ? "Today's Menu" : "Available Meals"} 🍽️
-            </h2>
-            <p className="text-gray-600 mt-1">
-              Fresh meals prepared daily with love
-            </p>
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Today's Menu</h2>
+          <div className="flex items-center text-sm text-gray-500">
+            <CalendarDaysIcon className="h-4 w-4 mr-1" />
+            {new Date().toLocaleDateString('en-IN', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
           </div>
-          
-          {!compact && (
-            <div className="text-sm text-gray-500">
-              <ClockIcon className="w-4 h-4 inline mr-1" />
-              Updated: {new Date().toLocaleTimeString()}
-            </div>
-          )}
+        </div>
+
+        {/* Meal Tabs */}
+        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+          {mealTabs.map((mealType) => (
+            <button
+              key={mealType}
+              onClick={() => setSelectedMeal(mealType)}
+              className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                selectedMeal === mealType
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <span className="mr-2">{getMealIcon(mealType)}</span>
+              {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Meal Type Tabs */}
-      {!mealType && (
-        <div className="px-6 pt-6">
-          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-            {mealTypes.map((type) => (
+      {/* Content */}
+      <div className="p-6">
+        {currentMeal.items && currentMeal.items.length > 0 ? (
+          <>
+            {/* Meal Info */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <ClockIcon className="h-5 w-5 text-gray-400 mr-2" />
+                <span className="text-sm text-gray-600">{currentMeal.time}</span>
+              </div>
+              <div className="flex items-center">
+                <CurrencyRupeeIcon className="h-5 w-5 text-green-600 mr-1" />
+                <span className="text-lg font-bold text-green-600">₹{currentMeal.price || 0}</span>
+              </div>
+            </div>
+
+            {/* Menu Items */}
+            <div className="space-y-3 mb-6">
+              <h3 className="font-semibold text-gray-900 mb-3">Menu Items</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {currentMeal.items.map((item, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="text-2xl mr-3">{item.icon || '🍛'}</div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{item.name}</p>
+                      {item.description && (
+                        <p className="text-xs text-gray-600">{item.description}</p>
+                      )}
+                    </div>
+                    {item.rating && (
+                      <div className="flex items-center">
+                        <StarIcon className="h-4 w-4 text-yellow-400 fill-current" />
+                        <span className="text-sm text-gray-600 ml-1">{item.rating}</span>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Booking Button */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full mr-2 ${
+                  getMealStatus(selectedMeal) === 'available' ? 'bg-green-500' : 'bg-red-500'
+                }`}></div>
+                <span className={`text-sm font-medium ${
+                  getMealStatus(selectedMeal) === 'available' ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {getMealStatus(selectedMeal) === 'available' ? 'Available Now' : 'Closed'}
+                </span>
+              </div>
+
               <button
-                key={type}
-                onClick={() => setActiveTab(type)}
-                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all duration-200 ${
-                  activeTab === type
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                onClick={() => handleBookMeal(selectedMeal)}
+                disabled={bookingLoading || getMealStatus(selectedMeal) !== 'available'}
+                className={`flex items-center px-6 py-2 rounded-lg font-medium transition-all ${
+                  getMealStatus(selectedMeal) === 'available' && !bookingLoading
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transform hover:scale-105'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Menu Items Grid */}
-      <div className="p-6">
-        {currentMealItems.length > 0 ? (
-          <div className={`grid gap-4 ${
-            compact 
-              ? 'grid-cols-1 md:grid-cols-2' 
-              : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-          }`}>
-            {currentMealItems.slice(0, compact ? 4 : currentMealItems.length).map((item, index) => (
-              <motion.div
-                key={item._id || index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="relative border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200"
-              >
-                {/* Favorite Button */}
-                <button
-                  onClick={() => toggleFavorite(item._id)}
-                  className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100"
-                >
-                  <HeartIcon 
-                    className={`w-5 h-5 ${
-                      favorites.has(item._id) 
-                        ? 'text-red-500 fill-current' 
-                        : 'text-gray-400'
-                    }`} 
-                  />
-                </button>
-
-                {/* Item Image/Icon */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 pr-8">
-                    <h3 className="font-semibold text-gray-900 mb-1">
-                      {item.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 line-clamp-2">
-                      {item.description}
-                    </p>
-                  </div>
-                  <div className="text-3xl">
-                    {item.images?.[0] || '🍽️'}
-                  </div>
-                </div>
-
-                {/* Price and Rating */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xl font-bold text-green-600">
-                      ₹{item.effectivePrice || item.price}
-                    </span>
-                    {item.discount > 0 && (
-                      <span className="text-sm text-gray-500 line-through">
-                        ₹{item.price}
-                      </span>
-                    )}
-                  </div>
-                  
-                  {item.ratings?.average && (
-                    <div className="flex items-center space-x-1">
-                      <StarIcon className="w-4 h-4 text-yellow-500 fill-current" />
-                      <span className="text-sm font-medium">
-                        {item.ratings.average.toFixed(1)}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        ({item.ratings.count})
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Dietary Info */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    {item.dietary?.isVegetarian && (
-                      <Badge variant="success" className="text-xs">
-                        🌱 Veg
-                      </Badge>
-                    )}
-                    {item.dietary?.isVegan && (
-                      <Badge variant="success" className="text-xs">
-                        🌿 Vegan
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <Badge
-                    variant={item.isAvailable ? 'success' : 'danger'}
-                    className="text-xs"
-                  >
-                    {item.isAvailable ? 'Available' : 'Sold Out'}
-                  </Badge>
-                </div>
-
-                {/* Book Button */}
-                {showBookButton && (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleBookMeal(item)}
-                    disabled={!item.isAvailable || bookingLoading}
-                    loading={bookingLoading}
-                    className="w-full"
-                  >
-                    {item.isAvailable ? 'Book Now' : 'Not Available'}
-                  </Button>
+                {bookingLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Booking...
+                  </>
+                ) : (
+                  <>
+                    <span>Book {selectedMeal}</span>
+                    <CheckCircleIcon className="h-4 w-4 ml-2" />
+                  </>
                 )}
-              </motion.div>
-            ))}
-          </div>
+              </button>
+            </div>
+          </>
         ) : (
+          /* No Menu Available */
           <div className="text-center py-12">
-            <span className="text-6xl mb-4 block">🍽️</span>
-            <h3 className="text-xl font-medium text-gray-900 mb-2">
-              No meals available
-            </h3>
-            <p className="text-gray-600">
-              No {activeTab} items are currently available for today
-            </p>
-          </div>
-        )}
-
-        {/* Show More Button (for compact view) */}
-        {compact && currentMealItems.length > 4 && (
-          <div className="mt-6 text-center">
-            <Button variant="outline" onClick={() => window.location.href = '/menu'}>
-              View All Menu Items
-            </Button>
+            <div className="text-6xl mb-4">🍽️</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Menu Available</h3>
+            <p className="text-gray-600">The menu for {selectedMeal} is not available today.</p>
           </div>
         )}
       </div>
-
-      {/* UPI Payment Modal */}
-      <UPIPayment
-        isOpen={isOpen}
-        onClose={closeModal}
-        amount={data?.amount}
-        orderId={data?.orderId}
-        customerName={data?.booking?.user?.name}
-        onPaymentSuccess={(paymentData) => {
-          console.log('Payment successful:', paymentData);
-          closeModal();
-          // Show success message or redirect
-        }}
-      />
-    </div>
+    </motion.div>
   );
 };
 

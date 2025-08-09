@@ -1,90 +1,116 @@
 // src/components/ui/Avatar.jsx
+import { forwardRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { cva } from 'class-variance-authority';
+import { cn } from '../../utils/cn';
 
-const Avatar = ({ 
-  src, 
-  alt = '', 
-  size = 'md', 
-  name = '',
-  className = '',
-  online = false,
-  onClick,
-  ...props 
-}) => {
-  const [imageError, setImageError] = useState(false);
+const avatarVariants = cva(
+  "relative flex shrink-0 overflow-hidden rounded-full",
+  {
+    variants: {
+      size: {
+        sm: "h-8 w-8",
+        md: "h-10 w-10",
+        lg: "h-12 w-12",
+        xl: "h-16 w-16",
+        "2xl": "h-20 w-20"
+      }
+    },
+    defaultVariants: {
+      size: "md"
+    }
+  }
+);
 
-  const sizes = {
-    xs: 'w-6 h-6',
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
-    lg: 'w-12 h-12',
-    xl: 'w-16 h-16',
-    '2xl': 'w-20 h-20'
+const Avatar = forwardRef(({
+  className,
+  size,
+  children,
+  ...props
+}, ref) => (
+  <div
+    ref={ref}
+    className={cn(avatarVariants({ size }), className)}
+    {...props}
+  >
+    {children}
+  </div>
+));
+
+const AvatarImage = forwardRef(({
+  className,
+  src,
+  alt,
+  onError,
+  animate = false,
+  ...props
+}, ref) => {
+  const [hasError, setHasError] = useState(false);
+  
+  const handleError = (e) => {
+    setHasError(true);
+    onError?.(e);
   };
 
-  const getInitials = (name) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  if (hasError || !src) {
+    return null;
+  }
 
-  const getRandomColor = (name) => {
-    const colors = [
-      'bg-red-500', 'bg-yellow-500', 'bg-green-500', 'bg-blue-500',
-      'bg-indigo-500', 'bg-purple-500', 'bg-pink-500'
-    ];
-    const index = name.charCodeAt(0) % colors.length;
-    return colors[index];
-  };
+  const Component = animate ? motion.img : 'img';
+  
+  const motionProps = animate ? {
+    initial: { opacity: 0, scale: 0.8 },
+    animate: { opacity: 1, scale: 1 },
+    transition: { duration: 0.3 }
+  } : {};
 
-  const handleImageError = () => {
-    setImageError(true);
-  };
+  return (
+    <Component
+      ref={ref}
+      src={src}
+      alt={alt}
+      onError={handleError}
+      className={cn("aspect-square h-full w-full object-cover", className)}
+      {...motionProps}
+      {...props}
+    />
+  );
+});
+
+const AvatarFallback = forwardRef(({
+  className,
+  children,
+  delayMs = 600,
+  ...props
+}, ref) => {
+  const [show, setShow] = useState(delayMs === 0);
+
+  useState(() => {
+    const timer = setTimeout(() => setShow(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [delayMs]);
+
+  if (!show) return null;
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
-      whileHover={onClick ? { scale: 1.05 } : {}}
-      whileTap={onClick ? { scale: 0.95 } : {}}
-      className={`relative inline-block ${onClick ? 'cursor-pointer' : ''}`}
-      onClick={onClick}
+      ref={ref}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className={cn(
+        "flex h-full w-full items-center justify-center rounded-full bg-gray-100 text-gray-600 font-medium",
+        className
+      )}
       {...props}
     >
-      <div className={`${sizes[size]} rounded-full overflow-hidden ${className}`}>
-        {src && !imageError ? (
-          <img
-            src={src}
-            alt={alt}
-            onError={handleImageError}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className={`
-            w-full h-full flex items-center justify-center text-white font-medium
-            ${getRandomColor(name || 'Unknown')}
-          `}>
-            {getInitials(name || 'U')}
-          </div>
-        )}
-      </div>
-      
-      {online && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="absolute -bottom-0 -right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full"
-        />
-      )}
+      {children}
     </motion.div>
   );
-};
+});
 
+Avatar.displayName = "Avatar";
+AvatarImage.displayName = "AvatarImage";
+AvatarFallback.displayName = "AvatarFallback";
+
+export { Avatar, AvatarImage, AvatarFallback };
 export default Avatar;
-

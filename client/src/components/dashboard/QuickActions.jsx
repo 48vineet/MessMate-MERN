@@ -1,204 +1,166 @@
 // src/components/dashboard/QuickActions.jsx
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   QrCodeIcon,
-  CreditCardIcon,
-  ChatBubbleLeftRightIcon,
-  ClipboardDocumentListIcon,
-  UserCircleIcon,
-  Cog6ToothIcon,
-  HeartIcon,
-  ChartBarIcon,
-  CameraIcon
+  CalendarDaysIcon,
+  BellIcon,
+  UserIcon,
+  CogIcon,
+  CreditCardIcon
 } from '@heroicons/react/24/outline';
-import { AnimatedCard, Button, Badge } from '../ui';
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 const QuickActions = () => {
-  const [activeAction, setActiveAction] = useState(null);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrData, setQrData] = useState(null);
+  const navigate = useNavigate();
+
+  const handleShowQR = () => {
+    // For now, show a placeholder QR code
+    // In a real implementation, this would fetch the user's active booking
+    setQrData({
+      mealType: 'DINNER',
+      date: new Date().toLocaleDateString('en-IN'),
+      time: new Date().toLocaleTimeString('en-IN', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
+    });
+    setShowQRModal(true);
+  };
+
+  const handleNavigation = (route, title) => {
+    try {
+      navigate(route);
+    } catch (error) {
+      console.error(`Error navigating to ${route}:`, error);
+      toast.error(`Unable to navigate to ${title}`);
+    }
+  };
 
   const quickActions = [
     {
-      id: 1,
-      title: 'QR Code',
-      subtitle: 'Scan to check-in',
+      title: 'Book Meal',
+      description: 'Book your next meal',
+      icon: CalendarDaysIcon,
+      color: 'bg-blue-500 hover:bg-blue-600',
+      onClick: () => handleNavigation('/menu', 'Book Meal')
+    },
+    {
+      title: 'View QR Code',
+      description: 'Show meal QR code',
       icon: QrCodeIcon,
-      color: 'bg-blue-500',
-      hoverColor: 'hover:bg-blue-600',
-      action: () => console.log('Open QR Code'),
-      badge: null
+      color: 'bg-green-500 hover:bg-green-600',
+      onClick: handleShowQR
     },
     {
-      id: 2,
-      title: 'Add Money',
-      subtitle: 'Top up wallet',
+      title: 'Wallet',
+      description: 'Manage your wallet',
       icon: CreditCardIcon,
-      color: 'bg-green-500',
-      hoverColor: 'hover:bg-green-600',
-      action: () => console.log('Add Money'),
-      badge: null
+      color: 'bg-emerald-500 hover:bg-emerald-600',
+      onClick: () => handleNavigation('/wallet', 'Wallet')
     },
     {
-      id: 3,
-      title: 'Feedback',
-      subtitle: 'Rate your meal',
-      icon: ChatBubbleLeftRightIcon,
-      color: 'bg-yellow-500',
-      hoverColor: 'hover:bg-yellow-600',
-      action: () => console.log('Give Feedback'),
-      badge: '2'
+      title: 'Notifications',
+      description: 'Check notifications',
+      icon: BellIcon,
+      color: 'bg-orange-500 hover:bg-orange-600',
+      onClick: () => handleNavigation('/notifications', 'Notifications')
     },
     {
-      id: 4,
-      title: 'Menu',
-      subtitle: 'View today\'s menu',
-      icon: ClipboardDocumentListIcon,
-      color: 'bg-purple-500',
-      hoverColor: 'hover:bg-purple-600',
-      action: () => console.log('View Menu'),
-      badge: null
-    },
-    {
-      id: 5,
       title: 'Profile',
-      subtitle: 'Update details',
-      icon: UserCircleIcon,
-      color: 'bg-indigo-500',
-      hoverColor: 'hover:bg-indigo-600',
-      action: () => console.log('Edit Profile'),
-      badge: null
+      description: 'Update profile',
+      icon: UserIcon,
+      color: 'bg-purple-500 hover:bg-purple-600',
+      onClick: () => handleNavigation('/profile', 'Profile')
     },
     {
-      id: 6,
       title: 'Settings',
-      subtitle: 'App preferences',
-      icon: Cog6ToothIcon,
-      color: 'bg-gray-500',
-      hoverColor: 'hover:bg-gray-600',
-      action: () => console.log('Open Settings'),
-      badge: null
-    },
-    {
-      id: 7,
-      title: 'Favorites',
-      subtitle: 'Saved meals',
-      icon: HeartIcon,
-      color: 'bg-red-500',
-      hoverColor: 'hover:bg-red-600',
-      action: () => console.log('View Favorites'),
-      badge: '5'
-    },
-    {
-      id: 8,
-      title: 'Analytics',
-      subtitle: 'Your stats',
-      icon: ChartBarIcon,
-      color: 'bg-orange-500',
-      hoverColor: 'hover:bg-orange-600',
-      action: () => console.log('View Analytics'),
-      badge: null
+      description: 'App settings',
+      icon: CogIcon,
+      color: 'bg-gray-500 hover:bg-gray-600',
+      onClick: () => handleNavigation('/settings', 'Settings')
     }
   ];
 
-  const handleActionClick = (action) => {
-    setActiveAction(action.id);
-    action.action();
-    setTimeout(() => setActiveAction(null), 300);
-  };
-
   return (
-    <AnimatedCard className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-bold text-gray-900">Quick Actions</h3>
-          <p className="text-sm text-gray-600">Access features instantly</p>
-        </div>
-        <motion.div
-          animate={{ rotate: activeAction ? 360 : 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <CameraIcon className="h-6 w-6 text-primary-600" />
-        </motion.div>
-      </div>
-
-      {/* Actions Grid */}
-      <div className="grid grid-cols-2 gap-4">
-        {quickActions.map((action, index) => (
-          <motion.div
-            key={action.id}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => handleActionClick(action)}
-            className={`
-              relative cursor-pointer rounded-xl p-4 text-white transition-all duration-300
-              ${action.color} ${action.hoverColor}
-              ${activeAction === action.id ? 'ring-4 ring-white/30' : ''}
-            `}
-          >
-            {/* Badge */}
-            {action.badge && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.3 }}
-                className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold"
-              >
-                {action.badge}
-              </motion.div>
-            )}
-
-            {/* Icon */}
-            <div className="flex items-center justify-center mb-3">
-              <action.icon className="h-8 w-8" />
-            </div>
-
-            {/* Content */}
-            <div className="text-center">
-              <h4 className="font-semibold text-sm mb-1">{action.title}</h4>
-              <p className="text-xs opacity-90">{action.subtitle}</p>
-            </div>
-
-            {/* Ripple Effect */}
-            {activeAction === action.id && (
-              <motion.div
-                initial={{ scale: 0, opacity: 0.5 }}
-                animate={{ scale: 2, opacity: 0 }}
-                transition={{ duration: 0.6 }}
-                className="absolute inset-0 bg-white rounded-xl pointer-events-none"
-              />
-            )}
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Recent Actions */}
+    <>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="mt-6 pt-4 border-t border-gray-200"
+        className="bg-white rounded-xl shadow-sm border border-gray-200"
       >
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Recent Actions</h4>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">QR Code Scanned</span>
-            <span className="text-gray-500">2 min ago</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Added ₹500 to wallet</span>
-            <span className="text-gray-500">1 hour ago</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Rated lunch meal</span>
-            <span className="text-gray-500">3 hours ago</span>
+        {/* Header */}
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
+          <p className="text-sm text-gray-600 mt-1">Access frequently used features</p>
+        </div>
+
+        {/* Actions Grid */}
+        <div className="p-6">
+          <div className="grid grid-cols-2 gap-4">
+            {quickActions.map((action, index) => (
+              <motion.button
+                key={action.title}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+                onClick={action.onClick}
+                className={`${action.color} text-white p-4 rounded-lg transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <action.icon className="h-6 w-6 mb-2" />
+                  <span className="text-sm font-medium">{action.title}</span>
+                  <span className="text-xs opacity-90">{action.description}</span>
+                </div>
+              </motion.button>
+            ))}
           </div>
         </div>
       </motion.div>
-    </AnimatedCard>
+
+      {/* QR Code Modal */}
+      {showQRModal && qrData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-xl p-6 max-w-sm w-full"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Meal QR Code</h3>
+              <button
+                onClick={() => setShowQRModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <QrCodeIcon className="h-24 w-24 text-gray-400" />
+              </div>
+              
+              <div className="text-sm text-gray-600">
+                <p className="font-medium">{qrData.mealType}</p>
+                <p>{qrData.date}</p>
+                <p>{qrData.time}</p>
+              </div>
+              
+              <p className="text-xs text-gray-500 mt-4">
+                Show this QR code at the mess counter to collect your meal
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </>
   );
 };
 

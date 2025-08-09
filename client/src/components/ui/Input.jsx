@@ -1,122 +1,126 @@
 // src/components/ui/Input.jsx
-import { motion } from 'framer-motion';
 import { forwardRef, useState } from 'react';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
+import { EyeIcon, EyeSlashIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { cn } from '../../utils/cn';
 
-const Input = forwardRef(({ 
+const Input = forwardRef(({
+  className,
+  type = "text",
   label,
-  type = 'text',
   placeholder,
   error,
-  success,
-  leftIcon,
-  rightIcon,
-  className = '',
-  containerClassName = '',
-  showPasswordToggle = false,
-  ...props 
+  helperText,
+  leftIcon: LeftIcon,
+  rightIcon: RightIcon,
+  disabled = false,
+  required = false,
+  value,
+  onChange,
+  onFocus,
+  onBlur,
+  ...props
 }, ref) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-
-  const inputType = showPasswordToggle ? (showPassword ? 'text' : 'password') : type;
-
-  const baseClasses = "w-full px-4 py-3 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1";
+  const [focused, setFocused] = useState(false);
   
-  const stateClasses = {
-    default: "border-gray-300 focus:border-primary-500 focus:ring-primary-500",
-    error: "border-red-500 focus:border-red-500 focus:ring-red-500",
-    success: "border-green-500 focus:border-green-500 focus:ring-green-500"
+  const isPassword = type === 'password';
+  const inputType = isPassword && showPassword ? 'text' : type;
+  const hasError = !!error;
+
+  const handleFocus = (e) => {
+    setFocused(true);
+    onFocus?.(e);
   };
 
-  const getStateClasses = () => {
-    if (error) return stateClasses.error;
-    if (success) return stateClasses.success;
-    return stateClasses.default;
+  const handleBlur = (e) => {
+    setFocused(false);
+    onBlur?.(e);
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={containerClassName}
-    >
+    <div className="w-full">
       {label && (
-        <motion.label
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           {label}
-        </motion.label>
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
       )}
       
       <div className="relative">
-        {leftIcon && (
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-            {leftIcon}
+        {LeftIcon && (
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <LeftIcon className="h-5 w-5 text-gray-400" />
           </div>
         )}
         
         <motion.input
           ref={ref}
           type={inputType}
+          value={value}
+          onChange={onChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          disabled={disabled}
           placeholder={placeholder}
-          className={`
-            ${baseClasses} 
-            ${getStateClasses()}
-            ${leftIcon ? 'pl-10' : ''}
-            ${rightIcon || showPasswordToggle ? 'pr-10' : ''}
-            ${className}
-          `}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          whileFocus={{ scale: 1.01 }}
+          className={cn(
+            "flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm transition-colors",
+            "file:border-0 file:bg-transparent file:text-sm file:font-medium",
+            "placeholder:text-gray-500",
+            "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            hasError && "border-red-300 focus:border-red-500 focus:ring-red-500",
+            LeftIcon && "pl-10",
+            (RightIcon || isPassword) && "pr-10",
+            focused && !hasError && "ring-2 ring-blue-500 border-blue-500",
+            className
+          )}
           {...props}
         />
         
-        {showPasswordToggle && (
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
-          </button>
-        )}
-        
-        {rightIcon && !showPasswordToggle && (
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-            {rightIcon}
+        {(RightIcon || isPassword) && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+            {isPassword ? (
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
+              </button>
+            ) : RightIcon ? (
+              <RightIcon className="h-5 w-5 text-gray-400" />
+            ) : null}
           </div>
         )}
       </div>
       
-      {error && (
-        <motion.p
+      {(error || helperText) && (
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-1 text-sm text-red-600"
+          className="mt-2"
         >
-          {error}
-        </motion.p>
+          {error && (
+            <p className="text-sm text-red-600 flex items-center">
+              <ExclamationCircleIcon className="h-4 w-4 mr-1" />
+              {error}
+            </p>
+          )}
+          {helperText && !error && (
+            <p className="text-sm text-gray-500">{helperText}</p>
+          )}
+        </motion.div>
       )}
-      
-      {success && (
-        <motion.p
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-1 text-sm text-green-600"
-        >
-          {success}
-        </motion.p>
-      )}
-    </motion.div>
+    </div>
   );
 });
 
-Input.displayName = 'Input';
+Input.displayName = "Input";
 
 export default Input;

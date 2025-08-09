@@ -5,6 +5,8 @@ const {
   getAllFeedback,
   getFeedback,
   createFeedback,
+  updateFeedback,
+  deleteFeedback,
   respondToFeedback,
   resolveFeedback,
   addHelpfulVote,
@@ -15,7 +17,7 @@ const { protect, authorize } = require('../middleware/auth');
 // All routes require authentication
 router.use(protect);
 
-// Student and Admin routes
+// Public routes (for students)
 router.get('/', getAllFeedback);
 router.get('/:id', getFeedback);
 router.post('/', createFeedback);
@@ -23,6 +25,8 @@ router.post('/:id/vote', addHelpfulVote);
 
 // Admin only routes
 router.get('/admin/stats', authorize('admin'), getFeedbackStats);
+router.put('/:id', authorize('admin'), updateFeedback);
+router.delete('/:id', authorize('admin'), deleteFeedback);
 router.post('/:id/respond', authorize('admin'), respondToFeedback);
 router.patch('/:id/resolve', authorize('admin'), resolveFeedback);
 

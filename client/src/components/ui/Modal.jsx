@@ -1,26 +1,23 @@
 // src/components/ui/Modal.jsx
+import { forwardRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useEffect } from 'react';
+import { cn } from '../../utils/cn';
 
-const Modal = ({ 
-  isOpen, 
-  onClose, 
-  title, 
-  children, 
+const Modal = forwardRef(({
+  isOpen = false,
+  onClose,
+  title,
+  description,
   size = 'md',
-  showCloseButton = true,
+  closable = true,
   closeOnOverlayClick = true,
-  className = ''
-}) => {
-  const sizes = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
-    full: 'max-w-full mx-4'
-  };
-
+  showCloseButton = true,
+  className,
+  children,
+  ...props
+}, ref) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -33,78 +30,120 @@ const Modal = ({
     };
   }, [isOpen]);
 
-  const handleOverlayClick = (e) => {
-    if (closeOnOverlayClick && e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  const handleEscapeKey = (e) => {
-    if (e.key === 'Escape') {
-      onClose();
-    }
-  };
-
   useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscapeKey);
-      return () => document.removeEventListener('keydown', handleEscapeKey);
-    }
-  }, [isOpen]);
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && closable && onClose) {
+        onClose();
+      }
+    };
 
-  return (
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, closable, onClose]);
+
+  const sizeClasses = {
+    sm: 'max-w-md',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+    full: 'max-w-7xl mx-4'
+  };
+
+  const overlayVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 }
+  };
+
+  const modalVariants = {
+    hidden: { 
+      opacity: 0, 
+      scale: 0.9,
+      y: 20
+    },
+    visible: { 
+      opacity: 1, 
+      scale: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 30
+      }
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.9,
+      y: 20,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return createPortal(
     <AnimatePresence>
-      {isOpen && (
+      <motion.div
+        variants={overlayVariants}
+        initial="hidden"
+        animate="visible"
+        exit="hidden"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+        onClick={closeOnOverlayClick ? onClose : undefined}
+      >
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-50 overflow-y-auto"
-          onClick={handleOverlayClick}
+          ref={ref}
+          variants={modalVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            "relative w-full bg-white rounded-xl shadow-xl",
+            sizeClasses[size],
+            className
+          )}
+          {...props}
         >
-          <div className="flex items-center justify-center min-h-screen p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
-            />
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className={`
-                relative bg-white rounded-2xl shadow-2xl w-full ${sizes[size]} ${className}
-              `}
-            >
-              {title && (
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-                  {showCloseButton && (
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={onClose}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <XMarkIcon className="h-6 w-6" />
-                    </motion.button>
-                  )}
-                </div>
-              )}
-              
-              <div className="p-6">
-                {children}
+          {/* Header */}
+          {(title || showCloseButton) && (
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                {title && (
+                  <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+                )}
+                {description && (
+                  <p className="text-sm text-gray-600 mt-1">{description}</p>
+                )}
               </div>
-            </motion.div>
+              {showCloseButton && closable && (
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <XMarkIcon className="h-5 w-5 text-gray-500" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="p-6">
+            {children}
           </div>
         </motion.div>
-      )}
-    </AnimatePresence>
+      </motion.div>
+    </AnimatePresence>,
+    document.body
   );
-};
+});
+
+Modal.displayName = "Modal";
 
 export default Modal;

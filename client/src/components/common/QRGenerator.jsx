@@ -1,200 +1,114 @@
 // src/components/common/QRGenerator.jsx
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { 
   QrCodeIcon,
-  DocumentDuplicateIcon,
-  ShareIcon,
+  ArrowDownTrayIcon,
   PrinterIcon,
+  ShareIcon,
   CheckCircleIcon,
-  XMarkIcon,
-  ClockIcon,
-  ArrowDownTrayIcon   // ✅ Fixed - was DownloadIcon
+  XMarkIcon
 } from '@heroicons/react/24/outline';
-import { Button, Badge, Modal } from '../ui';
-import { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
+import { toast } from 'react-hot-toast';
 
 const QRGenerator = ({ 
-  userId, 
-  mealType, 
-  bookingId, 
-  isOpen = false, 
-  onClose,
-  onSuccess
+  data, 
+  size = 256, 
+  title = "QR Code",
+  subtitle = "",
+  showActions = true,
+  onClose
 }) => {
-  const [qrCode, setQrCode] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [downloaded, setDownloaded] = useState(false);
-  const [qrData, setQrData] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutes
-  const [loading, setLoading] = useState(false);
-  const qrRef = useRef(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [loading, setLoading] = useState(true);
+  const canvasRef = useRef(null);
 
   useEffect(() => {
-    if (isOpen && userId && mealType) {
-      generateQR();
-    }
-  }, [isOpen, userId, mealType, bookingId]);
+    generateQRCode();
+  }, [data, size]);
 
-  // Countdown timer
-  useEffect(() => {
-    if (qrData && timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [qrData, timeLeft]);
+  const generateQRCode = async () => {
+    if (!data) return;
 
-  const generateQR = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      
-      const data = {
-        userId,
-        mealType,
-        bookingId,
-        timestamp: Date.now(),
-        validUntil: Date.now() + (30 * 60 * 1000), // 30 minutes
-        version: '1.0'
-      };
-      
-      setQrData(data);
-      
-      // Generate QR code with high quality
-      const qrString = JSON.stringify(data);
-      const qrDataURL = await QRCode.toDataURL(qrString, {
-        width: 300,
+      const qrString = typeof data === 'string' ? data : JSON.stringify(data);
+      const url = await QRCode.toDataURL(qrString, {
+        width: size,
         margin: 2,
         color: {
-          dark: '#1f2937',
-          light: '#ffffff'
+          dark: '#1f2937', // Dark gray
+          light: '#ffffff' // White
         },
-        errorCorrectionLevel: 'H'
+        errorCorrectionLevel: 'M'
       });
-      
-      setQrCode(qrDataURL);
-      setTimeLeft(30 * 60); // Reset timer
-      
+      setQrCodeUrl(url);
     } catch (error) {
       console.error('Error generating QR code:', error);
+      toast.error('Failed to generate QR code');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(qrData, null, 2));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
-    }
+  const downloadQR = () => {
+    if (!qrCodeUrl) return;
+
+    const link = document.createElement('a');
+    link.href = qrCodeUrl;
+    link.download = `${title.toLowerCase().replace(/\s+/g, '-')}-qr-code.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('QR code downloaded');
   };
 
-  const handleShare = async () => {
-    if (navigator.share && qrCode) {
-      try {
-        // Convert data URL to blob
-        const response = await fetch(qrCode);
-        const blob = await response.blob();
-        const file = new File([blob], `messmate-qr-${bookingId}.png`, { type: 'image/png' });
-        
-        await navigator.share({
-          title: 'MessMate QR Code',
-          text: `QR Code for ${mealType} booking`,
-          files: [file]
-        });
-      } catch (error) {
-        console.error('Error sharing:', error);
-        handleDownload(); // Fallback to download
-      }
-    } else {
-      handleDownload();
-    }
-  };
+  const printQR = () => {
+    if (!qrCodeUrl) return;
 
-  const handleDownload = () => {
-    if (qrCode) {
-      const link = document.createElement('a');
-      link.download = `messmate-qr-${bookingId || 'booking'}.png`;
-      link.href = qrCode;
-      link.click();
-      setDownloaded(true);
-      setTimeout(() => setDownloaded(false), 3000);
-    }
-  };
-
-  const handlePrint = () => {
-    if (!qrCode) return;
-    
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html>
         <head>
-          <title>MessMate QR Code</title>
+          <title>Print QR Code - ${title}</title>
           <style>
-            body { 
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-              text-align: center; 
-              padding: 40px; 
-              background: #f8fafc;
+            body {
+              margin: 0;
+              padding: 20px;
+              font-family: Arial, sans-serif;
+              text-align: center;
             }
             .container {
               max-width: 400px;
               margin: 0 auto;
-              background: white;
-              padding: 30px;
-              border-radius: 12px;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             }
-            .header {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
-              padding: 20px;
-              border-radius: 8px;
+            h1 {
+              color: #1f2937;
+              margin-bottom: 10px;
+            }
+            p {
+              color: #6b7280;
               margin-bottom: 20px;
             }
-            .qr-code { 
-              max-width: 250px; 
-              margin: 20px auto;
-              border: 2px solid #e5e7eb;
-              border-radius: 8px;
-              padding: 10px;
-              background: white;
+            img {
+              max-width: 100%;
+              height: auto;
             }
-            .details {
-              background: #f1f5f9;
-              padding: 15px;
-              border-radius: 8px;
-              margin-top: 20px;
-            }
-            .footer {
-              margin-top: 30px;
-              padding-top: 20px;
-              border-top: 1px solid #e5e7eb;
-              color: #6b7280;
-              font-size: 12px;
+            @media print {
+              body { margin: 0; }
             }
           </style>
         </head>
         <body>
           <div class="container">
-            <div class="header">
-              <h1>MessMate QR Code</h1>
-              <p>Scan to Check-in</p>
-            </div>
-            <img src="${qrCode}" alt="QR Code" class="qr-code" />
-            <div class="details">
-              <p><strong>Meal Type:</strong> ${mealType}</p>
-              <p><strong>Booking ID:</strong> ${bookingId}</p>
-              <p><strong>Valid Until:</strong> ${new Date(qrData?.validUntil).toLocaleString()}</p>
-            </div>
-            <div class="footer">
-              <p>Generated on ${new Date().toLocaleString()}</p>
-              <p>MessMate - Smart Mess Management System</p>
-            </div>
+            <h1>${title}</h1>
+            ${subtitle ? `<p>${subtitle}</p>` : ''}
+            <img src="${qrCodeUrl}" alt="QR Code" />
+            <p style="margin-top: 20px; font-size: 12px;">
+              Generated by MessMate<br>
+              ${new Date().toLocaleString()}
+            </p>
           </div>
         </body>
       </html>
@@ -203,202 +117,122 @@ const QRGenerator = ({
     printWindow.print();
   };
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  const shareQR = async () => {
+    if (!qrCodeUrl) return;
 
-  const getExpiryColor = () => {
-    if (timeLeft > 600) return 'text-green-600'; // > 10 minutes
-    if (timeLeft > 300) return 'text-yellow-600'; // > 5 minutes
-    return 'text-red-600'; // < 5 minutes
+    try {
+      // Convert data URL to blob
+      const response = await fetch(qrCodeUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `${title}-qr-code.png`, { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: title,
+          text: subtitle,
+          files: [file]
+        });
+        toast.success('QR code shared');
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(qrCodeUrl);
+        toast.success('QR code copied to clipboard');
+      }
+    } catch (error) {
+      console.error('Error sharing QR code:', error);
+      toast.error('Failed to share QR code');
+    }
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Your QR Code"
-      size="md"
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className="bg-white rounded-xl p-6 max-w-sm w-full mx-auto"
     >
-      <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          {subtitle && <p className="text-sm text-gray-600">{subtitle}</p>}
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      {/* QR Code Display */}
+      <div className="text-center mb-6">
         {loading ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg">Generating your QR code...</p>
-          </motion.div>
-        ) : qrCode ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="space-y-6"
-          >
-            {/* QR Code Display */}
-            <div className="text-center">
-              <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-gray-200 mx-auto max-w-sm">
-                <div className="flex items-center justify-center mb-4">
-                  <QrCodeIcon className="h-8 w-8 text-primary-600 mr-2" />
-                  <h3 className="text-lg font-semibold text-gray-900">Scan to Check-in</h3>
-                </div>
-                
-                <div className="relative">
-                  <img 
-                    ref={qrRef}
-                    src={qrCode} 
-                    alt="QR Code" 
-                    className="w-64 h-64 mx-auto border-2 border-gray-300 rounded-lg bg-white"
-                  />
-                  
-                  {/* Timer Overlay */}
-                  <div className="absolute top-2 right-2">
-                    <div className={`bg-white rounded-full px-2 py-1 shadow-lg flex items-center space-x-1 ${getExpiryColor()}`}>
-                      <ClockIcon className="h-3 w-3" />
-                      <span className="text-xs font-mono font-bold">
-                        {formatTime(timeLeft)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Meal Type:</span>
-                    <Badge variant="primary" className="capitalize">{mealType}</Badge>
-                  </div>
-                  {bookingId && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Booking ID:</span>
-                      <span className="font-mono font-medium text-gray-900">{bookingId}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Expires:</span>
-                    <span className={`font-medium ${getExpiryColor()}`}>
-                      {formatTime(timeLeft)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Instructions */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2 flex items-center">
-                <span className="text-lg mr-2">💡</span>
-                How to use this QR code:
-              </h4>
-              <ol className="text-sm text-blue-800 space-y-1 ml-6 list-decimal">
-                <li>Show this QR code at the mess counter</li>
-                <li>Staff will scan the code to verify your booking</li>
-                <li>Collect your meal and enjoy!</li>
-              </ol>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                onClick={handleCopy}
-                leftIcon={copied ? <CheckCircleIcon className="h-4 w-4" /> : <DocumentDuplicateIcon className="h-4 w-4" />}
-                className={copied ? 'border-green-500 text-green-600 bg-green-50' : ''}
-                disabled={copied}
-              >
-                {copied ? 'Copied!' : 'Copy Data'}
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={handleDownload}
-                leftIcon={downloaded ? <CheckCircleIcon className="h-4 w-4" /> : <ArrowDownTrayIcon className="h-4 w-4" />}
-                className={downloaded ? 'border-green-500 text-green-600 bg-green-50' : ''}
-                disabled={downloaded}
-              >
-                {downloaded ? 'Downloaded!' : 'Download'}
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={handleShare}
-                leftIcon={<ShareIcon className="h-4 w-4" />}
-              >
-                Share
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={handlePrint}
-                leftIcon={<PrinterIcon className="h-4 w-4" />}
-              >
-                Print
-              </Button>
-            </div>
-
-            {/* Regenerate Button */}
-            <div className="text-center pt-4">
-              <Button
-                variant="primary"
-                onClick={generateQR}
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? 'Generating...' : 'Generate New QR Code'}
-              </Button>
-            </div>
-
-            {/* Expiry Warning */}
-            {timeLeft < 300 && timeLeft > 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-red-50 border border-red-200 rounded-lg p-4"
-              >
-                <div className="flex items-center">
-                  <div className="text-red-500 mr-3">
-                    <ClockIcon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-red-800 font-medium">QR Code expiring soon!</p>
-                    <p className="text-red-700 text-sm">
-                      This code will expire in {formatTime(timeLeft)}. Generate a new one if needed.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Expired State */}
-            {timeLeft <= 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-red-50 border border-red-200 rounded-lg p-4 text-center"
-              >
-                <XMarkIcon className="h-12 w-12 text-red-500 mx-auto mb-3" />
-                <h4 className="text-red-800 font-bold mb-2">QR Code Expired</h4>
-                <p className="text-red-700 text-sm mb-4">
-                  This QR code has expired. Please generate a new one.
-                </p>
-                <Button variant="primary" onClick={generateQR} className="w-full">
-                  Generate New QR Code
-                </Button>
-              </motion.div>
-            )}
-          </motion.div>
+          <div className="flex flex-col items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+            <p className="text-sm text-gray-600">Generating QR code...</p>
+          </div>
+        ) : qrCodeUrl ? (
+          <div className="inline-block p-4 bg-white border-2 border-gray-200 rounded-lg shadow-sm">
+            <img 
+              src={qrCodeUrl} 
+              alt="QR Code" 
+              className="max-w-full h-auto"
+              style={{ width: size, height: size }}
+            />
+          </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <QrCodeIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg">No QR code available</p>
-            <p className="text-sm">Please check your booking details</p>
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+            <QrCodeIcon className="h-16 w-16 mb-4" />
+            <p className="text-sm">Failed to generate QR code</p>
           </div>
         )}
       </div>
-    </Modal>
+
+      {/* Action Buttons */}
+      {showActions && qrCodeUrl && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={downloadQR}
+              className="flex flex-col items-center justify-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <ArrowDownTrayIcon className="h-5 w-5 text-gray-600 mb-1" />
+              <span className="text-xs text-gray-600">Download</span>
+            </button>
+            <button
+              onClick={printQR}
+              className="flex flex-col items-center justify-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <PrinterIcon className="h-5 w-5 text-gray-600 mb-1" />
+              <span className="text-xs text-gray-600">Print</span>
+            </button>
+            <button
+              onClick={shareQR}
+              className="flex flex-col items-center justify-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <ShareIcon className="h-5 w-5 text-gray-600 mb-1" />
+              <span className="text-xs text-gray-600">Share</span>
+            </button>
+          </div>
+
+          {/* Info */}
+          <div className="flex items-center justify-center text-green-600 text-sm">
+            <CheckCircleIcon className="h-4 w-4 mr-2" />
+            <span>Scan with any QR code reader</span>
+          </div>
+        </div>
+      )}
+
+      {/* Data Preview */}
+      {typeof data === 'string' && data.length < 100 && (
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+          <p className="text-xs text-gray-600 font-mono break-all">{data}</p>
+        </div>
+      )}
+    </motion.div>
   );
 };
 

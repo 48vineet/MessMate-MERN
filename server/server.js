@@ -19,6 +19,16 @@ const inventoryRoutes = require('./routes/inventory');
 const paymentRoutes = require('./routes/payments');
 const feedbackRoutes = require('./routes/feedback');
 const analyticsRoutes = require('./routes/analytics');
+const attendanceRoutes = require('./routes/attendance');
+const notificationRoutes = require('./routes/notifications');
+const reportsRoutes = require('./routes/reports');
+const settingsRoutes = require('./routes/settings');
+const contactRoutes = require('./routes/contact');
+
+// --- ADD these lines for your new routes: ---
+const mealsRoutes = require('./routes/meals');
+const walletRoutes = require('./routes/wallet');
+// -----------------------------------------------
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -61,14 +71,17 @@ app.use(cors({
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 2000, // Increased from 500 to 2000 for development
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
-  }
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skipSuccessfulRequests: true, // Don't count successful requests
+  skipFailedRequests: false // Count failed requests
 });
-
 app.use('/api/', limiter);
 
 // Body parsing middleware
@@ -80,6 +93,7 @@ app.use(morgan('dev'));
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // Database connection
 const connectDB = async () => {
@@ -106,7 +120,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// API Routes
+// Test endpoint for bookings
+app.get('/api/test-bookings', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Bookings endpoint is accessible!',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// API Routes (order does not matter for these)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/menu', menuRoutes);
@@ -115,6 +138,16 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/user/attendance', attendanceRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/contact', contactRoutes);
+
+// --- Register NEW endpoints! ---
+app.use('/api/meals', mealsRoutes);
+app.use('/api/wallet', walletRoutes);
+// --------------------------------
 
 // Socket.IO handler
 socketHandler(io);
@@ -125,7 +158,6 @@ app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 5000;
-
 const startServer = async () => {
   await connectDB();
   server.listen(PORT, () => {
@@ -134,5 +166,4 @@ const startServer = async () => {
     console.log(`📡 Socket.IO running on port ${PORT}`);
   });
 };
-
 startServer();

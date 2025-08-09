@@ -21,7 +21,7 @@ const bookingSchema = new mongoose.Schema({
   // Meal Information
   menuItem: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Menu',
+    ref: 'DailyMenu',
     required: [true, 'Menu item is required']
   },
   quantity: {
