@@ -1,7 +1,7 @@
 // src/components/admin/ReportsPanel.jsx
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
   DocumentChartBarIcon,
   ArrowDownTrayIcon,
   CalendarDaysIcon,
@@ -10,59 +10,71 @@ import {
   ChartBarIcon,
   PrinterIcon,
   EyeIcon,
-  ClockIcon
-} from '@heroicons/react/24/outline';
-import api from '../../utils/api';
-import { toast } from 'react-hot-toast';
+  ClockIcon,
+} from "@heroicons/react/24/outline";
+import api from "../../utils/api";
+import { toast } from "react-hot-toast";
 
 const ReportsPanel = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generatingReport, setGeneratingReport] = useState(null);
   const [selectedDateRange, setSelectedDateRange] = useState({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0]
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    endDate: new Date().toISOString().split("T")[0],
   });
   const [reportData, setReportData] = useState({
     sales: null,
     inventory: null,
     users: null,
-    feedback: null
+    feedback: null,
   });
 
   const reportTypes = [
     {
-      id: 'sales',
-      title: 'Sales Report',
-      description: 'Revenue, bookings, and transaction analysis',
+      id: "sales",
+      title: "Sales Report",
+      description: "Revenue, bookings, and transaction analysis",
       icon: CurrencyRupeeIcon,
-      color: 'bg-green-100 text-green-600',
-      fields: ['revenue', 'bookings', 'popular_items', 'payment_methods']
+      color: "bg-green-100 text-green-600",
+      fields: ["revenue", "bookings", "popular_items", "payment_methods"],
     },
     {
-      id: 'inventory',
-      title: 'Inventory Report',
-      description: 'Stock levels, consumption, and reorder alerts',
+      id: "inventory",
+      title: "Inventory Report",
+      description: "Stock levels, consumption, and reorder alerts",
       icon: ChartBarIcon,
-      color: 'bg-blue-100 text-blue-600',
-      fields: ['stock_levels', 'consumption', 'low_stock', 'expired_items']
+      color: "bg-blue-100 text-blue-600",
+      fields: ["stock_levels", "consumption", "low_stock", "expired_items"],
     },
     {
-      id: 'users',
-      title: 'User Analytics',
-      description: 'User activity, registrations, and engagement',
+      id: "users",
+      title: "User Analytics",
+      description: "User activity, registrations, and engagement",
       icon: UsersIcon,
-      color: 'bg-purple-100 text-purple-600',
-      fields: ['registrations', 'active_users', 'meal_preferences', 'attendance']
+      color: "bg-purple-100 text-purple-600",
+      fields: [
+        "registrations",
+        "active_users",
+        "meal_preferences",
+        "attendance",
+      ],
     },
     {
-      id: 'feedback',
-      title: 'Feedback Report',
-      description: 'Ratings, reviews, and satisfaction metrics',
+      id: "feedback",
+      title: "Feedback Report",
+      description: "Ratings, reviews, and satisfaction metrics",
       icon: DocumentChartBarIcon,
-      color: 'bg-orange-100 text-orange-600',
-      fields: ['ratings', 'comments', 'satisfaction_trends', 'improvement_areas']
-    }
+      color: "bg-orange-100 text-orange-600",
+      fields: [
+        "ratings",
+        "comments",
+        "satisfaction_trends",
+        "improvement_areas",
+      ],
+    },
   ];
 
   useEffect(() => {
@@ -71,11 +83,11 @@ const ReportsPanel = () => {
 
   const fetchReportsHistory = async () => {
     try {
-      const response = await api.get('/reports/history');
+      const response = await api.get("/reports/history");
       setReports(response.data.reports || []);
     } catch (error) {
-      console.error('Error fetching reports history:', error);
-      toast.error('Failed to load reports history');
+      console.error("Error fetching reports history:", error);
+      toast.error("Failed to load reports history");
     } finally {
       setLoading(false);
     }
@@ -84,87 +96,99 @@ const ReportsPanel = () => {
   const generateReport = async (reportType) => {
     setGeneratingReport(reportType);
     try {
-      const response = await api.post('/reports/generate', {
+      const response = await api.post("/reports/generate", {
         type: reportType,
         dateRange: selectedDateRange,
-        includeCharts: true
+        includeCharts: true,
       });
 
-      setReportData(prev => ({
+      setReportData((prev) => ({
         ...prev,
-        [reportType]: response.data.report
+        [reportType]: response.data.report,
       }));
 
       toast.success(`${reportType} report generated successfully`);
       fetchReportsHistory();
     } catch (error) {
-      console.error('Error generating report:', error);
+      console.error("Error generating report:", error);
       toast.error(`Failed to generate ${reportType} report`);
     } finally {
       setGeneratingReport(null);
     }
   };
 
-  const downloadReport = async (reportId, format = 'pdf', reportType = null) => {
+  const downloadReport = async (
+    reportId,
+    format = "pdf",
+    reportType = null
+  ) => {
     try {
       const params = { format };
-      
+
       // Add report type and date range if available
       if (reportType) {
         params.type = reportType;
         params.dateRange = JSON.stringify(selectedDateRange);
       }
-      
+
       const response = await api.get(`/reports/${reportId}/download`, {
         params,
-        responseType: 'blob'
+        responseType: "blob",
       });
 
       // Determine file extension based on format
-      const fileExtension = format === 'excel' ? 'csv' : format;
-      
+      const fileExtension = format === "excel" ? "csv" : format;
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', `${reportType || 'report'}-${reportId}.${fileExtension}`);
+      link.setAttribute(
+        "download",
+        `${reportType || "report"}-${reportId}.${fileExtension}`
+      );
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      toast.success('Report downloaded successfully');
+      toast.success("Report downloaded successfully");
     } catch (error) {
-      console.error('Error downloading report:', error);
-      toast.error('Failed to download report');
+      console.error("Error downloading report:", error);
+      toast.error("Failed to download report");
     }
   };
 
   const scheduleReport = async (reportType, frequency) => {
     try {
-      await api.post('/reports/schedule', {
+      await api.post("/reports/schedule", {
         type: reportType,
         frequency, // daily, weekly, monthly
-        enabled: true
+        enabled: true,
       });
 
       toast.success(`${reportType} report scheduled ${frequency}`);
     } catch (error) {
-      console.error('Error scheduling report:', error);
-      toast.error('Failed to schedule report');
+      console.error("Error scheduling report:", error);
+      toast.error("Failed to schedule report");
     }
   };
 
   const getReportStatusBadge = (status) => {
     const statusConfig = {
-      completed: { color: 'bg-green-100 text-green-800', text: 'Completed' },
-      processing: { color: 'bg-yellow-100 text-yellow-800', text: 'Processing' },
-      failed: { color: 'bg-red-100 text-red-800', text: 'Failed' },
-      scheduled: { color: 'bg-blue-100 text-blue-800', text: 'Scheduled' }
+      completed: { color: "bg-green-100 text-green-800", text: "Completed" },
+      processing: {
+        color: "bg-yellow-100 text-yellow-800",
+        text: "Processing",
+      },
+      failed: { color: "bg-red-100 text-red-800", text: "Failed" },
+      scheduled: { color: "bg-blue-100 text-blue-800", text: "Scheduled" },
     };
 
     const config = statusConfig[status] || statusConfig.completed;
     return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      <span
+        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}
+      >
         {config.text}
       </span>
     );
@@ -196,8 +220,12 @@ const ReportsPanel = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Reports & Analytics</h1>
-          <p className="text-gray-600">Generate comprehensive reports and insights</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Reports & Analytics
+          </h1>
+          <p className="text-gray-600">
+            Generate comprehensive reports and insights
+          </p>
         </motion.div>
 
         {/* Date Range Selector */}
@@ -207,21 +235,33 @@ const ReportsPanel = () => {
           className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Report Parameters</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Report Parameters
+            </h2>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <CalendarDaysIcon className="h-5 w-5 text-gray-400" />
                 <input
                   type="date"
                   value={selectedDateRange.startDate}
-                  onChange={(e) => setSelectedDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                  onChange={(e) =>
+                    setSelectedDateRange((prev) => ({
+                      ...prev,
+                      startDate: e.target.value,
+                    }))
+                  }
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <span className="text-gray-500">to</span>
                 <input
                   type="date"
                   value={selectedDateRange.endDate}
-                  onChange={(e) => setSelectedDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                  onChange={(e) =>
+                    setSelectedDateRange((prev) => ({
+                      ...prev,
+                      endDate: e.target.value,
+                    }))
+                  }
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -247,14 +287,25 @@ const ReportsPanel = () => {
                 {reportData[reportType.id] && (
                   <div className="flex items-center space-x-1">
                     <button
-                      onClick={() => downloadReport(reportData[reportType.id].id, 'pdf', reportType.id)}
+                      onClick={() =>
+                        downloadReport(
+                          reportData[reportType.id].id,
+                          "pdf",
+                          reportType.id
+                        )
+                      }
                       className="p-1 text-gray-600 hover:text-blue-600 rounded transition-colors"
                       title="Download PDF"
                     >
                       <ArrowDownTrayIcon className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => window.open(`/reports/${reportData[reportType.id].id}/view`, '_blank')}
+                      onClick={() =>
+                        window.open(
+                          `/reports/${reportData[reportType.id].id}/view`,
+                          "_blank"
+                        )
+                      }
                       className="p-1 text-gray-600 hover:text-blue-600 rounded transition-colors"
                       title="View Report"
                     >
@@ -266,20 +317,28 @@ const ReportsPanel = () => {
 
               {/* Content */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{reportType.title}</h3>
-                <p className="text-sm text-gray-600 mb-4">{reportType.description}</p>
-                
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {reportType.title}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {reportType.description}
+                </p>
+
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-gray-700">Includes:</p>
                   {reportType.fields.map((field) => (
-                    <p key={field} className="text-xs text-gray-600">• {field.replace('_', ' ')}</p>
+                    <p key={field} className="text-xs text-gray-600">
+                      • {field.replace("_", " ")}
+                    </p>
                   ))}
                 </div>
-                
-                {reportType.id === 'users' && (
+
+                {reportType.id === "users" && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <button
-                      onClick={() => window.location.href = '/admin/users/reports'}
+                      onClick={() =>
+                        (window.location.href = "/admin/users/reports")
+                      }
                       className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                     >
                       View Detailed User Report →
@@ -295,8 +354,8 @@ const ReportsPanel = () => {
                   disabled={generatingReport === reportType.id}
                   className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
                     generatingReport === reportType.id
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
                   }`}
                 >
                   {generatingReport === reportType.id ? (
@@ -305,19 +364,19 @@ const ReportsPanel = () => {
                       Generating...
                     </div>
                   ) : (
-                    'Generate Report'
+                    "Generate Report"
                   )}
                 </button>
 
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => scheduleReport(reportType.id, 'weekly')}
+                    onClick={() => scheduleReport(reportType.id, "weekly")}
                     className="flex-1 py-1 px-2 text-xs border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
                   >
                     Schedule Weekly
                   </button>
                   <button
-                    onClick={() => scheduleReport(reportType.id, 'monthly')}
+                    onClick={() => scheduleReport(reportType.id, "monthly")}
                     className="flex-1 py-1 px-2 text-xs border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
                   >
                     Schedule Monthly
@@ -375,26 +434,40 @@ const ReportsPanel = () => {
                             <DocumentChartBarIcon className="h-4 w-4 text-gray-600" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900 capitalize">{report.type} Report</p>
-                            <p className="text-sm text-gray-500">ID: {report._id.slice(-8)}</p>
+                            <p className="text-sm font-medium text-gray-900 capitalize">
+                              {report.type} Report
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              ID: {report._id.slice(-8)}
+                            </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {new Date(report.dateRange.startDate).toLocaleDateString('en-IN')} - 
-                          {new Date(report.dateRange.endDate).toLocaleDateString('en-IN')}
+                          {new Date(
+                            report.dateRange.startDate
+                          ).toLocaleDateString("en-IN")}{" "}
+                          -
+                          {new Date(
+                            report.dateRange.endDate
+                          ).toLocaleDateString("en-IN")}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {new Date(report.createdAt).toLocaleDateString('en-IN')}
+                          {new Date(report.createdAt).toLocaleDateString(
+                            "en-IN"
+                          )}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {new Date(report.createdAt).toLocaleTimeString('en-IN', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                          {new Date(report.createdAt).toLocaleTimeString(
+                            "en-IN",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -403,21 +476,30 @@ const ReportsPanel = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => window.open(`/reports/${report._id}/view`, '_blank')}
+                            onClick={() =>
+                              window.open(
+                                `/reports/${report._id}/view`,
+                                "_blank"
+                              )
+                            }
                             className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
                             title="View Report"
                           >
                             <EyeIcon className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => downloadReport(report._id, 'pdf', report.type)}
+                            onClick={() =>
+                              downloadReport(report._id, "pdf", report.type)
+                            }
                             className="text-green-600 hover:text-green-900 p-1 rounded transition-colors"
                             title="Download PDF"
                           >
                             <ArrowDownTrayIcon className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => downloadReport(report._id, 'excel', report.type)}
+                            onClick={() =>
+                              downloadReport(report._id, "excel", report.type)
+                            }
                             className="text-purple-600 hover:text-purple-900 p-1 rounded transition-colors"
                             title="Download Excel"
                           >

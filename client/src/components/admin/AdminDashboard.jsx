@@ -130,7 +130,7 @@ const ChartBarIcon = ({ className = "h-6 w-6" }) => (
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={2}
-      d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
+      d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504-1.125-1.125-1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504-1.125-1.125-1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
     />
   </svg>
 );
@@ -186,13 +186,7 @@ const RefreshIcon = ({ className = "w-4 h-4" }) => (
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem("theme");
-    return (
-      saved === "dark" ||
-      (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)
-    );
-  });
+  const [darkMode, setDarkMode] = useState(false); // Force light mode
   const [dashboardData, setDashboardData] = useState({
     stats: {},
     recentActivity: [],
@@ -206,12 +200,8 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     setMounted(true);
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
+    document.documentElement.classList.remove("dark"); // Ensure light mode
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
@@ -323,9 +313,8 @@ const AdminDashboard = () => {
       value: dashboardData.stats.totalUsers || 0,
       change: dashboardData.stats.userGrowth || 0,
       icon: UsersIcon,
-      color: "from-orange-400 to-amber-500",
-      bgColor: "bg-orange-50 dark:bg-orange-900/20",
-      textColor: "text-orange-600 dark:text-orange-400",
+      color: "bg-blue-100 text-blue-600",
+      textColor: "text-blue-600",
       prefix: "",
     },
     {
@@ -333,9 +322,8 @@ const AdminDashboard = () => {
       value: dashboardData.stats.todayRevenue || 0,
       change: dashboardData.stats.revenueGrowth || 0,
       icon: CurrencyRupeeIcon,
-      color: "from-emerald-400 to-green-500",
-      bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
-      textColor: "text-emerald-600 dark:text-emerald-400",
+      color: "bg-green-100 text-green-600",
+      textColor: "text-green-600",
       prefix: "₹",
     },
     {
@@ -343,9 +331,8 @@ const AdminDashboard = () => {
       value: dashboardData.stats.mealsServed || 0,
       change: dashboardData.stats.mealGrowth || 0,
       icon: RestaurantIcon,
-      color: "from-purple-400 to-violet-500",
-      bgColor: "bg-purple-50 dark:bg-purple-900/20",
-      textColor: "text-purple-600 dark:text-purple-400",
+      color: "bg-purple-100 text-purple-600",
+      textColor: "text-purple-600",
       prefix: "",
     },
     {
@@ -353,9 +340,8 @@ const AdminDashboard = () => {
       value: dashboardData.stats.activeBookings || 0,
       change: dashboardData.stats.bookingGrowth || 0,
       icon: ChefHatIcon,
-      color: "from-blue-400 to-cyan-500",
-      bgColor: "bg-blue-50 dark:bg-blue-900/20",
-      textColor: "text-blue-600 dark:text-blue-400",
+      color: "bg-teal-100 text-teal-600",
+      textColor: "text-teal-600",
       prefix: "",
     },
   ];
@@ -411,29 +397,23 @@ const AdminDashboard = () => {
   const getAlertColor = (type) => {
     switch (type) {
       case "warning":
-        return "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800";
+        return "bg-yellow-100 border-yellow-300 text-yellow-600";
       case "error":
-        return "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800";
+        return "bg-red-100 border-red-300 text-red-600";
       default:
-        return "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800";
+        return "bg-gray-100 border-gray-300 text-gray-600";
     }
   };
 
   // Enhanced SVG Chart Component with Food Theme
-  const SimpleChart = ({ data, labels, title, color = "#FB923C" }) => {
+  const SimpleChart = ({ data, labels, title, color = "#3B82F6" }) => {
     if (!data || data.length === 0) {
       return (
         <div className="h-64 flex items-center justify-center">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="text-center"
-          >
-            <ChartBarIcon className="h-12 w-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <p className="text-gray-500 dark:text-gray-400">
-              No data available
-            </p>
-          </motion.div>
+          <div className="text-center">
+            <ChartBarIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-500">No data available</p>
+          </div>
         </div>
       );
     }
@@ -458,108 +438,87 @@ const AdminDashboard = () => {
 
     return (
       <div className="w-full">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-          {title}
-        </h3>
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
+        <h3 className="text-sm font-semibold text-gray-700 mb-4">{title}</h3>
+        <svg
+          width="100%"
+          height={height}
+          viewBox={`0 0 ${width} ${height}`}
+          className="w-full"
         >
-          <svg
-            width="100%"
-            height={height}
-            viewBox={`0 0 ${width} ${height}`}
-            className="w-full"
-          >
-            <defs>
-              <linearGradient
-                id={`gradient-${title}`}
-                x1="0%"
-                y1="0%"
-                x2="0%"
-                y2="100%"
-              >
-                <stop
-                  offset="0%"
-                  style={{ stopColor: color, stopOpacity: 0.3 }}
-                />
-                <stop
-                  offset="100%"
-                  style={{ stopColor: color, stopOpacity: 0.1 }}
-                />
-              </linearGradient>
-            </defs>
-
-            {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
-              <motion.line
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.1 }}
-                x1={padding}
-                y1={height - padding - ratio * chartHeight}
-                x2={width - padding}
-                y2={height - padding - ratio * chartHeight}
-                stroke={darkMode ? "#374151" : "#E5E7EB"}
-                strokeWidth="1"
+          <defs>
+            <linearGradient
+              id={`gradient-${title}`}
+              x1="0%"
+              y1="0%"
+              x2="0%"
+              y2="100%"
+            >
+              <stop
+                offset="0%"
+                style={{ stopColor: color, stopOpacity: 0.3 }}
               />
-            ))}
+              <stop
+                offset="100%"
+                style={{ stopColor: color, stopOpacity: 0.1 }}
+              />
+            </linearGradient>
+          </defs>
 
-            <motion.path
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
-              d={`M ${points.split(" ").join(" L ")}`}
-              fill={`url(#gradient-${title})`}
-              stroke={color}
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+            <line
+              key={i}
+              x1={padding}
+              y1={height - padding - ratio * chartHeight}
+              x2={width - padding}
+              y2={height - padding - ratio * chartHeight}
+              stroke="#E5E7EB"
+              strokeWidth="1"
             />
+          ))}
 
-            {data.map((value, index) => {
-              const x = padding + (index / (data.length - 1)) * chartWidth;
-              const y =
-                height - padding - ((value - minValue) / range) * chartHeight;
-              return (
-                <motion.circle
-                  key={index}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.5 + index * 0.1, type: "spring" }}
-                  whileHover={{ scale: 1.2 }}
-                  cx={x}
-                  cy={y}
-                  r="5"
-                  fill={color}
-                  stroke="white"
-                  strokeWidth="3"
-                  className="cursor-pointer drop-shadow-sm"
-                />
-              );
-            })}
+          <path
+            d={`M ${points.split(" ").join(" L ")}`}
+            fill="none"
+            stroke={color}
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
 
-            {labels.map((label, index) => {
-              const x = padding + (index / (labels.length - 1)) * chartWidth;
-              return (
-                <motion.text
-                  key={index}
-                  initial={{ y: height + 10, opacity: 0 }}
-                  animate={{ y: height - 10, opacity: 1 }}
-                  transition={{ delay: 0.8 + index * 0.05 }}
-                  x={x}
-                  textAnchor="middle"
-                  fontSize="12"
-                  fontWeight="500"
-                  fill={darkMode ? "#9CA3AF" : "#6B7280"}
-                >
-                  {label}
-                </motion.text>
-              );
-            })}
-          </svg>
-        </motion.div>
+          {data.map((value, index) => {
+            const x = padding + (index / (data.length - 1)) * chartWidth;
+            const y =
+              height - padding - ((value - minValue) / range) * chartHeight;
+            return (
+              <circle
+                key={index}
+                cx={x}
+                cy={y}
+                r="5"
+                fill={color}
+                stroke="white"
+                strokeWidth="3"
+                className="cursor-pointer drop-shadow-sm"
+              />
+            );
+          })}
+
+          {labels.map((label, index) => {
+            const x = padding + (index / (labels.length - 1)) * chartWidth;
+            return (
+              <text
+                key={index}
+                x={x}
+                textAnchor="middle"
+                fontSize="12"
+                fontWeight="500"
+                fill="#6B7280"
+              >
+                {label}
+              </text>
+            );
+          })}
+        </svg>
       </div>
     );
   };
@@ -592,13 +551,9 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div
-      className={`min-h-screen bg-gradient-to-br from-orange-50 via-amber-25 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6 transition-all duration-700 ${
-        mounted ? "opacity-100" : "opacity-0"
-      }`}
-    >
+    <div className="min-h-screen bg-gray-50 p-6 transition-all duration-700">
       <div className="max-w-7xl mx-auto">
-        {/* Enhanced Header */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -608,16 +563,16 @@ const AdminDashboard = () => {
             <div className="flex items-center space-x-4">
               <motion.div
                 whileHover={{ rotate: 10, scale: 1.05 }}
-                className="w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 dark:from-orange-500 dark:to-amber-600 rounded-2xl flex items-center justify-center shadow-lg"
+                className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg"
               >
-                <ChefHatIcon className="w-8 h-8 text-white" />
+                <ChefHatIcon className="w-8 h-8 text-orange-500" />
               </motion.div>
               <div>
                 <motion.h1
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-400 dark:to-amber-400 bg-clip-text text-transparent"
+                  className="text-4xl font-bold text-gray-900"
                 >
                   {getGreeting()}, {user?.name}!
                   <motion.span
@@ -636,62 +591,36 @@ const AdminDashboard = () => {
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="text-gray-600 dark:text-gray-300 text-lg mt-1"
+                  className="text-gray-600 text-lg mt-1"
                 >
                   Welcome to your MessMate dashboard overview for {timeRange}
                 </motion.p>
               </div>
             </div>
-
             <div className="flex items-center space-x-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={toggleDarkMode}
-                className="p-3 rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 border border-orange-200 dark:border-gray-700"
+                className="p-3 rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
               >
-                <AnimatePresence mode="wait">
-                  {darkMode ? (
-                    <motion.div
-                      key="sun"
-                      initial={{ rotate: -180, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: 180, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <SunIcon className="text-yellow-500" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="moon"
-                      initial={{ rotate: 180, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: -180, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <MoonIcon className="text-gray-700" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <SunIcon className="text-yellow-500" />
               </motion.button>
-
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
-                className="px-4 py-3 border-2 border-orange-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:focus:border-orange-400 transition-all duration-300"
+                className="px-4 py-3 border-2 border-gray-200 rounded-xl bg-white text-gray-900 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300"
               >
                 <option value="today">Today</option>
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
                 <option value="year">This Year</option>
               </select>
-
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => fetchDashboardData(true)}
                 disabled={refreshing}
-                className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-2"
+                className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-2"
               >
                 <motion.div
                   animate={refreshing ? { rotate: 360 } : {}}
@@ -709,7 +638,7 @@ const AdminDashboard = () => {
           </div>
         </motion.div>
 
-        {/* Enhanced Quick Stats */}
+        {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {quickStats.map((stat, index) => (
             <motion.div
@@ -721,131 +650,68 @@ const AdminDashboard = () => {
                 type: "spring",
                 stiffness: 100,
               }}
-              whileHover={{
-                y: -4,
-                transition: { type: "spring", stiffness: 400, damping: 10 },
-              }}
-              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-2xl border border-orange-100 dark:border-gray-700 p-6 transition-all duration-500 group"
+              className={`rounded-lg shadow-md p-6 ${stat.color}`}
             >
               <div className="flex items-center justify-between mb-4">
-                <motion.div
-                  whileHover={{ rotate: 10, scale: 1.1 }}
-                  className={`p-4 rounded-2xl bg-gradient-to-br ${stat.color} shadow-lg group-hover:shadow-xl transition-all duration-300`}
-                >
-                  <stat.icon className="h-7 w-7 text-white" />
-                </motion.div>
+                <div className="p-3 rounded-full bg-white shadow-md">
+                  <stat.icon className="h-6 w-6" />
+                </div>
                 {stat.change !== 0 && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.5 + index * 0.1, type: "spring" }}
-                    className="flex items-center space-x-1"
-                  >
-                    <motion.div
-                      animate={{ y: stat.change > 0 ? [-2, 0, -2] : [2, 0, 2] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      {getChangeIcon(stat.change)}
-                    </motion.div>
-                    <span
-                      className={`text-sm font-bold ${getChangeColor(
-                        stat.change
-                      )}`}
-                    >
+                  <div className="flex items-center space-x-1">
+                    <span className={`text-sm font-bold ${stat.textColor}`}>
                       {Math.abs(stat.change)}%
                     </span>
-                  </motion.div>
+                  </div>
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                <p className="text-sm font-medium text-gray-700 mb-2">
                   {stat.title}
                 </p>
-                <motion.p
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + index * 0.1 }}
-                  className="text-3xl font-bold text-gray-900 dark:text-white"
-                >
+                <p className="text-2xl font-bold text-gray-900">
                   {stat.prefix}
                   {formatNumber(stat.value)}
-                </motion.p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 font-medium">
-                  vs previous {timeRange}
                 </p>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Enhanced Alerts */}
-        <AnimatePresence>
-          {dashboardData.alerts.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mb-8"
-            >
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-orange-100 dark:border-gray-700 p-6">
-                <motion.h2
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center"
-                >
-                  <div className="w-2 h-2 bg-orange-500 rounded-full mr-3 animate-pulse"></div>
-                  System Alerts
-                </motion.h2>
-                <div className="space-y-4">
-                  {dashboardData.alerts.map((alert, index) => (
-                    <motion.div
-                      key={alert._id}
-                      initial={{ opacity: 0, x: -20, scale: 0.9 }}
-                      animate={{ opacity: 1, x: 0, scale: 1 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02 }}
-                      className={`p-5 rounded-xl border-2 ${getAlertColor(
-                        alert.type
-                      )} transition-all duration-300 hover:shadow-lg`}
-                    >
-                      <div className="flex items-start">
-                        <motion.div
-                          whileHover={{ rotate: 15 }}
-                          className="mr-4 mt-1"
-                        >
-                          {getAlertIcon(alert.type)}
-                        </motion.div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
-                            {alert.title}
-                          </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                            {alert.message}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                            {new Date(alert.createdAt).toLocaleString("en-IN")}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+        {/* Alerts */}
+        {dashboardData.alerts.length > 0 && (
+          <div className="mb-8">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">
+                System Alerts
+              </h2>
+              <div className="space-y-4">
+                {dashboardData.alerts.map((alert) => (
+                  <div
+                    key={alert._id}
+                    className={`p-4 rounded-lg border ${getAlertColor(
+                      alert.type
+                    )}`}
+                  >
+                    <h4 className="font-semibold">{alert.title}</h4>
+                    <p className="text-sm">{alert.message}</p>
+                  </div>
+                ))}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+        )}
 
-        {/* Enhanced Main Content Grid */}
+        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Recent Activity */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-orange-100 dark:border-gray-700 overflow-hidden"
+            className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden"
           >
-            <div className="p-6 border-b border-orange-100 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center">
                 <div className="w-2 h-2 bg-orange-500 rounded-full mr-3 animate-pulse"></div>
                 Recent Activity
               </h2>
@@ -863,17 +729,17 @@ const AdminDashboard = () => {
                         x: 4,
                         transition: { type: "spring", stiffness: 400 },
                       }}
-                      className="flex items-start space-x-4 p-4 hover:bg-orange-50 dark:hover:bg-gray-700/50 rounded-xl transition-all duration-300 cursor-pointer group"
+                      className="flex items-start space-x-4 p-4 hover:bg-gray-100 rounded-xl transition-all duration-300 cursor-pointer group"
                     >
                       <motion.div
                         whileHover={{ scale: 1.2 }}
                         className="w-3 h-3 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full mt-2 flex-shrink-0 group-hover:shadow-lg transition-all duration-300"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-900 dark:text-white font-medium leading-relaxed">
+                        <p className="text-sm text-gray-800 font-medium leading-relaxed">
                           {activity.message}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 font-medium">
+                        <p className="text-xs text-gray-500 mt-2 font-medium">
                           {new Date(activity.timestamp).toLocaleString("en-IN")}
                         </p>
                       </div>
@@ -884,9 +750,9 @@ const AdminDashboard = () => {
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="text-center py-12 text-gray-500 dark:text-gray-400"
+                  className="text-center py-12 text-gray-500"
                 >
-                  <ClockIcon className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                  <ClockIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                   <p className="font-medium">No recent activity</p>
                   <p className="text-sm mt-1">
                     Activity will appear here as it happens
@@ -901,10 +767,10 @@ const AdminDashboard = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-orange-100 dark:border-gray-700"
+            className="bg-white rounded-2xl shadow-md border border-gray-200"
           >
-            <div className="p-6 border-b border-orange-100 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center">
                 <div className="w-2 h-2 bg-orange-500 rounded-full mr-3 animate-pulse"></div>
                 Revenue Trends
               </h2>
@@ -915,15 +781,15 @@ const AdminDashboard = () => {
                   data={dashboardData.charts.revenue.data}
                   labels={dashboardData.charts.revenue.labels}
                   title="Revenue Over Time"
-                  color="#FB923C"
+                  color="#3B82F6"
                 />
               ) : (
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="text-center py-16 text-gray-500 dark:text-gray-400"
+                  className="text-center py-16 text-gray-500"
                 >
-                  <ChartBarIcon className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                  <ChartBarIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                   <p className="font-medium">No chart data available</p>
                   <p className="text-sm mt-1">
                     Revenue data will be displayed here
@@ -934,18 +800,18 @@ const AdminDashboard = () => {
           </motion.div>
         </div>
 
-        {/* Enhanced Quick Actions */}
+        {/* Quick Actions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-lg border border-orange-100 dark:border-gray-700 p-8"
+          className="bg-white rounded-2xl shadow-md border border-gray-200 p-8"
         >
           <motion.h2
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="text-xl font-bold text-gray-900 dark:text-white mb-8 flex items-center"
+            className="text-xl font-bold text-gray-800 mb-8 flex items-center"
           >
             <div className="w-2 h-2 bg-orange-500 rounded-full mr-3 animate-pulse"></div>
             Quick Actions
@@ -977,36 +843,18 @@ const AdminDashboard = () => {
                 color: "from-blue-500 to-cyan-500",
               },
             ].map((action, index) => (
-              <motion.button
+              <button
                 key={action.title}
-                initial={{ opacity: 0, scale: 0.8, rotateY: -180 }}
-                animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-                transition={{
-                  delay: 0.7 + index * 0.1,
-                  type: "spring",
-                  stiffness: 100,
-                  damping: 12,
-                }}
-                whileHover={{
-                  scale: 1.05,
-                  y: -8,
-                  transition: { type: "spring", stiffness: 400, damping: 10 },
-                }}
-                whileTap={{ scale: 0.95 }}
                 onClick={() => navigate(action.path)}
-                className={`group p-6 rounded-2xl bg-gradient-to-br ${action.color} text-white shadow-lg hover:shadow-2xl transition-all duration-500 transform perspective-1000`}
+                className={`group p-6 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-800 shadow-md`}
               >
-                <motion.div
-                  whileHover={{ rotate: 360 }}
-                  transition={{ duration: 0.6 }}
-                  className="w-12 h-12 mx-auto mb-4 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm"
-                >
-                  <action.icon className="h-7 w-7" />
-                </motion.div>
-                <p className="font-semibold text-sm group-hover:text-opacity-90 transition-all duration-300">
+                <div className="w-12 h-12 mx-auto mb-4 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                  <action.icon className="h-7 w-7 text-gray-800" />
+                </div>
+                <p className="font-semibold text-sm text-gray-900">
                   {action.title}
                 </p>
-              </motion.button>
+              </button>
             ))}
           </div>
         </motion.div>

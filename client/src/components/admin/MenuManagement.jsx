@@ -1,8 +1,8 @@
 // src/components/admin/MenuManagement.jsx
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { 
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import {
   CalendarDaysIcon,
   PlusIcon,
   PencilIcon,
@@ -12,25 +12,27 @@ import {
   PhotoIcon,
   CheckCircleIcon,
   XMarkIcon,
-  DocumentDuplicateIcon
-} from '@heroicons/react/24/outline';
-import api from '../../utils/api';
-import { toast } from 'react-hot-toast';
+  DocumentDuplicateIcon,
+} from "@heroicons/react/24/outline";
+import api from "../../utils/api";
+import { toast } from "react-hot-toast";
 
 const MenuManagement = () => {
   const navigate = useNavigate();
   const [menus, setMenus] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [editingMenu, setEditingMenu] = useState(null);
   const [formData, setFormData] = useState({
-    date: '',
-    mealType: 'breakfast',
+    date: "",
+    mealType: "breakfast",
     items: [],
-    price: '',
-    description: '',
-    isAvailable: true
+    price: "",
+    description: "",
+    isAvailable: true,
   });
 
   useEffect(() => {
@@ -42,44 +44,46 @@ const MenuManagement = () => {
       const response = await api.get(`/menu/daily?date=${selectedDate}`);
       setMenus(response.data.data || []);
     } catch (error) {
-      console.error('Error fetching menus:', error);
-      toast.error('Failed to load menus');
+      console.error("Error fetching menus:", error);
+      toast.error("Failed to load menus");
     } finally {
       setLoading(false);
     }
   };
 
   const handleAddItem = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      items: [...prev.items, { name: '', description: '', icon: '🍛' }]
+      items: [...prev.items, { name: "", description: "", icon: "🍛" }],
     }));
   };
 
   const handleRemoveItem = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      items: prev.items.filter((_, i) => i !== index)
+      items: prev.items.filter((_, i) => i !== index),
     }));
   };
 
   const handleItemChange = (index, field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      items: prev.items.map((item, i) => 
+      items: prev.items.map((item, i) =>
         i === index ? { ...item, [field]: value } : item
-      )
+      ),
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Filter out empty items
-    const validItems = formData.items.filter(item => item.name && item.name.trim() !== '');
-    
+    const validItems = formData.items.filter(
+      (item) => item.name && item.name.trim() !== ""
+    );
+
     if (validItems.length === 0) {
-      toast.error('Please add at least one menu item with a name');
+      toast.error("Please add at least one menu item with a name");
       return;
     }
 
@@ -87,105 +91,123 @@ const MenuManagement = () => {
     const submitData = {
       ...formData,
       items: validItems,
-      price: formData.price ? parseFloat(formData.price) : undefined
+      price: formData.price ? parseFloat(formData.price) : undefined,
     };
 
     try {
       if (editingMenu) {
-        console.log('Updating menu:', editingMenu._id, submitData);
-        const response = await api.put(`/menu/daily/${editingMenu._id}`, submitData);
-        toast.success('Menu updated successfully');
-        
+        console.log("Updating menu:", editingMenu._id, submitData);
+        const response = await api.put(
+          `/menu/daily/${editingMenu._id}`,
+          submitData
+        );
+        toast.success("Menu updated successfully");
+
         const updatedMenu = response.data.data;
-        
+
         // Check if the date changed
-        const originalDate = new Date(editingMenu.date).toISOString().split('T')[0];
-        const newDate = new Date(updatedMenu.date).toISOString().split('T')[0];
-        
-        console.log('Date comparison:', { originalDate, newDate, selectedDate });
-        
+        const originalDate = new Date(editingMenu.date)
+          .toISOString()
+          .split("T")[0];
+        const newDate = new Date(updatedMenu.date).toISOString().split("T")[0];
+
+        console.log("Date comparison:", {
+          originalDate,
+          newDate,
+          selectedDate,
+        });
+
         if (originalDate !== newDate) {
           // Date changed, refetch menus for the current selected date
-          console.log('Date changed, refetching menus');
+          console.log("Date changed, refetching menus");
           fetchMenus();
         } else {
           // Date didn't change, just update the menu in local state
-          console.log('Date unchanged, updating local state');
-          setMenus(prev => prev.map(menu => 
-            menu._id === editingMenu._id ? updatedMenu : menu
-          ));
+          console.log("Date unchanged, updating local state");
+          setMenus((prev) =>
+            prev.map((menu) =>
+              menu._id === editingMenu._id ? updatedMenu : menu
+            )
+          );
         }
       } else {
-        console.log('Creating new menu:', submitData);
-        const response = await api.post('/menu/daily', submitData);
-        toast.success('Menu created successfully');
-        
+        console.log("Creating new menu:", submitData);
+        const response = await api.post("/menu/daily", submitData);
+        toast.success("Menu created successfully");
+
         // Add the new menu to the local state
         const newMenu = response.data.data;
-        setMenus(prev => [...prev, newMenu]);
+        setMenus((prev) => [...prev, newMenu]);
       }
-      
+
       resetForm();
     } catch (error) {
-      console.error('Error saving menu:', error);
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          'Failed to save menu';
+      console.error("Error saving menu:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to save menu";
       toast.error(errorMessage);
     }
   };
 
   const handleEdit = (menu) => {
     setEditingMenu(menu);
-    
+
     // Format date for input field (YYYY-MM-DD)
-    const formattedDate = menu.date ? new Date(menu.date).toISOString().split('T')[0] : selectedDate;
-    
+    const formattedDate = menu.date
+      ? new Date(menu.date).toISOString().split("T")[0]
+      : selectedDate;
+
     setFormData({
       date: formattedDate,
       mealType: menu.mealType,
       items: menu.items || [],
       price: menu.price,
-      description: menu.description || '',
-      isAvailable: menu.isAvailable
+      description: menu.description || "",
+      isAvailable: menu.isAvailable,
     });
     setShowAddMenu(true);
   };
 
   const handleDelete = async (menuId) => {
-    if (!window.confirm('Are you sure you want to delete this menu?')) return;
+    if (!window.confirm("Are you sure you want to delete this menu?")) return;
 
     try {
       await api.delete(`/menu/daily/${menuId}`);
-      setMenus(prev => prev.filter(menu => menu._id !== menuId));
-      toast.success('Menu deleted successfully');
+      setMenus((prev) => prev.filter((menu) => menu._id !== menuId));
+      toast.success("Menu deleted successfully");
     } catch (error) {
-      console.error('Error deleting menu:', error);
-      toast.error('Failed to delete menu');
+      console.error("Error deleting menu:", error);
+      toast.error("Failed to delete menu");
     }
   };
 
   const handleToggleAvailability = async (menuId, isAvailable) => {
     try {
       await api.patch(`/menu/daily/${menuId}/availability`, { isAvailable });
-      setMenus(prev => prev.map(menu => 
-        menu._id === menuId ? { ...menu, isAvailable } : menu
-      ));
-      toast.success(`Menu ${isAvailable ? 'enabled' : 'disabled'} successfully`);
+      setMenus((prev) =>
+        prev.map((menu) =>
+          menu._id === menuId ? { ...menu, isAvailable } : menu
+        )
+      );
+      toast.success(
+        `Menu ${isAvailable ? "enabled" : "disabled"} successfully`
+      );
     } catch (error) {
-      console.error('Error updating menu availability:', error);
-      toast.error('Failed to update menu availability');
+      console.error("Error updating menu availability:", error);
+      toast.error("Failed to update menu availability");
     }
   };
 
   const resetForm = () => {
     setFormData({
       date: selectedDate,
-      mealType: 'breakfast',
+      mealType: "breakfast",
       items: [],
-      price: '',
-      description: '',
-      isAvailable: true
+      price: "",
+      description: "",
+      isAvailable: true,
     });
     setEditingMenu(null);
     setShowAddMenu(false);
@@ -193,19 +215,27 @@ const MenuManagement = () => {
 
   const getMealIcon = (mealType) => {
     switch (mealType) {
-      case 'breakfast': return '🌅';
-      case 'lunch': return '☀️';
-      case 'dinner': return '🌙';
-      default: return '🍽️';
+      case "breakfast":
+        return "🌅";
+      case "lunch":
+        return "☀️";
+      case "dinner":
+        return "🌙";
+      default:
+        return "🍽️";
     }
   };
 
   const getMealTimeRange = (mealType) => {
     switch (mealType) {
-      case 'breakfast': return '7:00 AM - 10:00 AM';
-      case 'lunch': return '12:00 PM - 3:00 PM';
-      case 'dinner': return '7:00 PM - 10:00 PM';
-      default: return 'All Day';
+      case "breakfast":
+        return "7:00 AM - 10:00 AM";
+      case "lunch":
+        return "12:00 PM - 3:00 PM";
+      case "dinner":
+        return "7:00 PM - 10:00 PM";
+      default:
+        return "All Day";
     }
   };
 
@@ -237,8 +267,12 @@ const MenuManagement = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Menu Management</h1>
-              <p className="text-gray-600">Create and manage daily menus for your mess</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Menu Management
+              </h1>
+              <p className="text-gray-600">
+                Create and manage daily menus for your mess
+              </p>
             </div>
             <div className="flex items-center space-x-4">
               <input
@@ -249,7 +283,7 @@ const MenuManagement = () => {
               />
               <button
                 onClick={() => {
-                  setFormData(prev => ({ ...prev, date: selectedDate }));
+                  setFormData((prev) => ({ ...prev, date: selectedDate }));
                   setShowAddMenu(true);
                 }}
                 className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -258,7 +292,7 @@ const MenuManagement = () => {
                 Add Menu
               </button>
               <button
-                onClick={() => navigate('/admin/menu/templates')}
+                onClick={() => navigate("/admin/menu/templates")}
                 className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
                 <DocumentDuplicateIcon className="h-5 w-5 mr-2" />
@@ -270,8 +304,8 @@ const MenuManagement = () => {
 
         {/* Menu Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {['breakfast', 'lunch', 'dinner'].map((mealType) => {
-            const menu = menus.find(m => m.mealType === mealType);
+          {["breakfast", "lunch", "dinner"].map((mealType) => {
+            const menu = menus.find((m) => m.mealType === mealType);
             return (
               <motion.div
                 key={mealType}
@@ -283,22 +317,35 @@ const MenuManagement = () => {
                 <div className="p-6 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <span className="text-2xl mr-3">{getMealIcon(mealType)}</span>
+                      <span className="text-2xl mr-3">
+                        {getMealIcon(mealType)}
+                      </span>
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900 capitalize">{mealType}</h3>
-                        <p className="text-sm text-gray-600">{getMealTimeRange(mealType)}</p>
+                        <h3 className="text-lg font-bold text-gray-900 capitalize">
+                          {mealType}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {getMealTimeRange(mealType)}
+                        </p>
                       </div>
                     </div>
                     {menu && (
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => handleToggleAvailability(menu._id, !menu.isAvailable)}
+                          onClick={() =>
+                            handleToggleAvailability(
+                              menu._id,
+                              !menu.isAvailable
+                            )
+                          }
                           className={`p-2 rounded-lg transition-colors ${
-                            menu.isAvailable 
-                              ? 'text-green-600 hover:bg-green-50' 
-                              : 'text-red-600 hover:bg-red-50'
+                            menu.isAvailable
+                              ? "text-green-600 hover:bg-green-50"
+                              : "text-red-600 hover:bg-red-50"
                           }`}
-                          title={menu.isAvailable ? 'Disable Menu' : 'Enable Menu'}
+                          title={
+                            menu.isAvailable ? "Disable Menu" : "Enable Menu"
+                          }
                         >
                           {menu.isAvailable ? (
                             <CheckCircleIcon className="h-5 w-5" />
@@ -331,12 +378,14 @@ const MenuManagement = () => {
                     <div>
                       {/* Availability Status */}
                       <div className="mb-4">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          menu.isAvailable 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {menu.isAvailable ? 'Available' : 'Unavailable'}
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            menu.isAvailable
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {menu.isAvailable ? "Available" : "Unavailable"}
                         </span>
                       </div>
 
@@ -344,21 +393,34 @@ const MenuManagement = () => {
                       {menu.price && (
                         <div className="flex items-center mb-4">
                           <CurrencyRupeeIcon className="h-5 w-5 text-green-600 mr-2" />
-                          <span className="text-lg font-bold text-green-600">₹{menu.price}</span>
+                          <span className="text-lg font-bold text-green-600">
+                            ₹{menu.price}
+                          </span>
                         </div>
                       )}
 
                       {/* Menu Items */}
                       {menu.items && menu.items.length > 0 && (
                         <div className="space-y-3">
-                          <h4 className="font-semibold text-gray-900">Menu Items</h4>
+                          <h4 className="font-semibold text-gray-900">
+                            Menu Items
+                          </h4>
                           {menu.items.map((item, index) => (
-                            <div key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                              <span className="text-2xl mr-3">{item.icon || '🍛'}</span>
+                            <div
+                              key={index}
+                              className="flex items-center p-3 bg-gray-50 rounded-lg"
+                            >
+                              <span className="text-2xl mr-3">
+                                {item.icon || "🍛"}
+                              </span>
                               <div className="flex-1">
-                                <p className="font-medium text-gray-900">{item.name}</p>
+                                <p className="font-medium text-gray-900">
+                                  {item.name}
+                                </p>
                                 {item.description && (
-                                  <p className="text-sm text-gray-600">{item.description}</p>
+                                  <p className="text-sm text-gray-600">
+                                    {item.description}
+                                  </p>
                                 )}
                               </div>
                             </div>
@@ -369,20 +431,24 @@ const MenuManagement = () => {
                       {/* Description */}
                       {menu.description && (
                         <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                          <p className="text-sm text-blue-800">{menu.description}</p>
+                          <p className="text-sm text-blue-800">
+                            {menu.description}
+                          </p>
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="text-center py-8">
                       <PhotoIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500 mb-4">No menu set for {mealType}</p>
+                      <p className="text-gray-500 mb-4">
+                        No menu set for {mealType}
+                      </p>
                       <button
                         onClick={() => {
-                          setFormData(prev => ({ 
-                            ...prev, 
-                            date: selectedDate, 
-                            mealType 
+                          setFormData((prev) => ({
+                            ...prev,
+                            date: selectedDate,
+                            mealType,
                           }));
                           setShowAddMenu(true);
                         }}
@@ -408,7 +474,7 @@ const MenuManagement = () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
-                  {editingMenu ? 'Edit Menu' : 'Add New Menu'}
+                  {editingMenu ? "Edit Menu" : "Add New Menu"}
                 </h3>
                 <button
                   onClick={resetForm}
@@ -422,20 +488,34 @@ const MenuManagement = () => {
                 {/* Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date
+                    </label>
                     <input
                       type="date"
                       value={formData.date}
-                      onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          date: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Meal Type</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Meal Type
+                    </label>
                     <select
                       value={formData.mealType}
-                      onChange={(e) => setFormData(prev => ({ ...prev, mealType: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          mealType: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="breakfast">Breakfast</option>
@@ -444,11 +524,18 @@ const MenuManagement = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Price (₹)
+                    </label>
                     <input
                       type="number"
                       value={formData.price}
-                      onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          price: e.target.value,
+                        }))
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       min="0"
                       step="0.01"
@@ -460,7 +547,9 @@ const MenuManagement = () => {
                 {/* Menu Items */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <label className="block text-sm font-medium text-gray-700">Menu Items</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Menu Items
+                    </label>
                     <button
                       type="button"
                       onClick={handleAddItem}
@@ -470,15 +559,20 @@ const MenuManagement = () => {
                       Add Item
                     </button>
                   </div>
-                  
+
                   <div className="space-y-3">
                     {formData.items.map((item, index) => (
-                      <div key={index} className="grid grid-cols-12 gap-3 items-start p-3 border border-gray-200 rounded-lg">
+                      <div
+                        key={index}
+                        className="grid grid-cols-12 gap-3 items-start p-3 border border-gray-200 rounded-lg"
+                      >
                         <div className="col-span-1">
                           <input
                             type="text"
                             value={item.icon}
-                            onChange={(e) => handleItemChange(index, 'icon', e.target.value)}
+                            onChange={(e) =>
+                              handleItemChange(index, "icon", e.target.value)
+                            }
                             className="w-full px-2 py-1 border border-gray-300 rounded text-center"
                             placeholder="🍛"
                           />
@@ -487,7 +581,9 @@ const MenuManagement = () => {
                           <input
                             type="text"
                             value={item.name}
-                            onChange={(e) => handleItemChange(index, 'name', e.target.value)}
+                            onChange={(e) =>
+                              handleItemChange(index, "name", e.target.value)
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="Item name"
                             required
@@ -497,7 +593,13 @@ const MenuManagement = () => {
                           <input
                             type="text"
                             value={item.description}
-                            onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                            onChange={(e) =>
+                              handleItemChange(
+                                index,
+                                "description",
+                                e.target.value
+                              )
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="Description (optional)"
                           />
@@ -518,10 +620,17 @@ const MenuManagement = () => {
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description (Optional)
+                  </label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Special notes about this menu..."
@@ -533,10 +642,17 @@ const MenuManagement = () => {
                   <input
                     type="checkbox"
                     checked={formData.isAvailable}
-                    onChange={(e) => setFormData(prev => ({ ...prev, isAvailable: e.target.checked }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        isAvailable: e.target.checked,
+                      }))
+                    }
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <label className="ml-2 text-sm text-gray-700">Available for booking</label>
+                  <label className="ml-2 text-sm text-gray-700">
+                    Available for booking
+                  </label>
                 </div>
 
                 {/* Submit Buttons */}
@@ -552,7 +668,7 @@ const MenuManagement = () => {
                     type="submit"
                     className="flex-1 py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    {editingMenu ? 'Update Menu' : 'Create Menu'}
+                    {editingMenu ? "Update Menu" : "Create Menu"}
                   </button>
                 </div>
               </form>

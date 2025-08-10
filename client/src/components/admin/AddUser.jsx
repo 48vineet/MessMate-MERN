@@ -1,5 +1,5 @@
 // src/components/admin/AddUser.jsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 import { toast } from "react-hot-toast";
@@ -112,7 +112,6 @@ const AddUser = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -123,33 +122,6 @@ const AddUser = () => {
     password: "",
     confirmPassword: "",
   });
-
-  // Dark mode effect
-  useEffect(() => {
-    const theme = localStorage.getItem("theme");
-    if (
-      theme === "dark" ||
-      (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
-    ) {
-      setDarkMode(true);
-      document.documentElement.classList.add("dark");
-    } else {
-      setDarkMode(false);
-      document.documentElement.classList.remove("dark");
-    }
-  }, []);
-
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    if (newDarkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -197,57 +169,29 @@ const AddUser = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-25 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6 transition-all duration-700 ease-out">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-25 to-yellow-50 p-6 transition-all duration-700 ease-out">
       <div className="max-w-4xl mx-auto">
-        {/* Header with Dark Mode Toggle */}
+        {/* Header without Dark Mode Toggle */}
         <div className="mb-8">
           <div className="flex justify-between items-start mb-6">
             <button
               onClick={() => navigate("/admin/users")}
-              className="group flex items-center text-amber-700 dark:text-amber-300 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-300 ease-in-out transform hover:scale-105"
+              aria-label="Back to Users"
+              className="group flex items-center text-amber-700 hover:text-orange-600 transition-all duration-300 ease-in-out transform hover:scale-105"
             >
               <ArrowLeftIcon className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:-translate-x-1" />
               <span className="font-medium">Back to Users</span>
             </button>
-
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={toggleDarkMode}
-              className="p-3 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 border border-orange-200 dark:border-gray-700"
-            >
-              {darkMode ? (
-                <svg
-                  className="w-5 h-5 text-yellow-500"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="w-5 h-5 text-gray-700"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                </svg>
-              )}
-            </button>
           </div>
-
           <div className="flex items-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 dark:from-orange-500 dark:to-amber-600 rounded-2xl flex items-center justify-center mr-6 shadow-lg transform transition-all duration-500 hover:scale-110 hover:rotate-3">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl flex items-center justify-center mr-6 shadow-lg transform transition-all duration-500 hover:scale-110 hover:rotate-3">
               <UserPlusIcon className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
+              <h1 className="text-3xl font-bold text-gray-900 transition-colors duration-300">
                 Add New User
               </h1>
-              <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300 mt-1">
+              <p className="text-gray-600 transition-colors duration-300 mt-1">
                 Create a new user account for the food ordering system
               </p>
             </div>
@@ -255,23 +199,23 @@ const AddUser = () => {
         </div>
 
         {/* Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-orange-100 dark:border-gray-700 p-8 transition-all duration-500 transform hover:shadow-2xl">
+        <div className="bg-white rounded-2xl shadow-xl border border-orange-100 p-8 transition-all duration-500 transform hover:shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information */}
             <div className="space-y-6">
-              <div className="border-b border-orange-100 dark:border-gray-700 pb-4">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center transition-colors duration-300">
+              <div className="border-b border-orange-100 pb-4">
+                <h3 className="text-xl font-semibold text-gray-900 flex items-center transition-colors duration-300">
                   <div className="w-2 h-2 bg-orange-500 rounded-full mr-3 animate-pulse"></div>
                   Basic Information
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-sm text-gray-600 mt-1">
                   Enter the user's personal details
                 </p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300">
+                  <label className="block text-sm font-medium text-gray-700 transition-colors duration-300">
                     Full Name *
                   </label>
                   <input
@@ -280,13 +224,13 @@ const AddUser = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border-2 border-orange-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:focus:border-orange-400 transition-all duration-300 ease-out transform focus:scale-[1.02]"
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl bg-white text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300 ease-out transform focus:scale-[1.02]"
                     placeholder="Enter full name"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300">
+                  <label className="block text-sm font-medium text-gray-700 transition-colors duration-300">
                     Email *
                   </label>
                   <input
@@ -295,13 +239,13 @@ const AddUser = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border-2 border-orange-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:focus:border-orange-400 transition-all duration-300 ease-out transform focus:scale-[1.02]"
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl bg-white text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300 ease-out transform focus:scale-[1.02]"
                     placeholder="Enter email address"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300">
+                  <label className="block text-sm font-medium text-gray-700 transition-colors duration-300">
                     Phone Number
                   </label>
                   <input
@@ -309,13 +253,13 @@ const AddUser = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border-2 border-orange-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:focus:border-orange-400 transition-all duration-300 ease-out transform focus:scale-[1.02]"
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl bg-white text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300 ease-out transform focus:scale-[1.02]"
                     placeholder="Enter phone number"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300">
+                  <label className="block text-sm font-medium text-gray-700 transition-colors duration-300">
                     Student ID
                   </label>
                   <input
@@ -323,13 +267,13 @@ const AddUser = () => {
                     name="studentId"
                     value={formData.studentId}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border-2 border-orange-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:focus:border-orange-400 transition-all duration-300 ease-out transform focus:scale-[1.02]"
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl bg-white text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300 ease-out transform focus:scale-[1.02]"
                     placeholder="Enter student ID"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300">
+                  <label className="block text-sm font-medium text-gray-700 transition-colors duration-300">
                     Hostel
                   </label>
                   <input
@@ -337,13 +281,13 @@ const AddUser = () => {
                     name="hostel"
                     value={formData.hostel}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border-2 border-orange-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:focus:border-orange-400 transition-all duration-300 ease-out transform focus:scale-[1.02]"
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl bg-white text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300 ease-out transform focus:scale-[1.02]"
                     placeholder="Enter hostel name"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300">
+                  <label className="block text-sm font-medium text-gray-700 transition-colors duration-300">
                     Role *
                   </label>
                   <select
@@ -351,7 +295,7 @@ const AddUser = () => {
                     value={formData.role}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border-2 border-orange-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:focus:border-orange-400 transition-all duration-300 ease-out transform focus:scale-[1.02] cursor-pointer"
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl bg-white text-gray-900 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300 ease-out transform focus:scale-[1.02] cursor-pointer"
                   >
                     <option value="student">Student</option>
                     <option value="staff">Staff</option>
@@ -363,19 +307,19 @@ const AddUser = () => {
 
             {/* Password Section */}
             <div className="space-y-6">
-              <div className="border-b border-orange-100 dark:border-gray-700 pb-4">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center transition-colors duration-300">
+              <div className="border-b border-orange-100 pb-4">
+                <h3 className="text-xl font-semibold text-gray-900 flex items-center transition-colors duration-300">
                   <div className="w-2 h-2 bg-orange-500 rounded-full mr-3 animate-pulse"></div>
                   Password Setup
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-sm text-gray-600 mt-1">
                   Set a secure password for the user account
                 </p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300">
+                  <label className="block text-sm font-medium text-gray-700 transition-colors duration-300">
                     Password *
                   </label>
                   <div className="relative">
@@ -386,13 +330,13 @@ const AddUser = () => {
                       onChange={handleChange}
                       required
                       minLength={6}
-                      className="w-full px-4 py-3 pr-12 border-2 border-orange-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:focus:border-orange-400 transition-all duration-300 ease-out transform focus:scale-[1.02]"
+                      className="w-full px-4 py-3 pr-12 border-2 border-orange-200 rounded-xl bg-white text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300 ease-out transform focus:scale-[1.02]"
                       placeholder="Enter password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
                     >
                       {showPassword ? (
                         <EyeSlashIcon className="w-5 h-5" />
@@ -404,7 +348,7 @@ const AddUser = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-300">
+                  <label className="block text-sm font-medium text-gray-700 transition-colors duration-300">
                     Confirm Password *
                   </label>
                   <div className="relative">
@@ -414,7 +358,7 @@ const AddUser = () => {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 pr-12 border-2 border-orange-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:focus:border-orange-400 transition-all duration-300 ease-out transform focus:scale-[1.02]"
+                      className="w-full px-4 py-3 pr-12 border-2 border-orange-200 rounded-xl bg-white text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300 ease-out transform focus:scale-[1.02]"
                       placeholder="Confirm password"
                     />
                     <button
@@ -422,7 +366,7 @@ const AddUser = () => {
                       onClick={() =>
                         setShowConfirmPassword(!showConfirmPassword)
                       }
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
                     >
                       {showConfirmPassword ? (
                         <EyeSlashIcon className="w-5 h-5" />
@@ -438,14 +382,14 @@ const AddUser = () => {
               {formData.password && formData.confirmPassword && (
                 <div className="mt-4 animate-fadeIn">
                   {formData.password === formData.confirmPassword ? (
-                    <div className="flex items-center text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-lg p-3 transition-all duration-300">
+                    <div className="flex items-center text-green-600 bg-green-50 rounded-lg p-3 transition-all duration-300 transform hover:scale-105">
                       <CheckCircleIcon className="w-5 h-5 mr-2 animate-bounce" />
                       <span className="text-sm font-medium">
                         Passwords match perfectly!
                       </span>
                     </div>
                   ) : (
-                    <div className="flex items-center text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg p-3 transition-all duration-300">
+                    <div className="flex items-center text-red-600 bg-red-50 rounded-lg p-3 transition-all duration-300 transform hover:scale-105">
                       <XCircleIcon className="w-5 h-5 mr-2 animate-pulse" />
                       <span className="text-sm font-medium">
                         Passwords do not match
@@ -457,17 +401,19 @@ const AddUser = () => {
             </div>
 
             {/* Submit Buttons */}
-            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-8 border-t border-orange-100 dark:border-gray-700">
+            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-8 border-t border-orange-100">
               <button
                 type="button"
                 onClick={() => navigate("/admin/users")}
-                className="px-8 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg font-medium"
+                aria-label="Cancel"
+                className="px-8 py-3 border-2 border-gray-300 rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg font-medium"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
+                aria-label="Create User"
                 className="group relative px-8 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-out transform hover:scale-105 focus:ring-4 focus:ring-orange-500/25"
               >
                 <span
@@ -479,17 +425,7 @@ const AddUser = () => {
                 </span>
                 {loading && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-white rounded-full animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-white rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
-                    </div>
+                    <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
                   </div>
                 )}
               </button>
