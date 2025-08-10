@@ -1,7 +1,7 @@
 // src/components/admin/BookingManagement.jsx
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
   CalendarDaysIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -9,19 +9,19 @@ import {
   XCircleIcon,
   ClockIcon,
   EyeIcon,
-  QrCodeIcon
-} from '@heroicons/react/24/outline';
-import api from '../../utils/api';
-import { toast } from 'react-hot-toast';
+  QrCodeIcon,
+} from "@heroicons/react/24/outline";
+import api from "../../utils/api";
+import { toast } from "react-hot-toast";
 
 const BookingManagement = () => {
   const [bookings, setBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [mealFilter, setMealFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('today');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [mealFilter, setMealFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("today");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [bookingsPerPage] = useState(20);
@@ -38,28 +38,28 @@ const BookingManagement = () => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      console.log('Fetching bookings with date filter:', dateFilter);
-      
+      console.log("Fetching bookings with date filter:", dateFilter);
+
       // Temporarily get all bookings to see if any exist
-      const response = await api.get('/bookings');
-      console.log('Bookings API response:', response.data);
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-      
+      const response = await api.get("/bookings");
+      console.log("Bookings API response:", response.data);
+      console.log("Response status:", response.status);
+      console.log("Response headers:", response.headers);
+
       if (response.data.success) {
         setBookings(response.data.data);
         setTotalBookings(response.data.total);
-        console.log('Set bookings:', response.data.data);
-        console.log('Total bookings:', response.data.total);
-        console.log('Bookings array length:', response.data.data.length);
+        console.log("Set bookings:", response.data.data);
+        console.log("Total bookings:", response.data.total);
+        console.log("Bookings array length:", response.data.data.length);
       } else {
-        console.error('API returned success: false:', response.data);
+        console.error("API returned success: false:", response.data);
       }
     } catch (error) {
-      console.error('Error fetching bookings:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      toast.error('Failed to load bookings');
+      console.error("Error fetching bookings:", error);
+      console.error("Error response:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      toast.error("Failed to load bookings");
     } finally {
       setLoading(false);
     }
@@ -70,21 +70,26 @@ const BookingManagement = () => {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(booking =>
-        booking.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.bookingId?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (booking) =>
+          booking.user?.name
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          booking.user?.email
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          booking.bookingId?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(booking => booking.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((booking) => booking.status === statusFilter);
     }
 
     // Meal filter
-    if (mealFilter !== 'all') {
-      filtered = filtered.filter(booking => booking.mealType === mealFilter);
+    if (mealFilter !== "all") {
+      filtered = filtered.filter((booking) => booking.mealType === mealFilter);
     }
 
     setFilteredBookings(filtered);
@@ -94,30 +99,39 @@ const BookingManagement = () => {
   const handleStatusUpdate = async (bookingId, newStatus) => {
     try {
       await api.patch(`/bookings/${bookingId}/status`, { status: newStatus });
-      setBookings(prev => prev.map(booking =>
-        booking._id === bookingId ? { ...booking, status: newStatus } : booking
-      ));
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking._id === bookingId
+            ? { ...booking, status: newStatus }
+            : booking
+        )
+      );
       toast.success(`Booking ${newStatus} successfully`);
     } catch (error) {
-      console.error('Error updating booking status:', error);
-      toast.error('Failed to update booking status');
+      console.error("Error updating booking status:", error);
+      toast.error("Failed to update booking status");
     }
   };
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', icon: ClockIcon },
-      confirmed: { color: 'bg-green-100 text-green-800', icon: CheckCircleIcon },
-      cancelled: { color: 'bg-red-100 text-red-800', icon: XCircleIcon },
-      completed: { color: 'bg-blue-100 text-blue-800', icon: CheckCircleIcon },
-      'no-show': { color: 'bg-gray-100 text-gray-800', icon: XCircleIcon }
+      pending: { color: "bg-yellow-100 text-yellow-800", icon: ClockIcon },
+      confirmed: {
+        color: "bg-green-100 text-green-800",
+        icon: CheckCircleIcon,
+      },
+      cancelled: { color: "bg-red-100 text-red-800", icon: XCircleIcon },
+      completed: { color: "bg-blue-100 text-blue-800", icon: CheckCircleIcon },
+      "no-show": { color: "bg-gray-100 text-gray-800", icon: XCircleIcon },
     };
 
     const config = statusConfig[status] || statusConfig.pending;
     const IconComponent = config.icon;
 
     return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      <span
+        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}
+      >
         <IconComponent className="h-3 w-3 mr-1" />
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
@@ -126,10 +140,14 @@ const BookingManagement = () => {
 
   const getMealIcon = (mealType) => {
     switch (mealType) {
-      case 'breakfast': return '🌅';
-      case 'lunch': return '☀️';
-      case 'dinner': return '🌙';
-      default: return '🍽️';
+      case "breakfast":
+        return "🌅";
+      case "lunch":
+        return "☀️";
+      case "dinner":
+        return "🌙";
+      default:
+        return "🍽️";
     }
   };
 
@@ -169,8 +187,12 @@ const BookingManagement = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Booking Management</h1>
-          <p className="text-gray-600">Manage all meal bookings and reservations</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Booking Management
+          </h1>
+          <p className="text-gray-600">
+            Manage all meal bookings and reservations
+          </p>
         </motion.div>
 
         {/* Filters */}
@@ -296,12 +318,13 @@ const BookingManagement = () => {
                       <div className="flex items-center">
                         <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
                           <span className="text-white font-medium text-xs">
-                            {booking.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                            {booking.user?.name?.charAt(0)?.toUpperCase() ||
+                              "U"}
                           </span>
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {booking.user?.name || 'Unknown User'}
+                            {booking.user?.name || "Unknown User"}
                           </div>
                           <div className="text-sm text-gray-500">
                             {booking.user?.email}
@@ -311,7 +334,9 @@ const BookingManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className="text-2xl mr-2">{getMealIcon(booking.mealType)}</span>
+                        <span className="text-2xl mr-2">
+                          {getMealIcon(booking.mealType)}
+                        </span>
                         <div>
                           <div className="text-sm font-medium text-gray-900 capitalize">
                             {booking.mealType}
@@ -326,13 +351,18 @@ const BookingManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {new Date(booking.date).toLocaleDateString('en-IN')}
+                        {new Date(booking.date).toLocaleDateString("en-IN")}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {booking.mealTime ? new Date(booking.mealTime).toLocaleTimeString('en-IN', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        }) : 'Not set'}
+                        {booking.mealTime
+                          ? new Date(booking.mealTime).toLocaleTimeString(
+                              "en-IN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )
+                          : "Not set"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -352,18 +382,22 @@ const BookingManagement = () => {
                         >
                           <EyeIcon className="h-4 w-4" />
                         </button>
-                        
-                        {booking.status === 'pending' && (
+
+                        {booking.status === "pending" && (
                           <>
                             <button
-                              onClick={() => handleStatusUpdate(booking._id, 'confirmed')}
+                              onClick={() =>
+                                handleStatusUpdate(booking._id, "confirmed")
+                              }
                               className="text-green-600 hover:text-green-900 p-1 rounded transition-colors"
                               title="Confirm Booking"
                             >
                               <CheckCircleIcon className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleStatusUpdate(booking._id, 'cancelled')}
+                              onClick={() =>
+                                handleStatusUpdate(booking._id, "cancelled")
+                              }
                               className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
                               title="Cancel Booking"
                             >
@@ -371,10 +405,12 @@ const BookingManagement = () => {
                             </button>
                           </>
                         )}
-                        
-                        {booking.status === 'confirmed' && (
+
+                        {booking.status === "confirmed" && (
                           <button
-                            onClick={() => handleStatusUpdate(booking._id, 'completed')}
+                            onClick={() =>
+                              handleStatusUpdate(booking._id, "completed")
+                            }
                             className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
                             title="Mark Complete"
                           >
@@ -394,11 +430,18 @@ const BookingManagement = () => {
             <div className="px-6 py-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-700">
-                  Showing {((currentPage - 1) * bookingsPerPage) + 1} to {Math.min(currentPage * bookingsPerPage, filteredBookings.length)} of {filteredBookings.length} results
+                  Showing {(currentPage - 1) * bookingsPerPage + 1} to{" "}
+                  {Math.min(
+                    currentPage * bookingsPerPage,
+                    filteredBookings.length
+                  )}{" "}
+                  of {filteredBookings.length} results
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={currentPage === 1}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
@@ -408,7 +451,9 @@ const BookingManagement = () => {
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
                     disabled={currentPage === totalPages}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
@@ -429,7 +474,9 @@ const BookingManagement = () => {
               className="bg-white rounded-xl p-6 max-w-lg w-full max-h-screen overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Booking Details</h3>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Booking Details
+                </h3>
                 <button
                   onClick={() => setSelectedBooking(null)}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -440,73 +487,112 @@ const BookingManagement = () => {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Booking ID</label>
-                  <p className="mt-1 text-gray-900">#{selectedBooking.bookingId || selectedBooking._id.slice(-8)}</p>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Booking ID
+                  </label>
+                  <p className="mt-1 text-gray-900">
+                    #
+                    {selectedBooking.bookingId || selectedBooking._id.slice(-8)}
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">User</label>
-                  <p className="mt-1 text-gray-900">{selectedBooking.user?.name}</p>
-                  <p className="text-sm text-gray-600">{selectedBooking.user?.email}</p>
+                  <label className="block text-sm font-medium text-gray-500">
+                    User
+                  </label>
+                  <p className="mt-1 text-gray-900">
+                    {selectedBooking.user?.name}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {selectedBooking.user?.email}
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Meal Details</label>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Meal Details
+                  </label>
                   <div className="mt-1 flex items-center">
-                    <span className="text-2xl mr-2">{getMealIcon(selectedBooking.mealType)}</span>
-                    <span className="text-gray-900 capitalize">{selectedBooking.mealType}</span>
+                    <span className="text-2xl mr-2">
+                      {getMealIcon(selectedBooking.mealType)}
+                    </span>
+                    <span className="text-gray-900 capitalize">
+                      {selectedBooking.mealType}
+                    </span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Date & Time</label>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Date & Time
+                  </label>
                   <p className="mt-1 text-gray-900">
-                    {new Date(selectedBooking.date).toLocaleDateString('en-IN', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+                    {new Date(selectedBooking.date).toLocaleDateString(
+                      "en-IN",
+                      {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )}
                   </p>
                   {selectedBooking.mealTime && (
                     <p className="text-sm text-gray-600">
-                      {new Date(selectedBooking.mealTime).toLocaleTimeString('en-IN')}
+                      {new Date(selectedBooking.mealTime).toLocaleTimeString(
+                        "en-IN"
+                      )}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Amount</label>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Amount
+                  </label>
                   <p className="mt-1 text-lg font-bold text-green-600">
-                    ₹{selectedBooking.totalAmount || selectedBooking.amount || 0}
+                    ₹
+                    {selectedBooking.totalAmount || selectedBooking.amount || 0}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Status</label>
-                  <div className="mt-1">{getStatusBadge(selectedBooking.status)}</div>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Status
+                  </label>
+                  <div className="mt-1">
+                    {getStatusBadge(selectedBooking.status)}
+                  </div>
                 </div>
 
                 {selectedBooking.specialInstructions && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Special Instructions</label>
-                    <p className="mt-1 text-gray-900">{selectedBooking.specialInstructions}</p>
+                    <label className="block text-sm font-medium text-gray-500">
+                      Special Instructions
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {selectedBooking.specialInstructions}
+                    </p>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Booking Time</label>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Booking Time
+                  </label>
                   <p className="mt-1 text-gray-900">
-                    {new Date(selectedBooking.createdAt).toLocaleString('en-IN')}
+                    {new Date(selectedBooking.createdAt).toLocaleString(
+                      "en-IN"
+                    )}
                   </p>
                 </div>
 
                 {/* Action Buttons */}
-                {selectedBooking.status === 'pending' && (
+                {selectedBooking.status === "pending" && (
                   <div className="flex space-x-3 pt-4">
                     <button
                       onClick={() => {
-                        handleStatusUpdate(selectedBooking._id, 'confirmed');
+                        handleStatusUpdate(selectedBooking._id, "confirmed");
                         setSelectedBooking(null);
                       }}
                       className="flex-1 py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -515,7 +601,7 @@ const BookingManagement = () => {
                     </button>
                     <button
                       onClick={() => {
-                        handleStatusUpdate(selectedBooking._id, 'cancelled');
+                        handleStatusUpdate(selectedBooking._id, "cancelled");
                         setSelectedBooking(null);
                       }}
                       className="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -525,11 +611,11 @@ const BookingManagement = () => {
                   </div>
                 )}
 
-                {selectedBooking.status === 'confirmed' && (
+                {selectedBooking.status === "confirmed" && (
                   <div className="pt-4">
                     <button
                       onClick={() => {
-                        handleStatusUpdate(selectedBooking._id, 'completed');
+                        handleStatusUpdate(selectedBooking._id, "completed");
                         setSelectedBooking(null);
                       }}
                       className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

@@ -1,6 +1,6 @@
 // src/components/admin/FeedbackManagement.jsx
-import { useState, useEffect } from 'react';
-import { 
+import { useState, useEffect } from "react";
+import {
   ChatBubbleLeftRightIcon,
   StarIcon,
   MagnifyingGlassIcon,
@@ -10,18 +10,18 @@ import {
   ChartBarIcon,
   CheckCircleIcon,
   XCircleIcon,
-  ArrowPathIcon
-} from '@heroicons/react/24/outline';
-import api from '../../utils/api';
-import { toast } from 'react-hot-toast';
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
+import api from "../../utils/api";
+import { toast } from "react-hot-toast";
 
 const FeedbackManagement = () => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [filteredFeedbacks, setFilteredFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [ratingFilter, setRatingFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [ratingFilter, setRatingFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
@@ -29,7 +29,7 @@ const FeedbackManagement = () => {
     averageRating: 0,
     pendingFeedback: 0,
     resolvedFeedback: 0,
-    responseRate: 0
+    responseRate: 0,
   });
 
   useEffect(() => {
@@ -44,42 +44,45 @@ const FeedbackManagement = () => {
   // Add keyboard shortcut for refresh
   useEffect(() => {
     const handleKeyPress = (event) => {
-      if (event.key === 'F5') {
+      if (event.key === "F5") {
         event.preventDefault();
         refreshData();
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
   }, []);
 
   const refreshData = async () => {
     setRefreshing(true);
-    console.log('Starting refresh...');
+    console.log("Starting refresh...");
     try {
       // Try to refresh both data sources, but don't fail if one fails
-      const results = await Promise.allSettled([fetchFeedbacks(), fetchStats()]);
-      
-      const feedbacksSuccess = results[0].status === 'fulfilled';
-      const statsSuccess = results[1].status === 'fulfilled';
-      
+      const results = await Promise.allSettled([
+        fetchFeedbacks(),
+        fetchStats(),
+      ]);
+
+      const feedbacksSuccess = results[0].status === "fulfilled";
+      const statsSuccess = results[1].status === "fulfilled";
+
       if (feedbacksSuccess && statsSuccess) {
-        console.log('Refresh completed successfully');
-        toast.success('Data refreshed successfully');
+        console.log("Refresh completed successfully");
+        toast.success("Data refreshed successfully");
       } else if (feedbacksSuccess) {
-        console.log('Feedbacks refreshed, stats failed');
-        toast.success('Feedbacks refreshed');
+        console.log("Feedbacks refreshed, stats failed");
+        toast.success("Feedbacks refreshed");
       } else if (statsSuccess) {
-        console.log('Stats refreshed, feedbacks failed');
-        toast.success('Stats refreshed');
+        console.log("Stats refreshed, feedbacks failed");
+        toast.success("Stats refreshed");
       } else {
-        console.log('Both refresh operations failed');
-        toast.error('Failed to refresh data');
+        console.log("Both refresh operations failed");
+        toast.error("Failed to refresh data");
       }
     } catch (error) {
-      console.error('Error refreshing data:', error);
-      toast.error('Failed to refresh data');
+      console.error("Error refreshing data:", error);
+      toast.error("Failed to refresh data");
     } finally {
       setRefreshing(false);
     }
@@ -88,36 +91,36 @@ const FeedbackManagement = () => {
   const createSampleFeedback = async () => {
     try {
       const sampleFeedback = {
-        feedbackType: 'meal-review',
-        category: 'food-quality',
-        title: 'Sample Feedback',
-        comment: 'This is a sample feedback for testing purposes.',
+        feedbackType: "meal-review",
+        category: "food-quality",
+        title: "Sample Feedback",
+        comment: "This is a sample feedback for testing purposes.",
         rating: {
           overall: 4,
           taste: 4,
           presentation: 3,
           portion: 4,
-          temperature: 5
+          temperature: 5,
         },
-        isAnonymous: false
+        isAnonymous: false,
       };
 
-      await api.post('/feedback', sampleFeedback);
-      toast.success('Sample feedback created');
+      await api.post("/feedback", sampleFeedback);
+      toast.success("Sample feedback created");
       refreshData();
     } catch (error) {
-      console.error('Error creating sample feedback:', error);
-      toast.error('Failed to create sample feedback');
+      console.error("Error creating sample feedback:", error);
+      toast.error("Failed to create sample feedback");
     }
   };
 
   const fetchFeedbacks = async () => {
     try {
-      const response = await api.get('/feedback');
+      const response = await api.get("/feedback");
       setFeedbacks(response.data.data || []);
     } catch (error) {
-      console.error('Error fetching feedbacks:', error);
-      toast.error('Failed to load feedbacks');
+      console.error("Error fetching feedbacks:", error);
+      toast.error("Failed to load feedbacks");
     } finally {
       setLoading(false);
     }
@@ -125,18 +128,20 @@ const FeedbackManagement = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await api.get('/feedback/admin/stats');
+      const response = await api.get("/feedback/admin/stats");
       const overview = response.data.data.overview || {};
       setStats({
         totalFeedback: overview.totalFeedback || 0,
         averageRating: overview.averageRating || 0,
         pendingFeedback: overview.pendingFeedback || 0,
         resolvedFeedback: overview.resolvedFeedback || 0,
-        responseRate: overview.totalFeedback > 0 ? 
-          ((overview.resolvedFeedback / overview.totalFeedback) * 100) : 0
+        responseRate:
+          overview.totalFeedback > 0
+            ? (overview.resolvedFeedback / overview.totalFeedback) * 100
+            : 0,
       });
     } catch (error) {
-      console.error('Error fetching feedback stats:', error);
+      console.error("Error fetching feedback stats:", error);
     }
   };
 
@@ -145,52 +150,64 @@ const FeedbackManagement = () => {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(feedback =>
-        feedback.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        feedback.comment?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        feedback.title?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (feedback) =>
+          feedback.user?.name
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          feedback.comment?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          feedback.title?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Rating filter
-    if (ratingFilter !== 'all') {
+    if (ratingFilter !== "all") {
       const rating = parseInt(ratingFilter);
-      filtered = filtered.filter(feedback => feedback.rating?.overall === rating);
+      filtered = filtered.filter(
+        (feedback) => feedback.rating?.overall === rating
+      );
     }
 
     // Status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(feedback => feedback.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(
+        (feedback) => feedback.status === statusFilter
+      );
     }
 
     setFilteredFeedbacks(filtered);
   };
 
   const handleDelete = async (feedbackId) => {
-    if (!window.confirm('Are you sure you want to delete this feedback?')) return;
+    if (!window.confirm("Are you sure you want to delete this feedback?"))
+      return;
 
     try {
       await api.delete(`/feedback/${feedbackId}`);
-      setFeedbacks(prev => prev.filter(feedback => feedback._id !== feedbackId));
-      toast.success('Feedback deleted successfully');
+      setFeedbacks((prev) =>
+        prev.filter((feedback) => feedback._id !== feedbackId)
+      );
+      toast.success("Feedback deleted successfully");
     } catch (error) {
-      console.error('Error deleting feedback:', error);
-      toast.error('Failed to delete feedback');
+      console.error("Error deleting feedback:", error);
+      toast.error("Failed to delete feedback");
     }
   };
 
   const handleStatusUpdate = async (feedbackId, newStatus) => {
     try {
       await api.put(`/feedback/${feedbackId}`, { status: newStatus });
-      setFeedbacks(prev => prev.map(feedback => 
-        feedback._id === feedbackId 
-          ? { ...feedback, status: newStatus }
-          : feedback
-      ));
-      toast.success('Feedback status updated successfully');
+      setFeedbacks((prev) =>
+        prev.map((feedback) =>
+          feedback._id === feedbackId
+            ? { ...feedback, status: newStatus }
+            : feedback
+        )
+      );
+      toast.success("Feedback status updated successfully");
     } catch (error) {
-      console.error('Error updating feedback status:', error);
-      toast.error('Failed to update feedback status');
+      console.error("Error updating feedback status:", error);
+      toast.error("Failed to update feedback status");
     }
   };
 
@@ -199,35 +216,44 @@ const FeedbackManagement = () => {
       <StarIcon
         key={index}
         className={`h-4 w-4 ${
-          index < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+          index < rating ? "text-yellow-400 fill-current" : "text-gray-300"
         }`}
       />
     ));
   };
 
   const getRatingColor = (rating) => {
-    if (rating >= 4) return 'text-green-600 bg-green-100';
-    if (rating >= 3) return 'text-yellow-600 bg-yellow-100';
-    if (rating >= 2) return 'text-orange-600 bg-orange-100';
-    return 'text-red-600 bg-red-100';
+    if (rating >= 4) return "text-green-600 bg-green-100";
+    if (rating >= 3) return "text-yellow-600 bg-yellow-100";
+    if (rating >= 2) return "text-orange-600 bg-orange-100";
+    return "text-red-600 bg-red-100";
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'acknowledged': return 'text-blue-600 bg-blue-100';
-      case 'in-progress': return 'text-orange-600 bg-orange-100';
-      case 'resolved': return 'text-green-600 bg-green-100';
-      case 'closed': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case "pending":
+        return "text-yellow-600 bg-yellow-100";
+      case "acknowledged":
+        return "text-blue-600 bg-blue-100";
+      case "in-progress":
+        return "text-orange-600 bg-orange-100";
+      case "resolved":
+        return "text-green-600 bg-green-100";
+      case "closed":
+        return "text-gray-600 bg-gray-100";
+      default:
+        return "text-gray-600 bg-gray-100";
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'resolved': return <CheckCircleIcon className="h-4 w-4" />;
-      case 'closed': return <XCircleIcon className="h-4 w-4" />;
-      default: return <ChatBubbleLeftRightIcon className="h-4 w-4" />;
+      case "resolved":
+        return <CheckCircleIcon className="h-4 w-4" />;
+      case "closed":
+        return <XCircleIcon className="h-4 w-4" />;
+      default:
+        return <ChatBubbleLeftRightIcon className="h-4 w-4" />;
     }
   };
 
@@ -260,8 +286,12 @@ const FeedbackManagement = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Feedback Management</h1>
-          <p className="text-gray-600">Monitor and manage user feedback and ratings</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Feedback Management
+          </h1>
+          <p className="text-gray-600">
+            Monitor and manage user feedback and ratings
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -269,8 +299,12 @@ const FeedbackManagement = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Average Rating</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.averageRating?.toFixed(1) || '0.0'}</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Average Rating
+                </p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.averageRating?.toFixed(1) || "0.0"}
+                </p>
                 <div className="flex items-center mt-2">
                   {renderStars(Math.round(stats.averageRating || 0))}
                 </div>
@@ -284,8 +318,12 @@ const FeedbackManagement = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Total Feedbacks</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.totalFeedback || 0}</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Total Feedbacks
+                </p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.totalFeedback || 0}
+                </p>
                 <p className="text-sm text-gray-500 mt-1">All time</p>
               </div>
               <div className="p-3 bg-blue-100 rounded-full">
@@ -297,8 +335,12 @@ const FeedbackManagement = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Pending</p>
-                <p className="text-3xl font-bold text-yellow-600">{stats.pendingFeedback || 0}</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Pending
+                </p>
+                <p className="text-3xl font-bold text-yellow-600">
+                  {stats.pendingFeedback || 0}
+                </p>
                 <p className="text-sm text-gray-500 mt-1">Awaiting response</p>
               </div>
               <div className="p-3 bg-yellow-100 rounded-full">
@@ -310,8 +352,12 @@ const FeedbackManagement = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Response Rate</p>
-                <p className="text-3xl font-bold text-green-600">{stats.responseRate?.toFixed(1) || '0'}%</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Response Rate
+                </p>
+                <p className="text-3xl font-bold text-green-600">
+                  {stats.responseRate?.toFixed(1) || "0"}%
+                </p>
                 <p className="text-sm text-gray-500 mt-1">Issues resolved</p>
               </div>
               <div className="p-3 bg-green-100 rounded-full">
@@ -367,15 +413,17 @@ const FeedbackManagement = () => {
             <button
               onClick={refreshData}
               className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
-                refreshing 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                refreshing
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
               }`}
               disabled={refreshing}
               title="Refresh data (or press F5)"
             >
-              <ArrowPathIcon className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+              <ArrowPathIcon
+                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              />
+              <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
             </button>
 
             {feedbacks.length === 0 && (
@@ -411,22 +459,33 @@ const FeedbackManagement = () => {
                       <div className="flex items-center mb-3">
                         <div className="h-10 w-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
                           <span className="text-white font-medium text-sm">
-                            {feedback.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                            {feedback.user?.name?.charAt(0)?.toUpperCase() ||
+                              "U"}
                           </span>
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">
-                            {feedback.isAnonymous ? 'Anonymous' : (feedback.user?.name || 'Unknown User')}
+                            {feedback.isAnonymous
+                              ? "Anonymous"
+                              : feedback.user?.name || "Unknown User"}
                           </p>
-                          <p className="text-sm text-gray-500">{feedback.user?.email}</p>
+                          <p className="text-sm text-gray-500">
+                            {feedback.user?.email}
+                          </p>
                         </div>
                       </div>
 
                       {/* Feedback Type & Category */}
                       <div className="flex items-center mb-3">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(feedback.status)}`}>
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            feedback.status
+                          )}`}
+                        >
                           {getStatusIcon(feedback.status)}
-                          <span className="ml-1 capitalize">{feedback.status}</span>
+                          <span className="ml-1 capitalize">
+                            {feedback.status}
+                          </span>
                         </span>
                         <span className="ml-2 text-sm text-gray-500">
                           {feedback.feedbackType} • {feedback.category}
@@ -435,7 +494,9 @@ const FeedbackManagement = () => {
 
                       {/* Title */}
                       {feedback.title && (
-                        <h3 className="font-medium text-gray-900 mb-2">{feedback.title}</h3>
+                        <h3 className="font-medium text-gray-900 mb-2">
+                          {feedback.title}
+                        </h3>
                       )}
 
                       {/* Rating */}
@@ -443,7 +504,11 @@ const FeedbackManagement = () => {
                         <div className="flex items-center mr-3">
                           {renderStars(feedback.rating?.overall || 0)}
                         </div>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRatingColor(feedback.rating?.overall || 0)}`}>
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRatingColor(
+                            feedback.rating?.overall || 0
+                          )}`}
+                        >
                           {feedback.rating?.overall || 0}/5
                         </span>
                       </div>
@@ -451,21 +516,28 @@ const FeedbackManagement = () => {
                       {/* Comment */}
                       {feedback.comment && (
                         <div className="mb-3">
-                          <p className="text-gray-700 italic">"{feedback.comment}"</p>
+                          <p className="text-gray-700 italic">
+                            "{feedback.comment}"
+                          </p>
                         </div>
                       )}
 
                       {/* Admin Response */}
                       {feedback.adminResponse?.response && (
                         <div className="mb-3 p-3 bg-blue-50 rounded-lg">
-                          <p className="text-sm font-medium text-blue-900 mb-1">Admin Response:</p>
-                          <p className="text-sm text-blue-800">{feedback.adminResponse.response}</p>
+                          <p className="text-sm font-medium text-blue-900 mb-1">
+                            Admin Response:
+                          </p>
+                          <p className="text-sm text-blue-800">
+                            {feedback.adminResponse.response}
+                          </p>
                         </div>
                       )}
 
                       {/* Timestamp */}
                       <p className="text-xs text-gray-500">
-                        Submitted on {new Date(feedback.createdAt).toLocaleString('en-IN')}
+                        Submitted on{" "}
+                        {new Date(feedback.createdAt).toLocaleString("en-IN")}
                       </p>
                     </div>
 
@@ -503,7 +575,9 @@ const FeedbackManagement = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl p-6 max-w-lg w-full max-h-screen overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Feedback Details</h3>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Feedback Details
+                </h3>
                 <button
                   onClick={() => setSelectedFeedback(null)}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -514,26 +588,39 @@ const FeedbackManagement = () => {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">User</label>
+                  <label className="block text-sm font-medium text-gray-500">
+                    User
+                  </label>
                   <p className="mt-1 text-gray-900">
-                    {selectedFeedback.isAnonymous ? 'Anonymous' : (selectedFeedback.user?.name || 'Unknown')}
+                    {selectedFeedback.isAnonymous
+                      ? "Anonymous"
+                      : selectedFeedback.user?.name || "Unknown"}
                   </p>
-                  <p className="text-sm text-gray-600">{selectedFeedback.user?.email}</p>
+                  <p className="text-sm text-gray-600">
+                    {selectedFeedback.user?.email}
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Type & Category</label>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Type & Category
+                  </label>
                   <p className="mt-1 text-gray-900 capitalize">
-                    {selectedFeedback.feedbackType} • {selectedFeedback.category}
+                    {selectedFeedback.feedbackType} •{" "}
+                    {selectedFeedback.category}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Status</label>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Status
+                  </label>
                   <div className="mt-1">
                     <select
                       value={selectedFeedback.status}
-                      onChange={(e) => handleStatusUpdate(selectedFeedback._id, e.target.value)}
+                      onChange={(e) =>
+                        handleStatusUpdate(selectedFeedback._id, e.target.value)
+                      }
                       className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="pending">Pending</option>
@@ -547,64 +634,98 @@ const FeedbackManagement = () => {
 
                 {selectedFeedback.title && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Title</label>
-                    <p className="mt-1 text-gray-900">{selectedFeedback.title}</p>
+                    <label className="block text-sm font-medium text-gray-500">
+                      Title
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {selectedFeedback.title}
+                    </p>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Overall Rating</label>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Overall Rating
+                  </label>
                   <div className="mt-1 flex items-center">
                     {renderStars(selectedFeedback.rating?.overall || 0)}
-                    <span className="ml-2 text-gray-900">{selectedFeedback.rating?.overall || 0}/5</span>
+                    <span className="ml-2 text-gray-900">
+                      {selectedFeedback.rating?.overall || 0}/5
+                    </span>
                   </div>
                 </div>
 
                 {selectedFeedback.rating && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-2">Detailed Ratings</label>
+                    <label className="block text-sm font-medium text-gray-500 mb-2">
+                      Detailed Ratings
+                    </label>
                     <div className="space-y-2">
-                      {Object.entries(selectedFeedback.rating).map(([aspect, rating]) => {
-                        if (aspect === 'overall') return null;
-                        return (
-                          <div key={aspect} className="flex items-center justify-between">
-                            <span className="capitalize text-gray-700">{aspect}</span>
-                            <div className="flex items-center">
-                              {renderStars(rating)}
-                              <span className="ml-2 text-sm text-gray-600">{rating}/5</span>
+                      {Object.entries(selectedFeedback.rating).map(
+                        ([aspect, rating]) => {
+                          if (aspect === "overall") return null;
+                          return (
+                            <div
+                              key={aspect}
+                              className="flex items-center justify-between"
+                            >
+                              <span className="capitalize text-gray-700">
+                                {aspect}
+                              </span>
+                              <div className="flex items-center">
+                                {renderStars(rating)}
+                                <span className="ml-2 text-sm text-gray-600">
+                                  {rating}/5
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        }
+                      )}
                     </div>
                   </div>
                 )}
 
                 {selectedFeedback.comment && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Comment</label>
+                    <label className="block text-sm font-medium text-gray-500">
+                      Comment
+                    </label>
                     <div className="mt-1 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-gray-900 italic">"{selectedFeedback.comment}"</p>
+                      <p className="text-gray-900 italic">
+                        "{selectedFeedback.comment}"
+                      </p>
                     </div>
                   </div>
                 )}
 
                 {selectedFeedback.adminResponse?.response && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Admin Response</label>
+                    <label className="block text-sm font-medium text-gray-500">
+                      Admin Response
+                    </label>
                     <div className="mt-1 p-3 bg-blue-50 rounded-lg">
-                      <p className="text-blue-900">{selectedFeedback.adminResponse.response}</p>
+                      <p className="text-blue-900">
+                        {selectedFeedback.adminResponse.response}
+                      </p>
                       <p className="text-xs text-blue-700 mt-1">
-                        Responded on {new Date(selectedFeedback.adminResponse.respondedAt).toLocaleString('en-IN')}
+                        Responded on{" "}
+                        {new Date(
+                          selectedFeedback.adminResponse.respondedAt
+                        ).toLocaleString("en-IN")}
                       </p>
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Submitted</label>
+                  <label className="block text-sm font-medium text-gray-500">
+                    Submitted
+                  </label>
                   <p className="mt-1 text-gray-900">
-                    {new Date(selectedFeedback.createdAt).toLocaleString('en-IN')}
+                    {new Date(selectedFeedback.createdAt).toLocaleString(
+                      "en-IN"
+                    )}
                   </p>
                 </div>
 
