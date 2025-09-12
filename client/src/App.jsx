@@ -1,7 +1,7 @@
 // src/App.jsx
 import {
   BrowserRouter as Router,
-  Routes,
+  Routes, 
   Route,
   Navigate,
 } from "react-router-dom"; 
