@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
-// Configure email transporter (CORRECTED METHOD NAME)
+// Configure email transporter (CORRECTED METHOD NAME) 
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE,
   auth: {
