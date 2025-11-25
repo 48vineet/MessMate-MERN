@@ -1,32 +1,28 @@
 // src/components/common/Header.jsx
-import { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
+  ArrowRightOnRectangleIcon,
   Bars3Icon,
   BellIcon,
-  UserCircleIcon,
-  CogIcon,
-  ArrowRightOnRectangleIcon,
   ChevronDownIcon,
+  CogIcon,
   MagnifyingGlassIcon,
-  SunIcon,
-  MoonIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
-import { toast } from 'react-hot-toast';
-import api from '../../utils/api';
+  UserCircleIcon,
+} from "@heroicons/react/24/outline";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import api from "../../utils/api";
 
 const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
   const { logout } = useAuth();
-  const { theme, isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
 
@@ -36,35 +32,41 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
         setShowProfileMenu(false);
       }
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
         setShowNotifications(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const fetchNotifications = async () => {
     try {
-      const response = await api.get('/notifications/recent?limit=5');
+      const response = await api.get("/notifications/recent?limit=5");
       setNotifications(response.data.notifications || []);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("Error fetching notifications:", error);
     }
   };
 
   const handleLogout = async () => {
     try {
       await logout();
-      toast.success('Logged out successfully');
-      navigate('/login');
+      toast.success("Logged out successfully");
+      navigate("/login");
     } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Failed to logout');
+      console.error("Logout error:", error);
+      toast.error("Failed to logout");
     }
   };
 
@@ -72,51 +74,55 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
+      setSearchQuery("");
     }
   };
 
   const markNotificationRead = async (notificationId) => {
     try {
       await api.patch(`/notifications/${notificationId}/read`);
-      setNotifications(prev => prev.map(notif => 
-        notif._id === notificationId ? { ...notif, isRead: true } : notif
-      ));
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif._id === notificationId ? { ...notif, isRead: true } : notif
+        )
+      );
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error("Error marking notification as read:", error);
     }
   };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
   };
 
   const getPageTitle = () => {
     const pathMap = {
-      '/dashboard': 'Dashboard',
-      '/menu': 'Menu',
-      '/bookings': 'My Bookings',
-      '/wallet': 'Wallet',
-      '/profile': 'Profile',
-      '/admin/dashboard': 'Admin Dashboard',
-      '/admin/users': 'User Management',
-      '/admin/menu': 'Menu Management',
-      '/admin/bookings': 'Booking Management',
-      '/admin/analytics': 'Analytics',
-      '/admin/inventory': 'Inventory',
-      '/admin/reports': 'Reports',
-      '/admin/settings': 'Settings'
+      "/dashboard": "Dashboard",
+      "/menu": "Menu",
+      "/bookings": "My Bookings",
+      "/wallet": "Wallet",
+      "/profile": "Profile",
+      "/admin/dashboard": "Admin Dashboard",
+      "/admin/users": "User Management",
+      "/admin/menu": "Menu Management",
+      "/admin/bookings": "Booking Management",
+      "/admin/analytics": "Analytics",
+      "/admin/inventory": "Inventory",
+      "/admin/reports": "Reports",
+      "/admin/settings": "Settings",
     };
-    return pathMap[location.pathname] || 'MessMate';
+    return pathMap[location.pathname] || "MessMate";
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <header className={`bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-40 ${isDark ? 'dark' : ''}`}>
+    <header
+      className={`bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-40`}
+    >
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left Section */}
@@ -142,13 +148,19 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
               <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
                 <span className="text-white font-bold text-sm">M</span>
               </div>
-              <span className="text-xl font-bold text-gray-900 hidden sm:block">MessMate</span>
+              <span className="text-xl font-bold text-gray-900 hidden sm:block">
+                MessMate
+              </span>
             </Link>
 
             {/* Page Title */}
             <div className="hidden md:block ml-8">
-              <h1 className="text-lg font-semibold text-gray-900">{getPageTitle()}</h1>
-              <p className="text-sm text-gray-500">{getGreeting()}, {user?.name}</p>
+              <h1 className="text-lg font-semibold text-gray-900">
+                {getPageTitle()}
+              </h1>
+              <p className="text-sm text-gray-500">
+                {getGreeting()}, {user?.name}
+              </p>
             </div>
           </div>
 
@@ -170,19 +182,6 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {isDark ? (
-                <SunIcon className="h-5 w-5" />
-              ) : (
-                <MoonIcon className="h-5 w-5" />
-              )}
-            </button>
-
             {/* Notifications */}
             <div className="relative" ref={notificationRef}>
               <button
@@ -192,7 +191,7 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
                 <BellIcon className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {unreadCount > 9 ? '9+' : unreadCount}
+                    {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </button>
@@ -206,22 +205,32 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
                     className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
                   >
                     <div className="p-4 border-b border-gray-200">
-                      <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Notifications
+                      </h3>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                       {notifications.length > 0 ? (
                         notifications.map((notification) => (
                           <div
                             key={notification._id}
-                            onClick={() => markNotificationRead(notification._id)}
+                            onClick={() =>
+                              markNotificationRead(notification._id)
+                            }
                             className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
-                              !notification.isRead ? 'bg-blue-50' : ''
+                              !notification.isRead ? "bg-blue-50" : ""
                             }`}
                           >
-                            <p className="text-sm font-medium text-gray-900">{notification.title}</p>
-                            <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {notification.title}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {notification.message}
+                            </p>
                             <p className="text-xs text-gray-500 mt-2">
-                              {new Date(notification.createdAt).toLocaleString('en-IN')}
+                              {new Date(notification.createdAt).toLocaleString(
+                                "en-IN"
+                              )}
                             </p>
                           </div>
                         ))
@@ -263,15 +272,21 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
                 ) : (
                   <div className="h-9 w-9 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center border-2 border-gray-200 hover:border-blue-300 transition-colors">
                     <span className="text-white font-semibold text-sm">
-                      {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                      {user?.name?.charAt(0)?.toUpperCase() || "U"}
                     </span>
                   </div>
                 )}
                 <div className="hidden md:block text-left">
                   <span className="font-medium text-sm">{user?.name}</span>
-                  <div className="text-xs text-gray-500 capitalize">{user?.role}</div>
+                  <div className="text-xs text-gray-500 capitalize">
+                    {user?.role}
+                  </div>
                 </div>
-                <ChevronDownIcon className={`h-4 w-4 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
+                <ChevronDownIcon
+                  className={`h-4 w-4 transition-transform duration-200 ${
+                    showProfileMenu ? "rotate-180" : ""
+                  }`}
+                />
               </button>
 
               <AnimatePresence>
@@ -295,21 +310,33 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
                         ) : (
                           <div className="h-16 w-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
                             <span className="text-white font-bold text-xl">
-                              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                              {user?.name?.charAt(0)?.toUpperCase() || "U"}
                             </span>
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-bold text-gray-900 truncate">{user?.name}</h3>
-                          <p className="text-sm text-gray-600 truncate">{user?.email}</p>
+                          <h3 className="text-lg font-bold text-gray-900 truncate">
+                            {user?.name}
+                          </h3>
+                          <p className="text-sm text-gray-600 truncate">
+                            {user?.email}
+                          </p>
                           <div className="flex items-center mt-2">
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 capitalize">
                               {user?.role}
                             </span>
                             {user?.isVerified && (
                               <div className="ml-2 p-1 bg-green-100 rounded-full">
-                                <svg className="h-3 w-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                <svg
+                                  className="h-3 w-3 text-green-600"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
                                 </svg>
                               </div>
                             )}
@@ -330,10 +357,12 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
                         </div>
                         <div>
                           <div className="font-medium">Profile</div>
-                          <div className="text-xs text-gray-500">Manage your account</div>
+                          <div className="text-xs text-gray-500">
+                            Manage your account
+                          </div>
                         </div>
                       </Link>
-                      
+
                       <Link
                         to="/settings"
                         onClick={() => setShowProfileMenu(false)}
@@ -344,7 +373,9 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
                         </div>
                         <div>
                           <div className="font-medium">Settings</div>
-                          <div className="text-xs text-gray-500">App preferences</div>
+                          <div className="text-xs text-gray-500">
+                            App preferences
+                          </div>
                         </div>
                       </Link>
                     </div>
@@ -366,7 +397,9 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
                         </div>
                         <div>
                           <div className="font-medium">Sign out</div>
-                          <div className="text-xs text-red-500">Logout from your account</div>
+                          <div className="text-xs text-red-500">
+                            Logout from your account
+                          </div>
                         </div>
                       </button>
                     </div>

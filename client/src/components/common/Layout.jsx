@@ -1,23 +1,31 @@
 // src/components/common/Layout.jsx
-import { useState, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
-import Header from './Header';
-import Sidebar from './Sidebar';
-import Footer from './Footer';
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import Footer from "./Footer";
+import Header from "./Header";
+import Sidebar from "./Sidebar";
 
 const Layout = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
-  const { isDark } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true); // Start with sidebar open on desktop
   const [isLoading, setIsLoading] = useState(true);
 
   // Public routes that don't need layout
-  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/about', '/contact', '/terms', '/privacy'];
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+    "/about",
+    "/contact",
+    "/terms",
+    "/privacy",
+  ];
   const isPublicRoute = publicRoutes.includes(location.pathname);
 
   useEffect(() => {
@@ -38,7 +46,7 @@ const Layout = ({ children }) => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate("/login");
     }
   }, [isAuthenticated, navigate]);
 
@@ -69,19 +77,19 @@ const Layout = ({ children }) => {
   const pageVariants = {
     initial: { opacity: 0, y: 20 },
     in: { opacity: 1, y: 0 },
-    out: { opacity: 0, y: -20 }
+    out: { opacity: 0, y: -20 },
   };
 
   const pageTransition = {
-    type: 'tween',
-    ease: 'anticipate',
-    duration: 0.3
+    type: "tween",
+    ease: "anticipate",
+    duration: 0.3,
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? 'dark' : ''} bg-gray-50`}>
+    <div className={`min-h-screen bg-gray-50`}>
       {/* Header */}
-      <Header 
+      <Header
         user={user}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -89,14 +97,18 @@ const Layout = ({ children }) => {
 
       <div className="flex">
         {/* Sidebar */}
-        <Sidebar 
+        <Sidebar
           user={user}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
         />
 
         {/* Main Content */}
-        <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}`}>
+        <div
+          className={`flex-1 transition-all duration-300 ${
+            sidebarOpen ? "lg:pl-64" : "lg:pl-0"
+          }`}
+        >
           <main className="min-h-screen pt-16 lg:pt-16">
             <AnimatePresence mode="wait">
               <motion.div
