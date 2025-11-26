@@ -1,21 +1,19 @@
 // src/components/admin/MenuManagement.jsx
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import {
-  CalendarDaysIcon,
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  ClockIcon,
-  CurrencyRupeeIcon,
-  PhotoIcon,
   CheckCircleIcon,
-  XMarkIcon,
+  CurrencyRupeeIcon,
   DocumentDuplicateIcon,
+  PencilIcon,
+  PhotoIcon,
+  PlusIcon,
+  TrashIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
-import api from "../../utils/api";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import api from "../../utils/api";
 
 const MenuManagement = () => {
   const navigate = useNavigate();
@@ -41,7 +39,7 @@ const MenuManagement = () => {
 
   const fetchMenus = async () => {
     try {
-      const response = await api.get(`/menu/daily?date=${selectedDate}`);
+      const response = await api.get(`/menu/admin/daily?date=${selectedDate}`);
       setMenus(response.data.data || []);
     } catch (error) {
       console.error("Error fetching menus:", error);
@@ -98,7 +96,7 @@ const MenuManagement = () => {
       if (editingMenu) {
         console.log("Updating menu:", editingMenu._id, submitData);
         const response = await api.put(
-          `/menu/daily/${editingMenu._id}`,
+          `/menu/admin/daily/${editingMenu._id}`,
           submitData
         );
         toast.success("Menu updated successfully");
@@ -132,7 +130,7 @@ const MenuManagement = () => {
         }
       } else {
         console.log("Creating new menu:", submitData);
-        const response = await api.post("/menu/daily", submitData);
+        const response = await api.post("/menu/admin/daily", submitData);
         toast.success("Menu created successfully");
 
         // Add the new menu to the local state
@@ -174,7 +172,7 @@ const MenuManagement = () => {
     if (!window.confirm("Are you sure you want to delete this menu?")) return;
 
     try {
-      await api.delete(`/menu/daily/${menuId}`);
+      await api.delete(`/menu/admin/daily/${menuId}`);
       setMenus((prev) => prev.filter((menu) => menu._id !== menuId));
       toast.success("Menu deleted successfully");
     } catch (error) {
@@ -185,7 +183,9 @@ const MenuManagement = () => {
 
   const handleToggleAvailability = async (menuId, isAvailable) => {
     try {
-      await api.patch(`/menu/daily/${menuId}/availability`, { isAvailable });
+      await api.patch(`/menu/admin/daily/${menuId}/availability`, {
+        isAvailable,
+      });
       setMenus((prev) =>
         prev.map((menu) =>
           menu._id === menuId ? { ...menu, isAvailable } : menu

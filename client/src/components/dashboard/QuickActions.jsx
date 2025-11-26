@@ -1,16 +1,9 @@
 // src/components/dashboard/QuickActions.jsx
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  QrCodeIcon,
-  CalendarDaysIcon,
-  BellIcon,
-  UserIcon,
-  CogIcon,
-  CreditCardIcon
-} from '@heroicons/react/24/outline';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { motion } from "framer-motion";
+import { useState } from "react";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import Icons from "../common/Icons";
 
 const QuickActions = () => {
   const [showQRModal, setShowQRModal] = useState(false);
@@ -21,12 +14,12 @@ const QuickActions = () => {
     // For now, show a placeholder QR code
     // In a real implementation, this would fetch the user's active booking
     setQrData({
-      mealType: 'DINNER',
-      date: new Date().toLocaleDateString('en-IN'),
-      time: new Date().toLocaleTimeString('en-IN', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })
+      mealType: "DINNER",
+      date: new Date().toLocaleDateString("en-IN"),
+      time: new Date().toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     });
     setShowQRModal(true);
   };
@@ -42,47 +35,47 @@ const QuickActions = () => {
 
   const quickActions = [
     {
-      title: 'Book Meal',
-      description: 'Book your next meal',
-      icon: CalendarDaysIcon,
-      color: 'bg-blue-500 hover:bg-blue-600',
-      onClick: () => handleNavigation('/menu', 'Book Meal')
+      title: "Book Meal",
+      description: "Book your next meal",
+      icon: Icons.calendar,
+      color: "bg-blue-500 hover:bg-blue-600",
+      onClick: () => handleNavigation("/menu", "Book Meal"),
     },
     {
-      title: 'View QR Code',
-      description: 'Show meal QR code',
-      icon: QrCodeIcon,
-      color: 'bg-green-500 hover:bg-green-600',
-      onClick: handleShowQR
+      title: "View QR Code",
+      description: "Show meal QR code",
+      icon: Icons.qrCode,
+      color: "bg-green-500 hover:bg-green-600",
+      onClick: handleShowQR,
     },
     {
-      title: 'Wallet',
-      description: 'Manage your wallet',
-      icon: CreditCardIcon,
-      color: 'bg-emerald-500 hover:bg-emerald-600',
-      onClick: () => handleNavigation('/wallet', 'Wallet')
+      title: "Wallet",
+      description: "Manage your wallet",
+      icon: Icons.wallet,
+      color: "bg-emerald-500 hover:bg-emerald-600",
+      onClick: () => handleNavigation("/wallet", "Wallet"),
     },
     {
-      title: 'Notifications',
-      description: 'Check notifications',
-      icon: BellIcon,
-      color: 'bg-orange-500 hover:bg-orange-600',
-      onClick: () => handleNavigation('/notifications', 'Notifications')
+      title: "Notifications",
+      description: "Check notifications",
+      icon: Icons.bell,
+      color: "bg-orange-500 hover:bg-orange-600",
+      onClick: () => handleNavigation("/notifications", "Notifications"),
     },
     {
-      title: 'Profile',
-      description: 'Update profile',
-      icon: UserIcon,
-      color: 'bg-purple-500 hover:bg-purple-600',
-      onClick: () => handleNavigation('/profile', 'Profile')
+      title: "Profile",
+      description: "Update profile",
+      icon: Icons.user,
+      color: "bg-purple-500 hover:bg-purple-600",
+      onClick: () => handleNavigation("/profile", "Profile"),
     },
     {
-      title: 'Settings',
-      description: 'App settings',
-      icon: CogIcon,
-      color: 'bg-gray-500 hover:bg-gray-600',
-      onClick: () => handleNavigation('/settings', 'Settings')
-    }
+      title: "Settings",
+      description: "App settings",
+      icon: Icons.settings,
+      color: "bg-gray-500 hover:bg-gray-600",
+      onClick: () => handleNavigation("/settings", "Settings"),
+    },
   ];
 
   return (
@@ -95,7 +88,9 @@ const QuickActions = () => {
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
-          <p className="text-sm text-gray-600 mt-1">Access frequently used features</p>
+          <p className="text-sm text-gray-600 mt-1">
+            Access frequently used features
+          </p>
         </div>
 
         {/* Actions Grid */}
@@ -113,7 +108,9 @@ const QuickActions = () => {
                 <div className="flex flex-col items-center text-center">
                   <action.icon className="h-6 w-6 mb-2" />
                   <span className="text-sm font-medium">{action.title}</span>
-                  <span className="text-xs opacity-90">{action.description}</span>
+                  <span className="text-xs opacity-90">
+                    {action.description}
+                  </span>
                 </div>
               </motion.button>
             ))}
@@ -131,28 +128,28 @@ const QuickActions = () => {
             className="bg-white rounded-xl p-6 max-w-sm w-full"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Meal QR Code</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Meal QR Code
+              </h3>
               <button
                 onClick={() => setShowQRModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <Icons.close className="h-5 w-5" />
               </button>
             </div>
-            
+
             <div className="text-center">
               <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <QrCodeIcon className="h-24 w-24 text-gray-400" />
+                <Icons.qrCode className="h-24 w-24 text-gray-400" />
               </div>
-              
+
               <div className="text-sm text-gray-600">
                 <p className="font-medium">{qrData.mealType}</p>
                 <p>{qrData.date}</p>
                 <p>{qrData.time}</p>
               </div>
-              
+
               <p className="text-xs text-gray-500 mt-4">
                 Show this QR code at the mess counter to collect your meal
               </p>

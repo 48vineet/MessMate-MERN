@@ -1,7 +1,7 @@
 // src/context/PaymentContext.jsx
-import { createContext, useContext, useReducer, useCallback } from 'react';
-import api from '../utils/api';
-import { toast } from 'react-hot-toast';
+import { createContext, useCallback, useContext, useReducer } from "react";
+import { toast } from "react-hot-toast";
+import api from "../utils/api";
 
 // Initial state
 const initialState = {
@@ -10,7 +10,7 @@ const initialState = {
     transactions: [],
     monthlySpent: 0,
     totalSpent: 0,
-    totalRecharged: 0
+    totalRecharged: 0,
   },
   payments: [],
   currentPayment: null,
@@ -18,24 +18,24 @@ const initialState = {
   error: null,
   paymentMethods: [],
   upiApps: [
-    { name: 'PhonePe', icon: '📱', id: 'phonepe' },
-    { name: 'Google Pay', icon: '🎯', id: 'googlepay' },
-    { name: 'Paytm', icon: '💙', id: 'paytm' },
-    { name: 'BHIM', icon: '🏛️', id: 'bhim' }
-  ]
+    { name: "PhonePe", iconName: "wallet", id: "phonepe" },
+    { name: "Google Pay", icon: "🎯", id: "googlepay" },
+    { name: "Paytm", icon: "💙", id: "paytm" },
+    { name: "BHIM", icon: "🏛️", id: "bhim" },
+  ],
 };
 
 // Action types
 const PAYMENT_ACTIONS = {
-  SET_LOADING: 'SET_LOADING',
-  SET_WALLET: 'SET_WALLET',
-  SET_PAYMENTS: 'SET_PAYMENTS',
-  SET_CURRENT_PAYMENT: 'SET_CURRENT_PAYMENT',
-  ADD_TRANSACTION: 'ADD_TRANSACTION',
-  UPDATE_TRANSACTION: 'UPDATE_TRANSACTION',
-  SET_PAYMENT_METHODS: 'SET_PAYMENT_METHODS',
-  SET_ERROR: 'SET_ERROR',
-  CLEAR_ERROR: 'CLEAR_ERROR'
+  SET_LOADING: "SET_LOADING",
+  SET_WALLET: "SET_WALLET",
+  SET_PAYMENTS: "SET_PAYMENTS",
+  SET_CURRENT_PAYMENT: "SET_CURRENT_PAYMENT",
+  ADD_TRANSACTION: "ADD_TRANSACTION",
+  UPDATE_TRANSACTION: "UPDATE_TRANSACTION",
+  SET_PAYMENT_METHODS: "SET_PAYMENT_METHODS",
+  SET_ERROR: "SET_ERROR",
+  CLEAR_ERROR: "CLEAR_ERROR",
 };
 
 // Reducer function
@@ -44,7 +44,7 @@ const paymentReducer = (state, action) => {
     case PAYMENT_ACTIONS.SET_LOADING:
       return {
         ...state,
-        loading: action.payload
+        loading: action.payload,
       };
 
     case PAYMENT_ACTIONS.SET_WALLET:
@@ -52,7 +52,7 @@ const paymentReducer = (state, action) => {
         ...state,
         wallet: { ...state.wallet, ...action.payload },
         loading: false,
-        error: null
+        error: null,
       };
 
     case PAYMENT_ACTIONS.SET_PAYMENTS:
@@ -60,7 +60,7 @@ const paymentReducer = (state, action) => {
         ...state,
         payments: action.payload,
         loading: false,
-        error: null
+        error: null,
       };
 
     case PAYMENT_ACTIONS.SET_CURRENT_PAYMENT:
@@ -68,7 +68,7 @@ const paymentReducer = (state, action) => {
         ...state,
         currentPayment: action.payload,
         loading: false,
-        error: null
+        error: null,
       };
 
     case PAYMENT_ACTIONS.ADD_TRANSACTION:
@@ -77,11 +77,12 @@ const paymentReducer = (state, action) => {
         wallet: {
           ...state.wallet,
           transactions: [action.payload, ...state.wallet.transactions],
-          balance: action.payload.type === 'credit' 
-            ? state.wallet.balance + action.payload.amount
-            : state.wallet.balance - action.payload.amount
+          balance:
+            action.payload.type === "credit"
+              ? state.wallet.balance + action.payload.amount
+              : state.wallet.balance - action.payload.amount,
         },
-        error: null
+        error: null,
       };
 
     case PAYMENT_ACTIONS.UPDATE_TRANSACTION:
@@ -89,11 +90,13 @@ const paymentReducer = (state, action) => {
         ...state,
         wallet: {
           ...state.wallet,
-          transactions: state.wallet.transactions.map(transaction =>
-            transaction._id === action.payload._id ? action.payload : transaction
-          )
+          transactions: state.wallet.transactions.map((transaction) =>
+            transaction._id === action.payload._id
+              ? action.payload
+              : transaction
+          ),
         },
-        error: null
+        error: null,
       };
 
     case PAYMENT_ACTIONS.SET_PAYMENT_METHODS:
@@ -101,20 +104,20 @@ const paymentReducer = (state, action) => {
         ...state,
         paymentMethods: action.payload,
         loading: false,
-        error: null
+        error: null,
       };
 
     case PAYMENT_ACTIONS.SET_ERROR:
       return {
         ...state,
         error: action.payload,
-        loading: false
+        loading: false,
       };
 
     case PAYMENT_ACTIONS.CLEAR_ERROR:
       return {
         ...state,
-        error: null
+        error: null,
       };
 
     default:
@@ -129,8 +132,7 @@ const PaymentContext = createContext();
 export const PaymentProvider = ({ children }) => {
   const [state, dispatch] = useReducer(paymentReducer, initialState);
 
-console.log ("stcnsole 4",state);
-
+  console.log("stcnsole 4", state);
 
   // Fetch wallet details
   const fetchWallet = useCallback(async () => {
@@ -138,52 +140,63 @@ console.log ("stcnsole 4",state);
       dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: true });
       dispatch({ type: PAYMENT_ACTIONS.CLEAR_ERROR });
 
-      const response = await api.get('/wallet/details');
-      
+      const response = await api.get("/wallet/details");
+
       if (response.data.success) {
         const wallet = response.data.wallet;
-        
+
         dispatch({ type: PAYMENT_ACTIONS.SET_WALLET, payload: wallet });
-        
+
         return { success: true, wallet };
       } else {
-        throw new Error(response.data.message || 'Failed to fetch wallet details');
+        throw new Error(
+          response.data.message || "Failed to fetch wallet details"
+        );
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch wallet details';
-      
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch wallet details";
+
       dispatch({ type: PAYMENT_ACTIONS.SET_ERROR, payload: errorMessage });
       return { success: false, error: errorMessage };
     }
   }, []);
 
   // Recharge wallet
-  const rechargeWallet = useCallback(async (amount, paymentMethod = 'upi') => {
+  const rechargeWallet = useCallback(async (amount, paymentMethod = "upi") => {
     try {
       dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: true });
       dispatch({ type: PAYMENT_ACTIONS.CLEAR_ERROR });
 
-      const response = await api.post('/wallet/recharge', {
+      const response = await api.post("/wallet/recharge", {
         amount,
-        paymentMethod
+        paymentMethod,
       });
-      
+
       if (response.data.success) {
         const transaction = response.data.transaction;
-        
-        dispatch({ type: PAYMENT_ACTIONS.ADD_TRANSACTION, payload: transaction });
+
+        dispatch({
+          type: PAYMENT_ACTIONS.ADD_TRANSACTION,
+          payload: transaction,
+        });
         toast.success(`Wallet recharged with ₹${amount}`);
-        
+
         return { success: true, transaction };
       } else {
-        throw new Error(response.data.message || 'Failed to recharge wallet');
+        throw new Error(response.data.message || "Failed to recharge wallet");
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to recharge wallet';
-      
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to recharge wallet";
+
       dispatch({ type: PAYMENT_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
-      
+
       return { success: false, error: errorMessage };
     } finally {
       dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: false });
@@ -196,40 +209,47 @@ console.log ("stcnsole 4",state);
       dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: true });
       dispatch({ type: PAYMENT_ACTIONS.CLEAR_ERROR });
 
-      const response = await api.post('/payments/booking', {
+      const response = await api.post("/payments/booking", {
         bookingId,
-        ...paymentData
+        ...paymentData,
       });
-      
+
       if (response.data.success) {
         const payment = response.data.payment;
-        
-        dispatch({ type: PAYMENT_ACTIONS.SET_CURRENT_PAYMENT, payload: payment });
-        
+
+        dispatch({
+          type: PAYMENT_ACTIONS.SET_CURRENT_PAYMENT,
+          payload: payment,
+        });
+
         // Update wallet if payment was from wallet
-        if (paymentData.paymentMethod === 'wallet') {
-          dispatch({ type: PAYMENT_ACTIONS.ADD_TRANSACTION, payload: {
-            _id: payment._id,
-            type: 'debit',
-            amount: payment.amount,
-            description: `Payment for booking #${bookingId.slice(-8)}`,
-            createdAt: new Date().toISOString(),
-            status: 'completed'
-          }});
+        if (paymentData.paymentMethod === "wallet") {
+          dispatch({
+            type: PAYMENT_ACTIONS.ADD_TRANSACTION,
+            payload: {
+              _id: payment._id,
+              type: "debit",
+              amount: payment.amount,
+              description: `Payment for booking #${bookingId.slice(-8)}`,
+              createdAt: new Date().toISOString(),
+              status: "completed",
+            },
+          });
         }
-        
-        toast.success('Payment processed successfully!');
-        
+
+        toast.success("Payment processed successfully!");
+
         return { success: true, payment };
       } else {
-        throw new Error(response.data.message || 'Payment failed');
+        throw new Error(response.data.message || "Payment failed");
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Payment failed';
-      
+      const errorMessage =
+        error.response?.data?.message || error.message || "Payment failed";
+
       dispatch({ type: PAYMENT_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
-      
+
       return { success: false, error: errorMessage };
     } finally {
       dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: false });
@@ -237,52 +257,68 @@ console.log ("stcnsole 4",state);
   }, []);
 
   // Generate UPI QR code
-  const generateUPIQR = useCallback(async (amount, purpose, bookingId = null) => {
-    try {
-      dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: true });
-      dispatch({ type: PAYMENT_ACTIONS.CLEAR_ERROR });
+  const generateUPIQR = useCallback(
+    async (amount, purpose, bookingId = null) => {
+      try {
+        dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: true });
+        dispatch({ type: PAYMENT_ACTIONS.CLEAR_ERROR });
 
-      const response = await api.post('/payments/generate-qr', {
-        amount,
-        purpose,
-        bookingId
-      });
-      
-      if (response.data.success) {
-        const { qrCode, transactionId } = response.data;
-        
-        return { success: true, qrCode, transactionId };
-      } else {
-        throw new Error(response.data.message || 'Failed to generate QR code');
+        const response = await api.post("/payments/generate-qr", {
+          amount,
+          purpose,
+          bookingId,
+        });
+
+        if (response.data.success) {
+          const { qrCode, transactionId } = response.data;
+
+          return { success: true, qrCode, transactionId };
+        } else {
+          throw new Error(
+            response.data.message || "Failed to generate QR code"
+          );
+        }
+      } catch (error) {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to generate QR code";
+
+        dispatch({ type: PAYMENT_ACTIONS.SET_ERROR, payload: errorMessage });
+        return { success: false, error: errorMessage };
+      } finally {
+        dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: false });
       }
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to generate QR code';
-      
-      dispatch({ type: PAYMENT_ACTIONS.SET_ERROR, payload: errorMessage });
-      return { success: false, error: errorMessage };
-    } finally {
-      dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: false });
-    }
-  }, []);
+    },
+    []
+  );
 
   // Check payment status
   const checkPaymentStatus = useCallback(async (transactionId) => {
     try {
       const response = await api.get(`/payments/status/${transactionId}`);
-      
+
       if (response.data.success) {
         const { status, payment } = response.data;
-        
+
         if (payment) {
-          dispatch({ type: PAYMENT_ACTIONS.SET_CURRENT_PAYMENT, payload: payment });
+          dispatch({
+            type: PAYMENT_ACTIONS.SET_CURRENT_PAYMENT,
+            payload: payment,
+          });
         }
-        
+
         return { success: true, status, payment };
       } else {
-        throw new Error(response.data.message || 'Failed to check payment status');
+        throw new Error(
+          response.data.message || "Failed to check payment status"
+        );
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to check payment status';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to check payment status";
       return { success: false, error: errorMessage };
     }
   }, []);
@@ -293,20 +329,25 @@ console.log ("stcnsole 4",state);
       dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: true });
       dispatch({ type: PAYMENT_ACTIONS.CLEAR_ERROR });
 
-      const response = await api.get('/payments/history', { params: filters });
-      
+      const response = await api.get("/payments/history", { params: filters });
+
       if (response.data.success) {
         const payments = response.data.payments || [];
-        
+
         dispatch({ type: PAYMENT_ACTIONS.SET_PAYMENTS, payload: payments });
-        
+
         return { success: true, payments };
       } else {
-        throw new Error(response.data.message || 'Failed to fetch payment history');
+        throw new Error(
+          response.data.message || "Failed to fetch payment history"
+        );
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch payment history';
-      
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch payment history";
+
       dispatch({ type: PAYMENT_ACTIONS.SET_ERROR, payload: errorMessage });
       return { success: false, error: errorMessage };
     }
@@ -318,25 +359,30 @@ console.log ("stcnsole 4",state);
       dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: true });
       dispatch({ type: PAYMENT_ACTIONS.CLEAR_ERROR });
 
-      const response = await api.post('/payments/refund-request', {
+      const response = await api.post("/payments/refund-request", {
         paymentId,
         reason,
-        amount
+        amount,
       });
-      
+
       if (response.data.success) {
-        toast.success('Refund request submitted successfully!');
-        
+        toast.success("Refund request submitted successfully!");
+
         return { success: true, refundRequest: response.data.refundRequest };
       } else {
-        throw new Error(response.data.message || 'Failed to submit refund request');
+        throw new Error(
+          response.data.message || "Failed to submit refund request"
+        );
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to submit refund request';
-      
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to submit refund request";
+
       dispatch({ type: PAYMENT_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
-      
+
       return { success: false, error: errorMessage };
     } finally {
       dispatch({ type: PAYMENT_ACTIONS.SET_LOADING, payload: false });
@@ -346,19 +392,27 @@ console.log ("stcnsole 4",state);
   // Fetch available payment methods
   const fetchPaymentMethods = useCallback(async () => {
     try {
-      const response = await api.get('/payments/methods');
-      
+      const response = await api.get("/payments/methods");
+
       if (response.data.success) {
         const methods = response.data.methods || [];
-        
-        dispatch({ type: PAYMENT_ACTIONS.SET_PAYMENT_METHODS, payload: methods });
-        
+
+        dispatch({
+          type: PAYMENT_ACTIONS.SET_PAYMENT_METHODS,
+          payload: methods,
+        });
+
         return { success: true, methods };
       } else {
-        throw new Error(response.data.message || 'Failed to fetch payment methods');
+        throw new Error(
+          response.data.message || "Failed to fetch payment methods"
+        );
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch payment methods';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch payment methods";
       return { success: false, error: errorMessage };
     }
   }, []);
@@ -377,7 +431,7 @@ console.log ("stcnsole 4",state);
     error: state.error,
     paymentMethods: state.paymentMethods,
     upiApps: state.upiApps,
-    
+
     // Actions
     fetchWallet,
     rechargeWallet,
@@ -387,24 +441,22 @@ console.log ("stcnsole 4",state);
     fetchPaymentHistory,
     requestRefund,
     fetchPaymentMethods,
-    clearError
+    clearError,
   };
 
   return (
-    <PaymentContext.Provider value={value}>
-      {children}
-    </PaymentContext.Provider>
+    <PaymentContext.Provider value={value}>{children}</PaymentContext.Provider>
   );
 };
 
 // Custom hook to use payment context
 export const usePayment = () => {
   const context = useContext(PaymentContext);
-  
+
   if (!context) {
-    throw new Error('usePayment must be used within a PaymentProvider');
+    throw new Error("usePayment must be used within a PaymentProvider");
   }
-  
+
   return context;
 };
 

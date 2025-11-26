@@ -1,23 +1,21 @@
 // src/components/dashboard/UserDashboard.jsx
-import { useState, useEffect } from 'react';
-import {
-  ClockIcon, CalendarDaysIcon, CurrencyRupeeIcon, ChartBarIcon, BellIcon, QrCodeIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../utils/api';
-import { toast } from 'react-hot-toast';
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useAuth } from "../../context/AuthContext";
+import api from "../../utils/api";
+import Icons from "../common/Icons";
 
 // Import dashboard components
-import MenuCard from './MenuCard';
-import BookingCard from './BookingCard';
-import ProfileCard from './ProfileCard';
-import MealHistory from './MealHistory';
-import AttendanceCard from './AttendanceCard';
-import NotificationCard from './NotificationCard';
-import QuickActions from './QuickActions';
-import WalletCard from './WalletCard';
-import FeedbackForm from './FeedbackForm';
-import FeedbackList from './FeedbackList';
+import AttendanceCard from "./AttendanceCard";
+import BookingCard from "./BookingCard";
+import FeedbackForm from "./FeedbackForm";
+import FeedbackList from "./FeedbackList";
+import MealHistory from "./MealHistory";
+import MenuCard from "./MenuCard";
+import NotificationCard from "./NotificationCard";
+import ProfileCard from "./ProfileCard";
+import QuickActions from "./QuickActions";
+import WalletCard from "./WalletCard";
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -27,10 +25,10 @@ const UserDashboard = () => {
     recentMeals: [],
     notifications: [],
     stats: {},
-    wallet: {}
+    wallet: {},
   });
   const [loading, setLoading] = useState(true);
-  const [greeting, setGreeting] = useState('');
+  const [greeting, setGreeting] = useState("");
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
 
   useEffect(() => {
@@ -41,9 +39,9 @@ const UserDashboard = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
   };
 
   const fetchDashboardData = async () => {
@@ -51,16 +49,16 @@ const UserDashboard = () => {
     try {
       // Fetch data individually to identify which endpoint is failing
       const endpoints = [
-        { name: 'menu', url: '/menu/today' },
-        { name: 'bookings', url: '/bookings/my-bookings' },
-        { name: 'meals', url: '/meals/recent' },
-        { name: 'notifications', url: '/notifications/unread-count' },
-        { name: 'stats', url: '/users/stats' },
-        { name: 'wallet', url: '/wallet/details' }
+        { name: "menu", url: "/menu/today" },
+        { name: "bookings", url: "/bookings/my-bookings" },
+        { name: "meals", url: "/meals/recent" },
+        { name: "notifications", url: "/notifications/unread-count" },
+        { name: "stats", url: "/users/stats" },
+        { name: "wallet", url: "/wallet/details" },
       ];
 
       const results = {};
-      
+
       for (const endpoint of endpoints) {
         try {
           console.log(`Fetching ${endpoint.name}...`);
@@ -71,34 +69,53 @@ const UserDashboard = () => {
           console.error(`Error fetching ${endpoint.name}:`, error);
           // Don't show toast errors for individual endpoint failures
           // Just log them and continue with empty data
-          results[endpoint.name] = { error: true, message: error.response?.data?.message || 'Failed to fetch' };
+          results[endpoint.name] = {
+            error: true,
+            message: error.response?.data?.message || "Failed to fetch",
+          };
         }
       }
 
       setDashboardData({
         todayMenu: results.menu?.menu || {
-          breakfast: { items: [], price: 0, available: false, time: '7:00 AM - 10:00 AM' },
-          lunch: { items: [], price: 0, available: false, time: '12:00 PM - 3:00 PM' },
-          dinner: { items: [], price: 0, available: false, time: '7:00 PM - 10:00 PM' }
+          breakfast: {
+            items: [],
+            price: 0,
+            available: false,
+            time: "7:00 AM - 10:00 AM",
+          },
+          lunch: {
+            items: [],
+            price: 0,
+            available: false,
+            time: "12:00 PM - 3:00 PM",
+          },
+          dinner: {
+            items: [],
+            price: 0,
+            available: false,
+            time: "7:00 PM - 10:00 PM",
+          },
         },
-        upcomingBookings: results.bookings?.data || results.bookings?.bookings || [],
+        upcomingBookings:
+          results.bookings?.data || results.bookings?.bookings || [],
         recentMeals: results.meals?.meals || [],
         notifications: results.notifications?.notifications || [],
         unreadCount: results.notifications?.count || 0,
         stats: results.stats?.stats || {
           monthlySpent: 0,
           mealsThisMonth: 0,
-          attendanceRate: 0
+          attendanceRate: 0,
         },
         wallet: results.wallet?.wallet || {
           balance: 0,
           monthlySpent: 0,
-          recentTransactions: []
-        }
+          recentTransactions: [],
+        },
       });
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      console.error("Error fetching dashboard data:", error);
+      toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
@@ -106,33 +123,33 @@ const UserDashboard = () => {
 
   const quickStats = [
     {
-      title: 'This Month',
+      title: "This Month",
       value: `₹${dashboardData.stats.monthlySpent || 200}`,
-      subtitle: 'Total Spent',
-      icon: CurrencyRupeeIcon,
-      color: 'text-green-600 bg-green-100'
+      subtitle: "Total Spent",
+      icon: Icons.rupee,
+      color: "text-green-600 bg-green-100",
     },
     {
-      title: 'Meals Taken',
+      title: "Meals Taken",
       value: dashboardData.stats.mealsThisMonth || 15,
-      subtitle: 'This Month',
-      icon: ChartBarIcon,
-      color: 'text-blue-600 bg-blue-100'
+      subtitle: "This Month",
+      icon: Icons.chart,
+      color: "text-blue-600 bg-blue-100",
     },
     {
-      title: 'Attendance',
+      title: "Attendance",
       value: `${dashboardData.stats.attendanceRate || 85}%`,
-      subtitle: 'This Month',
-      icon: CalendarDaysIcon,
-      color: 'text-purple-600 bg-purple-100'
+      subtitle: "This Month",
+      icon: Icons.calendar,
+      color: "text-purple-600 bg-purple-100",
     },
     {
-      title: 'Notifications',
+      title: "Notifications",
       value: dashboardData.notifications.length || 2,
-      subtitle: 'Unread',
-      icon: BellIcon,
-      color: 'text-orange-600 bg-orange-100'
-    }
+      subtitle: "Unread",
+      icon: Icons.bell,
+      color: "text-orange-600 bg-orange-100",
+    },
   ];
 
   if (loading) {
@@ -165,7 +182,8 @@ const UserDashboard = () => {
             {greeting}, {user?.name}! 👋
           </h1>
           <p className="text-gray-600">
-            Welcome back to your MessMate dashboard. Here's what's happening today.
+            Welcome back to your MessMate dashboard. Here's what's happening
+            today.
           </p>
         </div>
 
@@ -178,8 +196,12 @@ const UserDashboard = () => {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                  <p className="text-xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-sm font-medium text-gray-600 mb-1">
+                    {stat.title}
+                  </p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {stat.value}
+                  </p>
                   <p className="text-xs text-gray-500">{stat.subtitle}</p>
                 </div>
                 <div className={`p-2 rounded-full ${stat.color}`}>
@@ -208,8 +230,12 @@ const UserDashboard = () => {
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-base font-bold text-gray-900">Feedback & Reviews</h3>
-                    <p className="text-xs text-gray-600">Share your experience</p>
+                    <h3 className="text-base font-bold text-gray-900">
+                      Feedback & Reviews
+                    </h3>
+                    <p className="text-xs text-gray-600">
+                      Share your experience
+                    </p>
                   </div>
                   <button
                     onClick={() => setShowFeedbackForm(true)}
@@ -224,7 +250,7 @@ const UserDashboard = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Right Column - Quick Actions, Profile, Wallet, Attendance */}
           <div className="space-y-4">
             <QuickActions onRefresh={fetchDashboardData} />

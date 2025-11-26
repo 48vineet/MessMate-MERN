@@ -1,31 +1,27 @@
 // src/components/admin/UserManagement.jsx
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { 
-  UsersIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  EyeIcon,
+import {
+  ChartBarIcon,
   CheckCircleIcon,
-  XCircleIcon,
+  EyeIcon,
+  MagnifyingGlassIcon,
+  TrashIcon,
   UserPlusIcon,
-  ChartBarIcon
-} from '@heroicons/react/24/outline';
-import api from '../../utils/api';
-import { toast } from 'react-hot-toast';
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import api from "../../utils/api";
 
 const UserManagement = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [showUserDetails, setShowUserDetails] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,11 +37,11 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get('/users');
+      const response = await api.get("/users");
       setUsers(response.data.users || []);
     } catch (error) {
-      console.error('Error fetching users:', error);
-      toast.error('Failed to load users');
+      console.error("Error fetching users:", error);
+      toast.error("Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -56,23 +52,24 @@ const UserManagement = () => {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(user =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.phone?.includes(searchTerm) ||
-        user.hostel?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (user) =>
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.phone?.includes(searchTerm) ||
+          user.hostel?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Role filter
-    if (filterRole !== 'all') {
-      filtered = filtered.filter(user => user.role === filterRole);
+    if (filterRole !== "all") {
+      filtered = filtered.filter((user) => user.role === filterRole);
     }
 
     // Status filter
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(user => 
-        filterStatus === 'active' ? user.isActive : !user.isActive
+    if (filterStatus !== "all") {
+      filtered = filtered.filter((user) =>
+        filterStatus === "active" ? user.isActive : !user.isActive
       );
     }
 
@@ -81,76 +78,88 @@ const UserManagement = () => {
   };
 
   const handleSelectUser = (userId) => {
-    setSelectedUsers(prev =>
+    setSelectedUsers((prev) =>
       prev.includes(userId)
-        ? prev.filter(id => id !== userId)
+        ? prev.filter((id) => id !== userId)
         : [...prev, userId]
     );
   };
 
   const handleSelectAll = () => {
-    const currentPageUsers = getCurrentPageUsers().map(user => user._id);
-    const allSelected = currentPageUsers.every(id => selectedUsers.includes(id));
-    
+    const currentPageUsers = getCurrentPageUsers().map((user) => user._id);
+    const allSelected = currentPageUsers.every((id) =>
+      selectedUsers.includes(id)
+    );
+
     if (allSelected) {
-      setSelectedUsers(prev => prev.filter(id => !currentPageUsers.includes(id)));
+      setSelectedUsers((prev) =>
+        prev.filter((id) => !currentPageUsers.includes(id))
+      );
     } else {
-      setSelectedUsers(prev => [...new Set([...prev, ...currentPageUsers])]);
+      setSelectedUsers((prev) => [...new Set([...prev, ...currentPageUsers])]);
     }
   };
 
   const handleUpdateUserStatus = async (userId, status) => {
     try {
       await api.patch(`/users/${userId}/status`, { isActive: status });
-      setUsers(prev => prev.map(user =>
-        user._id === userId ? { ...user, isActive: status } : user
-      ));
-      toast.success(`User ${status ? 'activated' : 'deactivated'} successfully`);
+      setUsers((prev) =>
+        prev.map((user) =>
+          user._id === userId ? { ...user, isActive: status } : user
+        )
+      );
+      toast.success(
+        `User ${status ? "activated" : "deactivated"} successfully`
+      );
     } catch (error) {
-      console.error('Error updating user status:', error);
-      toast.error('Failed to update user status');
+      console.error("Error updating user status:", error);
+      toast.error("Failed to update user status");
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
 
     try {
       await api.delete(`/users/${userId}`);
-      setUsers(prev => prev.filter(user => user._id !== userId));
-      toast.success('User deleted successfully');
+      setUsers((prev) => prev.filter((user) => user._id !== userId));
+      toast.success("User deleted successfully");
     } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error('Failed to delete user');
+      console.error("Error deleting user:", error);
+      toast.error("Failed to delete user");
     }
   };
 
   const handleBulkAction = async (action) => {
     if (selectedUsers.length === 0) {
-      toast.error('Please select users first');
+      toast.error("Please select users first");
       return;
     }
 
     try {
-      await api.patch('/users/bulk-action', {
+      await api.patch("/users/bulk-action", {
         userIds: selectedUsers,
-        action
+        action,
       });
-      
-      if (action === 'activate' || action === 'deactivate') {
-        setUsers(prev => prev.map(user =>
-          selectedUsers.includes(user._id)
-            ? { ...user, isActive: action === 'activate' }
-            : user
-        ));
-      } else if (action === 'delete') {
-        setUsers(prev => prev.filter(user => !selectedUsers.includes(user._id)));
+
+      if (action === "activate" || action === "deactivate") {
+        setUsers((prev) =>
+          prev.map((user) =>
+            selectedUsers.includes(user._id)
+              ? { ...user, isActive: action === "activate" }
+              : user
+          )
+        );
+      } else if (action === "delete") {
+        setUsers((prev) =>
+          prev.filter((user) => !selectedUsers.includes(user._id))
+        );
       }
-      
+
       setSelectedUsers([]);
       toast.success(`Bulk ${action} completed successfully`);
     } catch (error) {
-      console.error('Error performing bulk action:', error);
+      console.error("Error performing bulk action:", error);
       toast.error(`Failed to ${action} users`);
     }
   };
@@ -165,19 +174,30 @@ const UserManagement = () => {
 
   const getUserStatusBadge = (user) => {
     if (user.isActive) {
-      return <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>;
+      return (
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          Active
+        </span>
+      );
     }
-    return <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Inactive</span>;
+    return (
+      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+        Inactive
+      </span>
+    );
   };
 
   const getRoleBadge = (role) => {
     const colors = {
-      admin: 'bg-purple-100 text-purple-800',
-      student: 'bg-blue-100 text-blue-800',
-      staff: 'bg-orange-100 text-orange-800'
+      admin: "bg-purple-100 text-purple-800",
+      student: "bg-blue-100 text-blue-800",
     };
     return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colors[role] || 'bg-gray-100 text-gray-800'}`}>
+      <span
+        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+          colors[role] || "bg-gray-100 text-gray-800"
+        }`}
+      >
         {role?.charAt(0).toUpperCase() + role?.slice(1)}
       </span>
     );
@@ -213,19 +233,23 @@ const UserManagement = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">User Management</h1>
-              <p className="text-gray-600">Manage all users in your MessMate system</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                User Management
+              </h1>
+              <p className="text-gray-600">
+                Manage all users in your MessMate system
+              </p>
             </div>
             <div className="flex space-x-3">
               <button
-                onClick={() => navigate('/admin/users/reports')}
+                onClick={() => navigate("/admin/users/reports")}
                 className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
                 <ChartBarIcon className="h-5 w-5 mr-2" />
                 View Reports
               </button>
               <button
-                onClick={() => navigate('/admin/users/add')}
+                onClick={() => navigate("/admin/users/add")}
                 className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <UserPlusIcon className="h-5 w-5 mr-2" />
@@ -263,7 +287,6 @@ const UserManagement = () => {
               <option value="all">All Roles</option>
               <option value="student">Students</option>
               <option value="admin">Admins</option>
-              <option value="staff">Staff</option>
             </select>
 
             {/* Status Filter */}
@@ -281,19 +304,19 @@ const UserManagement = () => {
             {selectedUsers.length > 0 && (
               <div className="flex space-x-2">
                 <button
-                  onClick={() => handleBulkAction('activate')}
+                  onClick={() => handleBulkAction("activate")}
                   className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                 >
                   Activate
                 </button>
                 <button
-                  onClick={() => handleBulkAction('deactivate')}
+                  onClick={() => handleBulkAction("deactivate")}
                   className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm"
                 >
                   Deactivate
                 </button>
                 <button
-                  onClick={() => handleBulkAction('delete')}
+                  onClick={() => handleBulkAction("delete")}
                   className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
                 >
                   Delete
@@ -330,7 +353,12 @@ const UserManagement = () => {
                     <input
                       type="checkbox"
                       onChange={handleSelectAll}
-                      checked={getCurrentPageUsers().length > 0 && getCurrentPageUsers().every(user => selectedUsers.includes(user._id))}
+                      checked={
+                        getCurrentPageUsers().length > 0 &&
+                        getCurrentPageUsers().every((user) =>
+                          selectedUsers.includes(user._id)
+                        )
+                      }
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                   </th>
@@ -379,10 +407,16 @@ const UserManagement = () => {
                           </span>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {user.email}
+                          </div>
                           {user.phone && (
-                            <div className="text-sm text-gray-500">{user.phone}</div>
+                            <div className="text-sm text-gray-500">
+                              {user.phone}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -394,13 +428,12 @@ const UserManagement = () => {
                       {getUserStatusBadge(user)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {user.hostel && user.roomNumber 
+                      {user.hostel && user.roomNumber
                         ? `${user.hostel}, Room ${user.roomNumber}`
-                        : user.hostel || 'Not provided'
-                      }
+                        : user.hostel || "Not provided"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(user.createdAt).toLocaleDateString('en-IN')}
+                      {new Date(user.createdAt).toLocaleDateString("en-IN")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
@@ -412,13 +445,15 @@ const UserManagement = () => {
                           <EyeIcon className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleUpdateUserStatus(user._id, !user.isActive)}
+                          onClick={() =>
+                            handleUpdateUserStatus(user._id, !user.isActive)
+                          }
                           className={`p-1 rounded transition-colors ${
-                            user.isActive 
-                              ? 'text-red-600 hover:text-red-900' 
-                              : 'text-green-600 hover:text-green-900'
+                            user.isActive
+                              ? "text-red-600 hover:text-red-900"
+                              : "text-green-600 hover:text-green-900"
                           }`}
-                          title={user.isActive ? 'Deactivate' : 'Activate'}
+                          title={user.isActive ? "Deactivate" : "Activate"}
                         >
                           {user.isActive ? (
                             <XCircleIcon className="h-4 w-4" />
@@ -446,11 +481,15 @@ const UserManagement = () => {
             <div className="px-6 py-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-700">
-                  Showing {((currentPage - 1) * usersPerPage) + 1} to {Math.min(currentPage * usersPerPage, filteredUsers.length)} of {filteredUsers.length} results
+                  Showing {(currentPage - 1) * usersPerPage + 1} to{" "}
+                  {Math.min(currentPage * usersPerPage, filteredUsers.length)}{" "}
+                  of {filteredUsers.length} results
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={currentPage === 1}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
@@ -460,7 +499,9 @@ const UserManagement = () => {
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
                     disabled={currentPage === totalPages}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
@@ -481,7 +522,9 @@ const UserManagement = () => {
               className="bg-white rounded-xl p-6 max-w-md w-full max-h-screen overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">User Details</h3>
+                <h3 className="text-xl font-bold text-gray-900">
+                  User Details
+                </h3>
                 <button
                   onClick={() => setShowUserDetails(null)}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -497,63 +540,90 @@ const UserManagement = () => {
                       {showUserDetails.name?.charAt(0)?.toUpperCase()}
                     </span>
                   </div>
-                  <h4 className="text-lg font-semibold text-gray-900">{showUserDetails.name}</h4>
+                  <h4 className="text-lg font-semibold text-gray-900">
+                    {showUserDetails.name}
+                  </h4>
                   <p className="text-gray-600">{showUserDetails.email}</p>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Role</label>
+                    <label className="block text-sm font-medium text-gray-500">
+                      Role
+                    </label>
                     <p className="mt-1">{getRoleBadge(showUserDetails.role)}</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Status</label>
-                    <p className="mt-1">{getUserStatusBadge(showUserDetails)}</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500">Phone</label>
-                    <p className="mt-1 text-gray-900">{showUserDetails.phone || 'Not provided'}</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500">College</label>
-                    <p className="mt-1 text-gray-900">{showUserDetails.college || 'Not provided'}</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500">Hostel & Room</label>
-                    <p className="mt-1 text-gray-900">
-                      {showUserDetails.hostel && showUserDetails.roomNumber 
-                        ? `${showUserDetails.hostel}, Room ${showUserDetails.roomNumber}`
-                        : 'Not provided'
-                      }
+                    <label className="block text-sm font-medium text-gray-500">
+                      Status
+                    </label>
+                    <p className="mt-1">
+                      {getUserStatusBadge(showUserDetails)}
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Member Since</label>
+                    <label className="block text-sm font-medium text-gray-500">
+                      Phone
+                    </label>
                     <p className="mt-1 text-gray-900">
-                      {new Date(showUserDetails.createdAt).toLocaleDateString('en-IN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                      {showUserDetails.phone || "Not provided"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">
+                      College
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {showUserDetails.college || "Not provided"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">
+                      Hostel & Room
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {showUserDetails.hostel && showUserDetails.roomNumber
+                        ? `${showUserDetails.hostel}, Room ${showUserDetails.roomNumber}`
+                        : "Not provided"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">
+                      Member Since
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {new Date(showUserDetails.createdAt).toLocaleDateString(
+                        "en-IN",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex space-x-3 pt-4">
                   <button
-                    onClick={() => handleUpdateUserStatus(showUserDetails._id, !showUserDetails.isActive)}
+                    onClick={() =>
+                      handleUpdateUserStatus(
+                        showUserDetails._id,
+                        !showUserDetails.isActive
+                      )
+                    }
                     className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
                       showUserDetails.isActive
-                        ? 'bg-red-600 text-white hover:bg-red-700'
-                        : 'bg-green-600 text-white hover:bg-green-700'
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "bg-green-600 text-white hover:bg-green-700"
                     }`}
                   >
-                    {showUserDetails.isActive ? 'Deactivate' : 'Activate'}
+                    {showUserDetails.isActive ? "Deactivate" : "Activate"}
                   </button>
                   <button
                     onClick={() => {

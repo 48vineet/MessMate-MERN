@@ -1,187 +1,11 @@
 // src/components/admin/AdminDashboard.jsx
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import api from "../../utils/api";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
-
-// Custom Food-Themed SVG Icons
-const UsersIcon = ({ className = "h-6 w-6" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-    />
-  </svg>
-);
-
-const CurrencyRupeeIcon = ({ className = "h-6 w-6" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-    />
-  </svg>
-);
-
-const RestaurantIcon = ({ className = "h-6 w-6" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21L6 12l4 8 2.6-1.174a1 1 0 01.8-.019l2.86 1.338a1 1 0 01.516.888V21a1 1 0 01-1 1H5a2 2 0 01-2-2V5z"
-    />
-  </svg>
-);
-
-const ChefHatIcon = ({ className = "h-6 w-6" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 14V6a7 7 0 00-14 0v8M5 14v4a3 3 0 003 3h8a3 3 0 003-3v-4M9 7h6M8 11h8"
-    />
-  </svg>
-);
-
-const ArrowTrendingUpIcon = ({ className = "h-4 w-4" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"
-    />
-  </svg>
-);
-
-const ExclamationTriangleIcon = ({ className = "h-5 w-5" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-    />
-  </svg>
-);
-
-const ClockIcon = ({ className = "h-5 w-5" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
-  </svg>
-);
-
-const ChartBarIcon = ({ className = "h-6 w-6" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504-1.125-1.125-1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504-1.125-1.125-1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
-    />
-  </svg>
-);
-
-const SunIcon = ({ className = "w-5 h-5" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-    />
-  </svg>
-);
-
-const MoonIcon = ({ className = "w-5 h-5" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-    />
-  </svg>
-);
-
-const RefreshIcon = ({ className = "w-4 h-4" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-    />
-  </svg>
-);
+import api from "../../utils/api";
+import Icons from "../common/Icons";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -205,6 +29,14 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+  }, [timeRange]);
+
+  // Auto-refresh dashboard data every 30 seconds for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchDashboardData(true);
+    }, 30000);
+    return () => clearInterval(interval);
   }, [timeRange]);
 
   const toggleDarkMode = () => {
@@ -312,8 +144,9 @@ const AdminDashboard = () => {
       title: "Total Users",
       value: dashboardData.stats.totalUsers || 0,
       change: dashboardData.stats.userGrowth || 0,
-      icon: UsersIcon,
-      color: "bg-blue-100 text-blue-600",
+      icon: Icons.users,
+      bgColor: "bg-gradient-to-br from-blue-50 to-indigo-50",
+      iconBg: "bg-gradient-to-br from-blue-500 to-indigo-600",
       textColor: "text-blue-600",
       prefix: "",
     },
@@ -321,17 +154,19 @@ const AdminDashboard = () => {
       title: "Today's Revenue",
       value: dashboardData.stats.todayRevenue || 0,
       change: dashboardData.stats.revenueGrowth || 0,
-      icon: CurrencyRupeeIcon,
-      color: "bg-green-100 text-green-600",
-      textColor: "text-green-600",
+      icon: Icons.wallet,
+      bgColor: "bg-gradient-to-br from-emerald-50 to-teal-50",
+      iconBg: "bg-gradient-to-br from-emerald-500 to-teal-600",
+      textColor: "text-emerald-600",
       prefix: "₹",
     },
     {
       title: "Meals Served",
       value: dashboardData.stats.mealsServed || 0,
       change: dashboardData.stats.mealGrowth || 0,
-      icon: RestaurantIcon,
-      color: "bg-purple-100 text-purple-600",
+      icon: Icons.dining,
+      bgColor: "bg-gradient-to-br from-purple-50 to-pink-50",
+      iconBg: "bg-gradient-to-br from-purple-500 to-pink-600",
       textColor: "text-purple-600",
       prefix: "",
     },
@@ -339,9 +174,10 @@ const AdminDashboard = () => {
       title: "Active Bookings",
       value: dashboardData.stats.activeBookings || 0,
       change: dashboardData.stats.bookingGrowth || 0,
-      icon: ChefHatIcon,
-      color: "bg-teal-100 text-teal-600",
-      textColor: "text-teal-600",
+      icon: Icons.calendarCheck,
+      bgColor: "bg-gradient-to-br from-orange-50 to-amber-50",
+      iconBg: "bg-gradient-to-br from-orange-500 to-amber-600",
+      textColor: "text-orange-600",
       prefix: "",
     },
   ];
@@ -411,7 +247,7 @@ const AdminDashboard = () => {
       return (
         <div className="h-64 flex items-center justify-center">
           <div className="text-center">
-            <ChartBarIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <Icons.barChart className="h-12 w-12 mx-auto mb-4 text-gray-300" />
             <p className="text-gray-500">No data available</p>
           </div>
         </div>
@@ -561,31 +397,14 @@ const AdminDashboard = () => {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <motion.div
-                whileHover={{ rotate: 10, scale: 1.05 }}
-                className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg"
-              >
-                <ChefHatIcon className="w-8 h-8 text-orange-500" />
-              </motion.div>
               <div>
                 <motion.h1
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="text-4xl font-bold text-gray-900"
+                  className="text-4xl font-bold text-gray-900 flex items-center gap-3"
                 >
                   {getGreeting()}, {user?.name}!
-                  <motion.span
-                    animate={{ rotate: [0, 14, -8, 14, -4, 10, 0] }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      repeatDelay: 3,
-                    }}
-                    className="inline-block ml-2"
-                  >
-                    👋
-                  </motion.span>
                 </motion.h1>
                 <motion.p
                   initial={{ x: -20, opacity: 0 }}
@@ -603,7 +422,7 @@ const AdminDashboard = () => {
                 whileTap={{ scale: 0.95 }}
                 className="p-3 rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
               >
-                <SunIcon className="text-yellow-500" />
+                <Icons.sun className="h-5 w-5 text-yellow-500" />
               </motion.button>
               <select
                 value={timeRange}
@@ -630,7 +449,7 @@ const AdminDashboard = () => {
                     ease: "linear",
                   }}
                 >
-                  <RefreshIcon />
+                  <Icons.refresh className="w-4 h-4" />
                 </motion.div>
                 <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
               </motion.button>
@@ -643,32 +462,47 @@ const AdminDashboard = () => {
           {quickStats.map((stat, index) => (
             <motion.div
               key={stat.title}
-              initial={{ opacity: 0, y: 20, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{
                 delay: index * 0.1,
-                type: "spring",
-                stiffness: 100,
               }}
-              className={`rounded-lg shadow-md p-6 ${stat.color}`}
+              className={`rounded-2xl shadow-md p-6 ${stat.bgColor} border border-gray-100 hover:shadow-lg transition-shadow duration-200`}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 rounded-full bg-white shadow-md">
-                  <stat.icon className="h-6 w-6" />
+              <div className="flex items-center justify-between mb-5">
+                <div
+                  className={`w-12 h-12 rounded-xl ${stat.iconBg} shadow-sm flex items-center justify-center`}
+                >
+                  <stat.icon className="h-6 w-6 text-white" />
                 </div>
                 {stat.change !== 0 && (
-                  <div className="flex items-center space-x-1">
-                    <span className={`text-sm font-bold ${stat.textColor}`}>
+                  <div
+                    className={`flex items-center space-x-1 px-2 py-1 rounded-lg ${
+                      stat.change > 0 ? "bg-green-100" : "bg-red-100"
+                    }`}
+                  >
+                    <Icons.trendingUp
+                      className={`h-4 w-4 ${
+                        stat.change > 0
+                          ? "text-green-600"
+                          : "text-red-600 rotate-180"
+                      }`}
+                    />
+                    <span
+                      className={`text-xs font-bold ${
+                        stat.change > 0 ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
                       {Math.abs(stat.change)}%
                     </span>
                   </div>
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">
+                <p className="text-sm font-semibold text-gray-600 mb-2">
                   {stat.title}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className={`text-3xl font-bold ${stat.textColor}`}>
                   {stat.prefix}
                   {formatNumber(stat.value)}
                 </p>
@@ -752,7 +586,7 @@ const AdminDashboard = () => {
                   animate={{ scale: 1, opacity: 1 }}
                   className="text-center py-12 text-gray-500"
                 >
-                  <ClockIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                  <Icons.clock className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                   <p className="font-medium">No recent activity</p>
                   <p className="text-sm mt-1">
                     Activity will appear here as it happens
@@ -820,41 +654,56 @@ const AdminDashboard = () => {
             {[
               {
                 title: "Manage Users",
-                icon: UsersIcon,
+                icon: Icons.users,
                 path: "/admin/users",
-                color: "from-orange-500 to-amber-500",
+                color: "from-blue-500 to-indigo-500",
+                bgColor: "bg-blue-50",
+                iconColor: "text-blue-600",
               },
               {
                 title: "Menu Management",
-                icon: RestaurantIcon,
+                icon: Icons.menu,
                 path: "/admin/menu",
-                color: "from-emerald-500 to-green-500",
+                color: "from-emerald-500 to-teal-500",
+                bgColor: "bg-emerald-50",
+                iconColor: "text-emerald-600",
               },
               {
                 title: "View Reports",
-                icon: ChartBarIcon,
+                icon: Icons.report,
                 path: "/admin/reports",
-                color: "from-purple-500 to-violet-500",
+                color: "from-purple-500 to-pink-500",
+                bgColor: "bg-purple-50",
+                iconColor: "text-purple-600",
               },
               {
                 title: "System Settings",
-                icon: ChefHatIcon,
+                icon: Icons.settings,
                 path: "/admin/settings",
-                color: "from-blue-500 to-cyan-500",
+                color: "from-orange-500 to-red-500",
+                bgColor: "bg-orange-50",
+                iconColor: "text-orange-600",
               },
             ].map((action, index) => (
-              <button
+              <motion.button
                 key={action.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 + index * 0.1 }}
+                whileHover={{ scale: 1.05, y: -5 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => navigate(action.path)}
-                className={`group p-6 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-800 shadow-md`}
+                className={`group p-6 rounded-2xl ${action.bgColor} hover:shadow-xl transition-all duration-300`}
               >
-                <div className="w-12 h-12 mx-auto mb-4 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                  <action.icon className="h-7 w-7 text-gray-800" />
+                <div
+                  className={`w-14 h-14 mx-auto mb-4 bg-white rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300`}
+                >
+                  <action.icon className={`h-8 w-8 ${action.iconColor}`} />
                 </div>
                 <p className="font-semibold text-sm text-gray-900">
                   {action.title}
                 </p>
-              </button>
+              </motion.button>
             ))}
           </div>
         </motion.div>

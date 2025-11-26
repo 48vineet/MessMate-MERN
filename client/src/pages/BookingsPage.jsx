@@ -1,38 +1,39 @@
 // src/pages/BookingsPage.jsx
-import { useState, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
-import { 
+import {
   CalendarDaysIcon,
-  ClockIcon,
   CheckCircleIcon,
-  XCircleIcon,
-  PlusIcon,
+  ClockIcon,
   MagnifyingGlassIcon,
+  PlusIcon,
   QrCodeIcon,
   StarIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
-import api from '../utils/api';
-import { toast } from 'react-hot-toast';
+  XCircleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import Icons from "../components/common/Icons";
+import api from "../utils/api";
 
 const BookingsPage = () => {
   const [bookings, setBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterDate, setFilterDate] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterDate, setFilterDate] = useState("all");
   const [showNewBookingModal, setShowNewBookingModal] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
   const [creatingBooking, setCreatingBooking] = useState(false);
 
   // New booking form state
   const [newBooking, setNewBooking] = useState({
-    bookingDate: '',
-    mealTime: '',
+    bookingDate: "",
+    mealTime: "",
     quantity: 1,
-    specialRequests: '',
-    menuItem: ''
+    specialRequests: "",
+    menuItem: "",
   });
 
   useEffect(() => {
@@ -47,61 +48,64 @@ const BookingsPage = () => {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      
+
       // First try to get bookings from local storage
-      const localBookings = JSON.parse(localStorage.getItem('messmate_bookings') || '[]');
-      
+      const localBookings = JSON.parse(
+        localStorage.getItem("messmate_bookings") || "[]"
+      );
+
       // Then try to fetch from API
       try {
-        const response = await api.get('/bookings/my-bookings');
-        const fetchedBookings = response.data.bookings || response.data.data || [];
-        
+        const response = await api.get("/bookings/my-bookings");
+        const fetchedBookings =
+          response.data.bookings || response.data.data || [];
+
         // Combine API bookings with local bookings
         const allBookings = [...fetchedBookings, ...localBookings];
-        
+
         if (allBookings.length === 0) {
           // Show sample data if no bookings
           const sampleBookings = [
             {
-              _id: 'sample1',
-              mealType: 'breakfast',
+              _id: "sample1",
+              mealType: "breakfast",
               bookingDate: new Date(),
-              mealTime: 'breakfast time',
-              status: 'booked',
+              mealTime: "breakfast time",
+              status: "booked",
               totalAmount: 80,
               quantity: 1,
-              specialRequests: '',
-              bookingId: 'BK001'
+              specialRequests: "",
+              bookingId: "BK001",
             },
             {
-              _id: 'sample2',
-              mealType: 'lunch',
+              _id: "sample2",
+              mealType: "lunch",
               bookingDate: new Date(),
-              mealTime: 'lunch time',
-              status: 'booked',
+              mealTime: "lunch time",
+              status: "booked",
               totalAmount: 120,
               quantity: 1,
-              specialRequests: 'Less spicy please',
-              bookingId: 'BK002'
+              specialRequests: "Less spicy please",
+              bookingId: "BK002",
             },
             {
-              _id: 'sample3',
-              mealType: 'dinner',
+              _id: "sample3",
+              mealType: "dinner",
               bookingDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-              mealTime: 'dinner time',
-              status: 'pending',
+              mealTime: "dinner time",
+              status: "pending",
               totalAmount: 100,
               quantity: 1,
-              specialRequests: '',
-              bookingId: 'BK003'
-            }
+              specialRequests: "",
+              bookingId: "BK003",
+            },
           ];
           setBookings(sampleBookings);
         } else {
           setBookings(allBookings);
         }
       } catch (error) {
-        console.error('Error fetching bookings from API:', error);
+        console.error("Error fetching bookings from API:", error);
         // Use local bookings if API fails
         if (localBookings.length > 0) {
           setBookings(localBookings);
@@ -109,45 +113,45 @@ const BookingsPage = () => {
           // Show sample data
           const sampleBookings = [
             {
-              _id: 'sample1',
-              mealType: 'breakfast',
+              _id: "sample1",
+              mealType: "breakfast",
               bookingDate: new Date(),
-              mealTime: 'breakfast time',
-              status: 'booked',
+              mealTime: "breakfast time",
+              status: "booked",
               totalAmount: 80,
               quantity: 1,
-              specialRequests: '',
-              bookingId: 'BK001'
+              specialRequests: "",
+              bookingId: "BK001",
             },
             {
-              _id: 'sample2',
-              mealType: 'lunch',
+              _id: "sample2",
+              mealType: "lunch",
               bookingDate: new Date(),
-              mealTime: 'lunch time',
-              status: 'booked',
+              mealTime: "lunch time",
+              status: "booked",
               totalAmount: 120,
               quantity: 1,
-              specialRequests: 'Less spicy please',
-              bookingId: 'BK002'
+              specialRequests: "Less spicy please",
+              bookingId: "BK002",
             },
             {
-              _id: 'sample3',
-              mealType: 'dinner',
+              _id: "sample3",
+              mealType: "dinner",
               bookingDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-              mealTime: 'dinner time',
-              status: 'pending',
+              mealTime: "dinner time",
+              status: "pending",
               totalAmount: 100,
               quantity: 1,
-              specialRequests: '',
-              bookingId: 'BK003'
-            }
+              specialRequests: "",
+              bookingId: "BK003",
+            },
           ];
           setBookings(sampleBookings);
         }
       }
     } catch (error) {
-      console.error('Error in fetchBookings:', error);
-      toast.error('Failed to load bookings');
+      console.error("Error in fetchBookings:", error);
+      toast.error("Failed to load bookings");
     } finally {
       setLoading(false);
     }
@@ -156,11 +160,11 @@ const BookingsPage = () => {
   const fetchMenuItems = async () => {
     try {
       // Fetch daily menus instead of regular menu items
-      const response = await api.get('/menu/daily');
-      console.log('Daily Menu API response:', response.data);
+      const response = await api.get("/menu/daily");
+      console.log("Daily Menu API response:", response.data);
       setMenuItems(response.data.data || []);
     } catch (error) {
-      console.error('Error fetching daily menu items:', error);
+      console.error("Error fetching daily menu items:", error);
     }
   };
 
@@ -169,41 +173,42 @@ const BookingsPage = () => {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(booking =>
-        booking.mealType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.bookingId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.status?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (booking) =>
+          booking.mealType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          booking.bookingId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          booking.status?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Status filter
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(booking => booking.status === filterStatus);
+    if (filterStatus !== "all") {
+      filtered = filtered.filter((booking) => booking.status === filterStatus);
     }
 
     // Date filter
-    if (filterDate !== 'all') {
+    if (filterDate !== "all") {
       const today = new Date();
-      
+
       switch (filterDate) {
-        case 'today': {
-          filtered = filtered.filter(booking => {
+        case "today": {
+          filtered = filtered.filter((booking) => {
             const bookingDate = new Date(booking.bookingDate);
             return bookingDate.toDateString() === today.toDateString();
           });
           break;
         }
-        case 'week': {
+        case "week": {
           const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-          filtered = filtered.filter(booking => {
+          filtered = filtered.filter((booking) => {
             const bookingDate = new Date(booking.bookingDate);
             return bookingDate >= weekAgo;
           });
           break;
         }
-        case 'month': {
+        case "month": {
           const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-          filtered = filtered.filter(booking => {
+          filtered = filtered.filter((booking) => {
             const bookingDate = new Date(booking.bookingDate);
             return bookingDate >= monthAgo;
           });
@@ -217,17 +222,19 @@ const BookingsPage = () => {
 
   const createBooking = async () => {
     if (!newBooking.bookingDate || !newBooking.mealTime) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
     try {
       setCreatingBooking(true);
-      
+
       // Find the selected daily menu item
-      const selectedMenuItem = menuItems.find(item => item._id === newBooking.menuItem);
+      const selectedMenuItem = menuItems.find(
+        (item) => item._id === newBooking.menuItem
+      );
       if (!selectedMenuItem) {
-        toast.error('Please select a menu item');
+        toast.error("Please select a menu item");
         return;
       }
 
@@ -245,32 +252,37 @@ const BookingsPage = () => {
         specialRequests: newBooking.specialRequests,
         itemPrice: itemPrice,
         totalAmount: totalAmount,
-        finalAmount: finalAmount
+        finalAmount: finalAmount,
       };
 
       try {
-        await api.post('/bookings', bookingData);
-        toast.success('Booking created successfully!');
+        await api.post("/bookings", bookingData);
+        toast.success("Booking created successfully!");
       } catch (error) {
-        console.error('API booking failed, saving locally:', error);
+        console.error("API booking failed, saving locally:", error);
         // Save to local storage if API fails
-        const localBookings = JSON.parse(localStorage.getItem('messmate_bookings') || '[]');
+        const localBookings = JSON.parse(
+          localStorage.getItem("messmate_bookings") || "[]"
+        );
         const newBooking = {
           _id: `local_${Date.now()}`,
           ...bookingData,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         };
         localBookings.push(newBooking);
-        localStorage.setItem('messmate_bookings', JSON.stringify(localBookings));
-        toast.success('Booking created successfully! (Saved locally)');
+        localStorage.setItem(
+          "messmate_bookings",
+          JSON.stringify(localBookings)
+        );
+        toast.success("Booking created successfully! (Saved locally)");
       }
-      
+
       setShowNewBookingModal(false);
       resetNewBookingForm();
       fetchBookings(); // Refresh the list
     } catch (error) {
-      console.error('Error creating booking:', error);
-      toast.error(error.response?.data?.message || 'Failed to create booking');
+      console.error("Error creating booking:", error);
+      toast.error(error.response?.data?.message || "Failed to create booking");
     } finally {
       setCreatingBooking(false);
     }
@@ -278,95 +290,164 @@ const BookingsPage = () => {
 
   const resetNewBookingForm = () => {
     setNewBooking({
-      bookingDate: '',
-      mealTime: '',
+      bookingDate: "",
+      mealTime: "",
       quantity: 1,
-      specialRequests: '',
-      menuItem: ''
+      specialRequests: "",
+      menuItem: "",
     });
   };
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      booked: { color: 'bg-green-100 text-green-800', text: 'Booked', icon: CheckCircleIcon },
-      confirmed: { color: 'bg-green-100 text-green-800', text: 'Confirmed', icon: CheckCircleIcon },
-      pending: { color: 'bg-yellow-100 text-yellow-800', text: 'Pending', icon: ClockIcon },
-      cancelled: { color: 'bg-red-100 text-red-800', text: 'Cancelled', icon: XCircleIcon },
-      served: { color: 'bg-blue-100 text-blue-800', text: 'Served', icon: CheckCircleIcon },
-      completed: { color: 'bg-blue-100 text-blue-800', text: 'Completed', icon: CheckCircleIcon }
+      booked: {
+        color: "bg-green-100 text-green-800",
+        text: "Booked",
+        icon: CheckCircleIcon,
+      },
+      confirmed: {
+        color: "bg-green-100 text-green-800",
+        text: "Confirmed",
+        icon: CheckCircleIcon,
+      },
+      pending: {
+        color: "bg-yellow-100 text-yellow-800",
+        text: "Pending",
+        icon: ClockIcon,
+      },
+      cancelled: {
+        color: "bg-red-100 text-red-800",
+        text: "Cancelled",
+        icon: XCircleIcon,
+      },
+      served: {
+        color: "bg-blue-100 text-blue-800",
+        text: "Served",
+        icon: CheckCircleIcon,
+      },
+      completed: {
+        color: "bg-blue-100 text-blue-800",
+        text: "Completed",
+        icon: CheckCircleIcon,
+      },
     };
 
     const config = statusConfig[status] || statusConfig.pending;
     const IconComponent = config.icon;
-    
+
     return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      <span
+        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}
+      >
         <IconComponent className="h-3 w-3 mr-1" />
         {config.text}
       </span>
     );
   };
 
-  const getMealTypeIcon = (mealType) => {
+  const getMealIcon = (mealType) => {
     const icons = {
-      breakfast: '🌅',
-      lunch: '🍽️',
-      dinner: '🌙',
-      snacks: '☕'
+      breakfast: "coffee",
+      lunch: "dining",
+      dinner: "dining",
+      snacks: "coffee",
     };
-    return icons[mealType] || '🍽️';
+    return icons[mealType] || "dining";
+  };
+
+  // Return a JSX icon element for the given meal type
+  const getMealTypeIcon = (mealType) => {
+    switch ((mealType || "").toLowerCase()) {
+      case "breakfast":
+        return <Icons.coffee className="h-6 w-6 text-orange-600" />;
+      case "lunch":
+        return <Icons.dining className="h-6 w-6 text-emerald-600" />;
+      case "dinner":
+        return <Icons.dining className="h-6 w-6 text-purple-600" />;
+      case "snacks":
+        return <Icons.coffee className="h-6 w-6 text-amber-600" />;
+      default:
+        return <Icons.dining className="h-6 w-6 text-gray-600" />;
+    }
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-IN', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(date).toLocaleDateString("en-IN", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const formatTime = (time) => {
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(`2000-01-01T${time}`).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const cancelBooking = async (bookingId) => {
-    if (!window.confirm('Are you sure you want to cancel this booking?')) {
+    if (!window.confirm("Are you sure you want to cancel this booking?")) {
       return;
     }
 
     try {
       // Try API first
       try {
-        await api.delete(`/bookings/${bookingId}`);
-        toast.success('Booking cancelled successfully');
-      } catch (error) {
-        console.error('API cancel failed, updating locally:', error);
-        // Update local storage if API fails
-        const localBookings = JSON.parse(localStorage.getItem('messmate_bookings') || '[]');
-        const updatedBookings = localBookings.map(booking => 
-          booking._id === bookingId 
-            ? { ...booking, status: 'cancelled' }
-            : booking
+        const response = await api.delete(`/bookings/${bookingId}`);
+        toast.success(
+          response.data.message || "Booking cancelled successfully"
         );
-        localStorage.setItem('messmate_bookings', JSON.stringify(updatedBookings));
-        toast.success('Booking cancelled successfully (Updated locally)');
+        fetchBookings(); // Refresh the list
+      } catch (error) {
+        console.error("API cancel failed:", error);
+
+        // Show specific error message
+        const errorMessage =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          "Failed to cancel booking";
+
+        // If it's a server error, show it
+        if (error.response?.status === 500) {
+          toast.error(`Server error: ${errorMessage}`);
+          console.error("Server error details:", error.response?.data);
+        } else if (error.response?.status === 403) {
+          toast.error("You don't have permission to cancel this booking");
+        } else if (error.response?.status === 404) {
+          toast.error("Booking not found");
+        } else if (error.response?.status === 400) {
+          toast.error(errorMessage);
+        } else {
+          // Fallback to local update if API completely fails
+          console.log("Attempting local update...");
+          const localBookings = JSON.parse(
+            localStorage.getItem("messmate_bookings") || "[]"
+          );
+          const updatedBookings = localBookings.map((booking) =>
+            booking._id === bookingId
+              ? { ...booking, status: "cancelled" }
+              : booking
+          );
+          localStorage.setItem(
+            "messmate_bookings",
+            JSON.stringify(updatedBookings)
+          );
+          toast.success("Booking cancelled locally");
+          fetchBookings();
+        }
       }
-      
-      fetchBookings(); // Refresh the list
     } catch (error) {
-      console.error('Error cancelling booking:', error);
-      toast.error('Failed to cancel booking');
+      console.error("Error cancelling booking:", error);
+      toast.error("Failed to cancel booking");
     }
   };
 
   // Get minimum date (today)
   const getMinDate = () => {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    return today.toISOString().split("T")[0];
   };
 
   if (loading) {
@@ -392,13 +473,15 @@ const BookingsPage = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div
-          className="mb-8"
-        >
+        <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">My Bookings</h1>
-              <p className="text-gray-600">Manage your meal bookings and reservations</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                My Bookings
+              </h1>
+              <p className="text-gray-600">
+                Manage your meal bookings and reservations
+              </p>
             </div>
             <button
               onClick={() => setShowNewBookingModal(true)}
@@ -411,9 +494,7 @@ const BookingsPage = () => {
         </div>
 
         {/* Filters */}
-        <div
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
-        >
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="relative">
@@ -459,15 +540,11 @@ const BookingsPage = () => {
             >
               Refresh
             </button>
-
-
           </div>
         </div>
 
         {/* Bookings List */}
-        <div
-          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-        >
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-bold text-gray-900">
               Bookings ({filteredBookings.length})
@@ -492,7 +569,9 @@ const BookingsPage = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="text-lg font-medium text-gray-900">
-                            {booking.mealType?.charAt(0).toUpperCase() + booking.mealType?.slice(1)} Booking
+                            {booking.mealType?.charAt(0).toUpperCase() +
+                              booking.mealType?.slice(1)}{" "}
+                            Booking
                           </h3>
                           <div className="flex items-center space-x-2">
                             {getStatusBadge(booking.status)}
@@ -506,10 +585,14 @@ const BookingsPage = () => {
                           </div>
                           <div className="flex items-center">
                             <ClockIcon className="h-4 w-4 mr-2" />
-                            {booking.mealTime ? formatTime(booking.mealTime) : 'Flexible'}
+                            {booking.mealTime
+                              ? formatTime(booking.mealTime)
+                              : "Flexible"}
                           </div>
                           <div className="flex items-center">
-                            <span className="font-medium">₹{booking.finalAmount || 0}</span>
+                            <span className="font-medium">
+                              ₹{booking.finalAmount || 0}
+                            </span>
                           </div>
                         </div>
 
@@ -529,17 +612,19 @@ const BookingsPage = () => {
 
                     {/* Actions */}
                     <div className="flex items-center space-x-2 ml-4">
-                      {booking.status === 'confirmed' && (
+                      {booking.status === "confirmed" && (
                         <button
-                          onClick={() => {/* Show QR code */}}
+                          onClick={() => {
+                            /* Show QR code */
+                          }}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Show QR Code"
                         >
                           <QrCodeIcon className="h-5 w-5" />
                         </button>
                       )}
-                      
-                      {booking.status === 'pending' && (
+
+                      {booking.status === "pending" && (
                         <button
                           onClick={() => cancelBooking(booking._id)}
                           className="px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
@@ -548,9 +633,11 @@ const BookingsPage = () => {
                         </button>
                       )}
 
-                      {booking.status === 'served' && !booking.feedback && (
+                      {booking.status === "served" && !booking.feedback && (
                         <button
-                          onClick={() => {/* Show feedback form */}}
+                          onClick={() => {
+                            /* Show feedback form */
+                          }}
                           className="px-3 py-1 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm flex items-center"
                         >
                           <StarIcon className="h-4 w-4 mr-1" />
@@ -566,19 +653,20 @@ const BookingsPage = () => {
                 <CalendarDaysIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">No bookings found</p>
                 <p className="text-gray-400 text-sm mt-2">
-                  {searchTerm || filterStatus !== 'all' || filterDate !== 'all' 
-                    ? 'Try adjusting your search or filter criteria'
-                    : 'Start by creating your first booking'
-                  }
+                  {searchTerm || filterStatus !== "all" || filterDate !== "all"
+                    ? "Try adjusting your search or filter criteria"
+                    : "Start by creating your first booking"}
                 </p>
-                {!searchTerm && filterStatus === 'all' && filterDate === 'all' && (
-                  <button
-                    onClick={() => setShowNewBookingModal(true)}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Create First Booking
-                  </button>
-                )}
+                {!searchTerm &&
+                  filterStatus === "all" &&
+                  filterDate === "all" && (
+                    <button
+                      onClick={() => setShowNewBookingModal(true)}
+                      className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Create First Booking
+                    </button>
+                  )}
               </div>
             )}
           </div>
@@ -588,15 +676,13 @@ const BookingsPage = () => {
       {/* New Booking Modal */}
       <AnimatePresence>
         {showNewBookingModal && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-          >
-            <div
-              className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
-            >
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">Create New Booking</h2>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Create New Booking
+                  </h2>
                   <button
                     onClick={() => setShowNewBookingModal(false)}
                     className="text-gray-400 hover:text-gray-600"
@@ -606,7 +692,6 @@ const BookingsPage = () => {
                 </div>
 
                 <div className="space-y-4">
-
                   {/* Menu Item */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -614,22 +699,32 @@ const BookingsPage = () => {
                     </label>
                     <select
                       value={newBooking.menuItem}
-                      onChange={(e) => setNewBooking({...newBooking, menuItem: e.target.value})}
+                      onChange={(e) =>
+                        setNewBooking({
+                          ...newBooking,
+                          menuItem: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select a menu item</option>
                       {menuItems.length === 0 ? (
-                        <option value="" disabled>Loading menu items...</option>
+                        <option value="" disabled>
+                          Loading menu items...
+                        </option>
                       ) : (
-                        menuItems.map(item => (
+                        menuItems.map((item) => (
                           <option key={item._id} value={item._id}>
-                            {item.name || `${item.mealType} Menu`} - {item.mealType} - ₹{item.price || 80}
+                            {item.name || `${item.mealType} Menu`} -{" "}
+                            {item.mealType} - ₹{item.price || 80}
                           </option>
                         ))
                       )}
                     </select>
                     {menuItems.length === 0 && (
-                      <p className="text-sm text-red-500 mt-1">No menu items available. Please try refreshing the page.</p>
+                      <p className="text-sm text-red-500 mt-1">
+                        No menu items available. Please try refreshing the page.
+                      </p>
                     )}
                   </div>
 
@@ -641,7 +736,12 @@ const BookingsPage = () => {
                     <input
                       type="date"
                       value={newBooking.bookingDate}
-                      onChange={(e) => setNewBooking({...newBooking, bookingDate: e.target.value})}
+                      onChange={(e) =>
+                        setNewBooking({
+                          ...newBooking,
+                          bookingDate: e.target.value,
+                        })
+                      }
                       min={getMinDate()}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -655,7 +755,12 @@ const BookingsPage = () => {
                     <input
                       type="time"
                       value={newBooking.mealTime}
-                      onChange={(e) => setNewBooking({...newBooking, mealTime: e.target.value})}
+                      onChange={(e) =>
+                        setNewBooking({
+                          ...newBooking,
+                          mealTime: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -670,7 +775,12 @@ const BookingsPage = () => {
                       min="1"
                       max="10"
                       value={newBooking.quantity}
-                      onChange={(e) => setNewBooking({...newBooking, quantity: parseInt(e.target.value)})}
+                      onChange={(e) =>
+                        setNewBooking({
+                          ...newBooking,
+                          quantity: parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -682,7 +792,12 @@ const BookingsPage = () => {
                     </label>
                     <textarea
                       value={newBooking.specialRequests}
-                      onChange={(e) => setNewBooking({...newBooking, specialRequests: e.target.value})}
+                      onChange={(e) =>
+                        setNewBooking({
+                          ...newBooking,
+                          specialRequests: e.target.value,
+                        })
+                      }
                       rows="3"
                       placeholder="Any special requests or dietary preferences..."
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -702,7 +817,7 @@ const BookingsPage = () => {
                     disabled={creatingBooking}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {creatingBooking ? 'Creating...' : 'Create Booking'}
+                    {creatingBooking ? "Creating..." : "Create Booking"}
                   </button>
                 </div>
               </div>
@@ -714,4 +829,4 @@ const BookingsPage = () => {
   );
 };
 
-export default BookingsPage; 
+export default BookingsPage;

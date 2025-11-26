@@ -1,8 +1,8 @@
 // src/components/admin/AddUser.jsx
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
-import { toast } from "react-hot-toast";
 
 // Custom SVG Icons
 const UserPlusIcon = ({ className }) => (
@@ -147,7 +147,7 @@ const AddUser = () => {
 
     setLoading(true);
     try {
-      const response = await api.post("/auth/create-user", {
+      const response = await api.post("/auth/admin/create-user", {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -298,7 +298,6 @@ const AddUser = () => {
                     className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl bg-white text-gray-900 focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300 ease-out transform focus:scale-[1.02] cursor-pointer"
                   >
                     <option value="student">Student</option>
-                    <option value="staff">Staff</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>

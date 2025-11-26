@@ -1,63 +1,69 @@
 // src/components/dashboard/MealHistory.jsx
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
 import {
-  ClockIcon,
-  StarIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   CalendarDaysIcon,
+  CheckCircleIcon,
+  ClipboardDocumentListIcon,
+  ClockIcon,
   FunnelIcon,
   MagnifyingGlassIcon,
-  ClipboardDocumentListIcon
-} from '@heroicons/react/24/outline';
-import api from '../../utils/api';
-import { toast } from 'react-hot-toast';
+  StarIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import api from "../../utils/api";
+import Icons from "../common/Icons";
 
 const MealHistory = ({ recentMeals = [], onRefresh }) => {
   const [meals, setMeals] = useState(recentMeals);
-  const [filter, setFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const searchTimeoutRef = useRef(null);
   const initialLoadRef = useRef(false);
 
   // Fetch meal history (memoized for stable reference)
-  const fetchMealHistory = useCallback(async (currentFilter = filter, currentSearch = searchTerm) => {
-    setLoading(true);
-    try {
-      const response = await api.get('/meals/history', {
-        params: {
-          limit: 20,
-          filter: currentFilter,
-          search: currentSearch
+  const fetchMealHistory = useCallback(
+    async (currentFilter = filter, currentSearch = searchTerm) => {
+      setLoading(true);
+      try {
+        const response = await api.get("/meals/history", {
+          params: {
+            limit: 20,
+            filter: currentFilter,
+            search: currentSearch,
+          },
+        });
+        setMeals(response.data.meals || []);
+      } catch (error) {
+        // Provide detailed error output
+        console.error("Error fetching meal history:", error);
+        if (error.response && error.response.status === 404) {
+          toast.error(
+            "API route /meals/history not found. Please contact support."
+          );
+        } else {
+          toast.error("Failed to load meal history");
         }
-      });
-      setMeals(response.data.meals || []);
-    } catch (error) {
-      // Provide detailed error output
-      console.error('Error fetching meal history:', error);
-      if (error.response && error.response.status === 404) {
-        toast.error('API route /meals/history not found. Please contact support.');
-      } else {
-        toast.error('Failed to load meal history');
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, []); // No dependencies to prevent recreation
+    },
+    []
+  ); // No dependencies to prevent recreation
 
   // Handle search input with debounce
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    
+
     // Clear existing timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     // Set new timeout for debounced search
     searchTimeoutRef.current = setTimeout(() => {
       if (!recentMeals || recentMeals.length === 0) {
@@ -70,12 +76,12 @@ const MealHistory = ({ recentMeals = [], onRefresh }) => {
   const handleFilterChange = (e) => {
     const value = e.target.value;
     setFilter(value);
-    
+
     // Clear existing timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     // Set new timeout for debounced filter
     searchTimeoutRef.current = setTimeout(() => {
       if (!recentMeals || recentMeals.length === 0) {
@@ -120,55 +126,75 @@ const MealHistory = ({ recentMeals = [], onRefresh }) => {
   const handleRateMeal = async (mealId, rating) => {
     try {
       await api.post(`/meals/${mealId}/rate`, { rating });
-      toast.success('Rating submitted successfully!');
-      setMeals(prev => prev.map(meal =>
-        meal._id === mealId ? { ...meal, userRating: rating } : meal
-      ));
+      toast.success("Rating submitted successfully!");
+      setMeals((prev) =>
+        prev.map((meal) =>
+          meal._id === mealId ? { ...meal, userRating: rating } : meal
+        )
+      );
     } catch (error) {
-      console.error('Rating error:', error);
-      toast.error('Failed to submit rating');
+      console.error("Rating error:", error);
+      toast.error("Failed to submit rating");
     }
   };
 
-  const getStatusColor = status => {
+  const getStatusColor = (status) => {
     switch (status) {
-      case 'completed': return 'success';
-      case 'cancelled': return 'danger';
-      case 'no-show': return 'warning';
-      default: return 'gray';
+      case "completed":
+        return "success";
+      case "cancelled":
+        return "danger";
+      case "no-show":
+        return "warning";
+      default:
+        return "gray";
     }
   };
 
-  const getStatusIcon = status => {
+  const getStatusIcon = (status) => {
     switch (status) {
-      case 'completed': return <CheckCircleIcon className="h-4 w-4" />;
-      case 'cancelled': return <XCircleIcon className="h-4 w-4" />;
-      default: return <ClockIcon className="h-4 w-4" />;
+      case "completed":
+        return <CheckCircleIcon className="h-4 w-4" />;
+      case "cancelled":
+        return <XCircleIcon className="h-4 w-4" />;
+      default:
+        return <ClockIcon className="h-4 w-4" />;
     }
   };
 
-  const getMealIcon = mealType => {
+  const getMealIcon = (mealType) => {
     switch (mealType) {
-      case 'breakfast': return '🌅';
-      case 'lunch': return '☀️';
-      case 'dinner': return '🌙';
-      default: return '🍽️';
+      case "breakfast":
+        return <Icons.coffee className="h-5 w-5 text-gray-600" />;
+      case "lunch":
+        return <Icons.dining className="h-5 w-5 text-gray-600" />;
+      case "dinner":
+        return <Icons.dining className="h-5 w-5 text-gray-600" />;
+      default:
+        return <Icons.dining className="h-5 w-5 text-gray-600" />;
     }
   };
 
-  const filteredMeals = meals.filter(meal => {
-    const matchesFilter = filter === 'all' || (meal.mealType && meal.mealType.toLowerCase() === filter);
-    const matchesSearch = meal.mealName && meal.mealName.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredMeals = meals.filter((meal) => {
+    const matchesFilter =
+      filter === "all" ||
+      (meal.mealType && meal.mealType.toLowerCase() === filter);
+    const matchesSearch =
+      meal.mealName &&
+      meal.mealName.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
   const totalSpent = meals
-    .filter(meal => meal.status === 'completed')
+    .filter((meal) => meal.status === "completed")
     .reduce((sum, meal) => sum + (meal.price || 0), 0);
 
-  const completedWithRating = meals.filter(meal => meal.status === 'completed' && meal.userRating);
+  const completedWithRating = meals.filter(
+    (meal) => meal.status === "completed" && meal.userRating
+  );
   const averageRating = completedWithRating.length
-    ? completedWithRating.reduce((sum, m) => sum + m.userRating, 0) / completedWithRating.length
+    ? completedWithRating.reduce((sum, m) => sum + m.userRating, 0) /
+      completedWithRating.length
     : 0;
 
   return (
@@ -182,11 +208,15 @@ const MealHistory = ({ recentMeals = [], onRefresh }) => {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-xl font-bold text-gray-900">Meal History</h3>
-            <p className="text-sm text-gray-600">Your recent dining experience</p>
+            <p className="text-sm text-gray-600">
+              Your recent dining experience
+            </p>
           </div>
           <div className="flex items-center space-x-2">
             <div className="text-xs text-gray-500">
-              ₹{totalSpent} spent • {averageRating.toFixed(1)} ⭐ avg
+              ₹{totalSpent} spent • {averageRating.toFixed(1)}{" "}
+              <Icons.star className="inline h-3 w-3 fill-yellow-400 text-yellow-400" />{" "}
+              avg
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -201,7 +231,7 @@ const MealHistory = ({ recentMeals = [], onRefresh }) => {
         {showFilters && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             className="flex items-center space-x-4"
           >
@@ -261,7 +291,9 @@ const MealHistory = ({ recentMeals = [], onRefresh }) => {
           >
             <ClipboardDocumentListIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
             <p className="text-base font-medium mb-1">No meals found</p>
-            <p className="text-sm">Try adjusting your search or filter criteria</p>
+            <p className="text-sm">
+              Try adjusting your search or filter criteria
+            </p>
           </motion.div>
         ) : (
           <div className="space-y-3">
@@ -285,15 +317,24 @@ const MealHistory = ({ recentMeals = [], onRefresh }) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <h4 className="font-semibold text-gray-900 truncate text-sm">
-                        {meal.mealName || `${meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)} Meal`}
+                        {meal.mealName ||
+                          `${
+                            meal.mealType.charAt(0).toUpperCase() +
+                            meal.mealType.slice(1)
+                          } Meal`}
                       </h4>
                       <div className="flex items-center space-x-2">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          getStatusColor(meal.status) === 'success' ? 'text-green-600 bg-green-100' :
-                          getStatusColor(meal.status) === 'danger' ? 'text-red-600 bg-red-100' :
-                          getStatusColor(meal.status) === 'warning' ? 'text-yellow-600 bg-yellow-100' :
-                          'text-gray-600 bg-gray-100'
-                        }`}>
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            getStatusColor(meal.status) === "success"
+                              ? "text-green-600 bg-green-100"
+                              : getStatusColor(meal.status) === "danger"
+                              ? "text-red-600 bg-red-100"
+                              : getStatusColor(meal.status) === "warning"
+                              ? "text-yellow-600 bg-yellow-100"
+                              : "text-gray-600 bg-gray-100"
+                          }`}
+                        >
                           {getStatusIcon(meal.status)}
                           <span className="ml-1 capitalize">{meal.status}</span>
                         </span>
@@ -303,21 +344,28 @@ const MealHistory = ({ recentMeals = [], onRefresh }) => {
                     <div className="flex items-center space-x-3 text-xs text-gray-600 mb-1">
                       <span className="flex items-center">
                         <CalendarDaysIcon className="h-3 w-3 mr-1" />
-                        {meal.date ? new Date(meal.date).toLocaleDateString('en-IN') : ''}
+                        {meal.date
+                          ? new Date(meal.date).toLocaleDateString("en-IN")
+                          : ""}
                       </span>
                       <span className="flex items-center">
                         <ClockIcon className="h-3 w-3 mr-1" />
                         {meal.bookedAt
-                          ? new Date(meal.bookedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
-                          : ''}
+                          ? new Date(meal.bookedAt).toLocaleTimeString(
+                              "en-IN",
+                              { hour: "2-digit", minute: "2-digit" }
+                            )
+                          : ""}
                       </span>
                       {meal.price && (
-                        <span className="font-medium text-green-600">₹{meal.price}</span>
+                        <span className="font-medium text-green-600">
+                          ₹{meal.price}
+                        </span>
                       )}
                     </div>
 
                     {/* Rating */}
-                    {meal.status === 'completed' && (
+                    {meal.status === "completed" && (
                       <div className="flex items-center space-x-2 mb-1">
                         <span className="text-xs text-gray-600">Rate:</span>
                         <div className="flex items-center space-x-1">
@@ -330,15 +378,17 @@ const MealHistory = ({ recentMeals = [], onRefresh }) => {
                               <StarIcon
                                 className={`h-3 w-3 ${
                                   star <= (meal.userRating || 0)
-                                    ? 'text-yellow-400 fill-current'
-                                    : 'text-gray-300 hover:text-yellow-400'
+                                    ? "text-yellow-400 fill-current"
+                                    : "text-gray-300 hover:text-yellow-400"
                                 }`}
                               />
                             </button>
                           ))}
                         </div>
                         {meal.userRating && (
-                          <span className="text-xs text-gray-600">({meal.userRating}/5)</span>
+                          <span className="text-xs text-gray-600">
+                            ({meal.userRating}/5)
+                          </span>
                         )}
                       </div>
                     )}
@@ -353,7 +403,7 @@ const MealHistory = ({ recentMeals = [], onRefresh }) => {
                 </div>
               </motion.div>
             ))}
-            
+
             {/* Show more meals link if there are more than 5 */}
             {filteredMeals.length > 5 && (
               <div className="text-center pt-2">
