@@ -52,7 +52,10 @@ const MenuManagement = () => {
   const handleAddItem = () => {
     setFormData((prev) => ({
       ...prev,
-      items: [...prev.items, { name: "", description: "", icon: "🍛" }],
+      items: [
+        ...prev.items,
+        { name: "", description: "", icon: "🍛", price: "", isAvailable: true },
+      ],
     }));
   };
 
@@ -75,10 +78,14 @@ const MenuManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Filter out empty items
-    const validItems = formData.items.filter(
-      (item) => item.name && item.name.trim() !== ""
-    );
+    // Filter out empty items and process prices
+    const validItems = formData.items
+      .filter((item) => item.name && item.name.trim() !== "")
+      .map((item) => ({
+        ...item,
+        price: item.price ? parseFloat(item.price) : undefined,
+        isAvailable: item.isAvailable !== false,
+      }));
 
     if (validItems.length === 0) {
       toast.error("Please add at least one menu item with a name");
@@ -408,21 +415,36 @@ const MenuManagement = () => {
                           {menu.items.map((item, index) => (
                             <div
                               key={index}
-                              className="flex items-center p-3 bg-gray-50 rounded-lg"
+                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                             >
-                              <span className="text-2xl mr-3">
-                                {item.icon || "🍛"}
-                              </span>
-                              <div className="flex-1">
-                                <p className="font-medium text-gray-900">
-                                  {item.name}
-                                </p>
-                                {item.description && (
-                                  <p className="text-sm text-gray-600">
-                                    {item.description}
+                              <div className="flex items-center flex-1">
+                                <span className="text-2xl mr-3">
+                                  {item.icon || "🍛"}
+                                </span>
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-900">
+                                    {index + 1} {item.name}
                                   </p>
-                                )}
+                                  {item.description && (
+                                    <p className="text-sm text-gray-600">
+                                      {item.description}
+                                    </p>
+                                  )}
+                                  {item.isAvailable === false && (
+                                    <span className="text-xs text-red-600 font-medium">
+                                      (Not Available)
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+                              {item.price && (
+                                <div className="flex items-center ml-3">
+                                  <CurrencyRupeeIcon className="h-4 w-4 text-green-600 mr-1" />
+                                  <span className="text-sm font-bold text-green-600">
+                                    ₹{item.price}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -539,8 +561,11 @@ const MenuManagement = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       min="0"
                       step="0.01"
-                      required
+                      placeholder="Optional: For single meal pricing"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Leave empty if items have individual prices
+                    </p>
                   </div>
                 </div>
 
@@ -564,54 +589,114 @@ const MenuManagement = () => {
                     {formData.items.map((item, index) => (
                       <div
                         key={index}
-                        className="grid grid-cols-12 gap-3 items-start p-3 border border-gray-200 rounded-lg"
+                        className="flex flex-col gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50"
                       >
-                        <div className="col-span-1">
-                          <input
-                            type="text"
-                            value={item.icon}
-                            onChange={(e) =>
-                              handleItemChange(index, "icon", e.target.value)
-                            }
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-center"
-                            placeholder="🍛"
-                          />
+                        <div className="grid grid-cols-12 gap-3 items-start">
+                          <div className="col-span-1">
+                            <label className="block text-xs text-gray-600 mb-1">
+                              Icon
+                            </label>
+                            <input
+                              type="text"
+                              value={item.icon}
+                              onChange={(e) =>
+                                handleItemChange(index, "icon", e.target.value)
+                              }
+                              className="w-full px-2 py-2 border border-gray-300 rounded text-center bg-white"
+                              placeholder="🍛"
+                            />
+                          </div>
+                          <div className="col-span-4">
+                            <label className="block text-xs text-gray-600 mb-1">
+                              Item Name *
+                            </label>
+                            <input
+                              type="text"
+                              value={item.name}
+                              onChange={(e) =>
+                                handleItemChange(index, "name", e.target.value)
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                              placeholder="Item name"
+                              required
+                            />
+                          </div>
+                          <div className="col-span-6">
+                            <label className="block text-xs text-gray-600 mb-1">
+                              Description
+                            </label>
+                            <input
+                              type="text"
+                              value={item.description}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "description",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                              placeholder="Description (optional)"
+                            />
+                          </div>
+                          <div className="col-span-1 flex items-end">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveItem(index)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Remove item"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </div>
                         </div>
-                        <div className="col-span-4">
-                          <input
-                            type="text"
-                            value={item.name}
-                            onChange={(e) =>
-                              handleItemChange(index, "name", e.target.value)
-                            }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Item name"
-                            required
-                          />
-                        </div>
-                        <div className="col-span-6">
-                          <input
-                            type="text"
-                            value={item.description}
-                            onChange={(e) =>
-                              handleItemChange(
-                                index,
-                                "description",
-                                e.target.value
-                              )
-                            }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Description (optional)"
-                          />
-                        </div>
-                        <div className="col-span-1">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(index)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">
+                              Price (₹)
+                            </label>
+                            <input
+                              type="number"
+                              value={item.price || ""}
+                              onChange={(e) =>
+                                handleItemChange(index, "price", e.target.value)
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                              placeholder="Leave empty to use menu price"
+                              min="0"
+                              step="0.01"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Optional: Leave empty to use menu-level price
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">
+                              Availability
+                            </label>
+                            <div className="flex items-center h-10">
+                              <input
+                                type="checkbox"
+                                checked={item.isAvailable !== false}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    index,
+                                    "isAvailable",
+                                    e.target.checked
+                                  )
+                                }
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                id={`item-available-${index}`}
+                              />
+                              <label
+                                htmlFor={`item-available-${index}`}
+                                className="ml-2 text-sm text-gray-700"
+                              >
+                                Available for booking
+                              </label>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))}

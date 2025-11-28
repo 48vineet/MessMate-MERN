@@ -1,20 +1,17 @@
 // src/components/admin/MenuAnalytics.jsx
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
-  ChartBarIcon,
-  CalendarDaysIcon,
-  CurrencyRupeeIcon,
-  UsersIcon,
-  ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
-  EyeIcon,
-  StarIcon,
-  ClockIcon,
+  ArrowTrendingUpIcon,
+  CalendarDaysIcon,
+  ChartBarIcon,
   CheckCircleIcon,
+  CurrencyRupeeIcon,
+  StarIcon,
 } from "@heroicons/react/24/outline";
-import api from "../../utils/api";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import api from "../../utils/api";
 
 const MenuAnalytics = () => {
   const [analytics, setAnalytics] = useState({
@@ -48,92 +45,15 @@ const MenuAnalytics = () => {
       const response = await api.get(
         `/analytics/menu?period=${selectedPeriod}&start=${selectedDateRange.start}&end=${selectedDateRange.end}`
       );
-      setAnalytics(response.data.data || getMockAnalytics());
+      setAnalytics(response.data.data || {});
     } catch (error) {
       console.error("Error fetching analytics:", error);
-      // Use mock data if API fails
-      setAnalytics(getMockAnalytics());
+      setAnalytics({});
       toast.error("Failed to load analytics data");
     } finally {
       setLoading(false);
     }
   };
-
-  const getMockAnalytics = () => ({
-    totalMenus: 45,
-    totalTemplates: 12,
-    averagePrice: 85.5,
-    mostPopularMeal: "Lunch",
-    totalBookings: 234,
-    revenue: 19850,
-    monthlyTrends: [
-      { month: "Jan", menus: 12, bookings: 45, revenue: 3200 },
-      { month: "Feb", menus: 15, bookings: 52, revenue: 3800 },
-      { month: "Mar", menus: 18, bookings: 61, revenue: 4200 },
-      { month: "Apr", menus: 22, bookings: 68, revenue: 4800 },
-      { month: "May", menus: 25, bookings: 75, revenue: 5200 },
-      { month: "Jun", menus: 28, bookings: 82, revenue: 5800 },
-    ],
-    mealTypeDistribution: [
-      { mealType: "Breakfast", count: 15, percentage: 33.3 },
-      { mealType: "Lunch", count: 18, percentage: 40.0 },
-      { mealType: "Dinner", count: 12, percentage: 26.7 },
-    ],
-    topRatedMenus: [
-      {
-        name: "South Indian Thali",
-        rating: 4.8,
-        bookings: 45,
-        mealType: "Lunch",
-      },
-      {
-        name: "North Indian Combo",
-        rating: 4.7,
-        bookings: 38,
-        mealType: "Dinner",
-      },
-      {
-        name: "Continental Breakfast",
-        rating: 4.6,
-        bookings: 32,
-        mealType: "Breakfast",
-      },
-      { name: "Chinese Special", rating: 4.5, bookings: 28, mealType: "Lunch" },
-      { name: "Healthy Bowl", rating: 4.4, bookings: 25, mealType: "Dinner" },
-    ],
-    recentActivity: [
-      {
-        action: "Menu Created",
-        item: "South Indian Thali",
-        time: "2 hours ago",
-        user: "Admin",
-      },
-      {
-        action: "Template Updated",
-        item: "Monday Template",
-        time: "4 hours ago",
-        user: "Admin",
-      },
-      {
-        action: "Menu Deleted",
-        item: "Old Menu",
-        time: "1 day ago",
-        user: "Admin",
-      },
-      {
-        action: "Price Updated",
-        item: "North Indian Combo",
-        time: "2 days ago",
-        user: "Admin",
-      },
-      {
-        action: "Menu Created",
-        item: "Chinese Special",
-        time: "3 days ago",
-        user: "Admin",
-      },
-    ],
-  });
 
   const StatCard = ({
     title,

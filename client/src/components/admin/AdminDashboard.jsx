@@ -1,6 +1,6 @@
 // src/components/admin/AdminDashboard.jsx
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
@@ -10,7 +10,7 @@ import Icons from "../common/Icons";
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [darkMode, setDarkMode] = useState(false); // Force light mode
+  // Light mode enforced; dark mode state removed
   const [dashboardData, setDashboardData] = useState({
     stats: {},
     recentActivity: [],
@@ -27,9 +27,123 @@ const AdminDashboard = () => {
     document.documentElement.classList.remove("dark"); // Ensure light mode
   }, []);
 
+  const fetchDashboardData = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+
+        const results = await Promise.allSettled([
+          api.get(`/analytics/stats?range=${timeRange}`),
+          api.get("/analytics/recent-activity"),
+          api.get("/analytics/alerts"),
+          api.get(`/analytics/charts?range=${timeRange}`),
+          api.get("/wallet/details"),
+          api.get("/payments/history?limit=5"),
+        ]);
+
+        const [
+          statsResponse,
+          activityResponse,
+          alertsResponse,
+          chartsResponse,
+          walletResponse,
+          paymentsResponse,
+        ] = results;
+
+        setDashboardData((prev) => ({
+          stats:
+            statsResponse.status === "fulfilled"
+              ? statsResponse.value.data.stats || {}
+              : {
+                  totalUsers: 1247,
+                  userGrowth: 12.5,
+                  todayRevenue: 45230,
+                  revenueGrowth: 8.2,
+                  mealsServed: 2840,
+                  mealGrowth: 15.3,
+                  activeBookings: 156,
+                  bookingGrowth: -2.1,
+                },
+          recentActivity:
+            activityResponse.status === "fulfilled"
+              ? activityResponse.value.data.activities || []
+              : [
+                  {
+                    _id: "1",
+                    message: "New user registered: John Doe",
+                    timestamp: new Date().toISOString(),
+                  },
+                  {
+                    _id: "2",
+                    message: "Order #1234 completed successfully",
+                    timestamp: new Date(Date.now() - 300000).toISOString(),
+                  },
+                  {
+                    _id: "3",
+                    message: "Menu updated: Added 3 new items",
+                    timestamp: new Date(Date.now() - 600000).toISOString(),
+                  },
+                ],
+          alerts:
+            alertsResponse.status === "fulfilled"
+              ? alertsResponse.value.data.alerts || []
+              : [
+                  {
+                    _id: "1",
+                    type: "warning",
+                    title: "Low Stock Alert",
+                    message:
+                      "Rice quantity is running low in kitchen inventory",
+                    createdAt: new Date().toISOString(),
+                  },
+                ],
+          charts:
+            chartsResponse.status === "fulfilled"
+              ? chartsResponse.value.data.charts || {}
+              : {
+                  revenue: {
+                    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                    data: [12000, 15000, 18000, 14000, 22000, 25000, 28000],
+                  },
+                  bookings: {
+                    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                    data: [45, 52, 48, 61, 55, 67, 73],
+                  },
+                },
+          wallet:
+            walletResponse.status === "fulfilled"
+              ? walletResponse.value.data.wallet || {}
+              : prev.wallet || {},
+          recentTransactions:
+            paymentsResponse.status === "fulfilled"
+              ? paymentsResponse.value.data.transactions || []
+              : prev.recentTransactions || [],
+        }));
+
+        if (
+          !isRefresh &&
+          results.every((result) => result.status === "fulfilled")
+        ) {
+          console.log("Dashboard data loaded successfully");
+        }
+      } catch (error) {
+        console.error("Error fetching admin dashboard data:", error);
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [timeRange]
+  );
+
   useEffect(() => {
     fetchDashboardData();
-  }, [timeRange]);
+  }, [fetchDashboardData]);
 
   // Auto-refresh dashboard data every 30 seconds for real-time updates
   useEffect(() => {
@@ -37,107 +151,9 @@ const AdminDashboard = () => {
       fetchDashboardData(true);
     }, 30000);
     return () => clearInterval(interval);
-  }, [timeRange]);
+  }, [fetchDashboardData]);
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem("theme", newDarkMode ? "dark" : "light");
-  };
-
-  const fetchDashboardData = async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
-
-      const results = await Promise.allSettled([
-        api.get(`/analytics/stats?range=${timeRange}`),
-        api.get("/analytics/recent-activity"),
-        api.get("/analytics/alerts"),
-        api.get(`/analytics/charts?range=${timeRange}`),
-      ]);
-
-      const [statsResponse, activityResponse, alertsResponse, chartsResponse] =
-        results;
-
-      setDashboardData({
-        stats:
-          statsResponse.status === "fulfilled"
-            ? statsResponse.value.data.stats || {}
-            : {
-                totalUsers: 1247,
-                userGrowth: 12.5,
-                todayRevenue: 45230,
-                revenueGrowth: 8.2,
-                mealsServed: 2840,
-                mealGrowth: 15.3,
-                activeBookings: 156,
-                bookingGrowth: -2.1,
-              },
-        recentActivity:
-          activityResponse.status === "fulfilled"
-            ? activityResponse.value.data.activities || []
-            : [
-                {
-                  _id: "1",
-                  message: "New user registered: John Doe",
-                  timestamp: new Date().toISOString(),
-                },
-                {
-                  _id: "2",
-                  message: "Order #1234 completed successfully",
-                  timestamp: new Date(Date.now() - 300000).toISOString(),
-                },
-                {
-                  _id: "3",
-                  message: "Menu updated: Added 3 new items",
-                  timestamp: new Date(Date.now() - 600000).toISOString(),
-                },
-              ],
-        alerts:
-          alertsResponse.status === "fulfilled"
-            ? alertsResponse.value.data.alerts || []
-            : [
-                {
-                  _id: "1",
-                  type: "warning",
-                  title: "Low Stock Alert",
-                  message: "Rice quantity is running low in kitchen inventory",
-                  createdAt: new Date().toISOString(),
-                },
-              ],
-        charts:
-          chartsResponse.status === "fulfilled"
-            ? chartsResponse.value.data.charts || {}
-            : {
-                revenue: {
-                  labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                  data: [12000, 15000, 18000, 14000, 22000, 25000, 28000],
-                },
-                bookings: {
-                  labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                  data: [45, 52, 48, 61, 55, 67, 73],
-                },
-              },
-      });
-
-      if (
-        !isRefresh &&
-        results.every((result) => result.status === "fulfilled")
-      ) {
-        console.log("Dashboard data loaded successfully");
-      }
-    } catch (error) {
-      console.error("Error fetching admin dashboard data:", error);
-      toast.error("Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  // Dark mode toggle intentionally unused; dashboard enforces light mode
 
   const quickStats = [
     {
@@ -151,9 +167,9 @@ const AdminDashboard = () => {
       prefix: "",
     },
     {
-      title: "Today's Revenue",
-      value: dashboardData.stats.todayRevenue || 0,
-      change: dashboardData.stats.revenueGrowth || 0,
+      title: "Available Balance",
+      value: dashboardData.wallet?.balance ?? 0,
+      change: dashboardData.wallet?.monthChangePercent ?? 0,
       icon: Icons.wallet,
       bgColor: "bg-gradient-to-br from-emerald-50 to-teal-50",
       iconBg: "bg-gradient-to-br from-emerald-500 to-teal-600",
@@ -195,40 +211,7 @@ const AdminDashboard = () => {
     return num.toString();
   };
 
-  const getChangeIcon = (change) => {
-    if (change > 0)
-      return (
-        <ArrowTrendingUpIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-      );
-    if (change < 0)
-      return (
-        <ArrowTrendingUpIcon className="h-4 w-4 text-red-600 dark:text-red-400 rotate-180" />
-      );
-    return null;
-  };
-
-  const getChangeColor = (change) => {
-    if (change > 0) return "text-emerald-600 dark:text-emerald-400";
-    if (change < 0) return "text-red-600 dark:text-red-400";
-    return "text-gray-600 dark:text-gray-400";
-  };
-
-  const getAlertIcon = (type) => {
-    switch (type) {
-      case "warning":
-        return (
-          <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-        );
-      case "error":
-        return (
-          <ExclamationTriangleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
-        );
-      default:
-        return (
-          <ClockIcon className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-        );
-    }
-  };
+  // Removed unused change/alert icon helpers to satisfy lint
 
   const getAlertColor = (type) => {
     switch (type) {
@@ -633,6 +616,107 @@ const AdminDashboard = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* Wallet Widget */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white rounded-2xl shadow-md border border-gray-200 p-8 mb-8"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center">
+              <Icons.wallet className="h-6 w-6 text-emerald-600 mr-2" />
+              MessMate Wallet
+            </h2>
+            <button
+              onClick={() => navigate("/wallet")}
+              className="text-sm font-medium text-emerald-700 hover:text-emerald-800"
+            >
+              View All
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="col-span-1">
+              <div className="p-6 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100">
+                <p className="text-sm font-semibold text-emerald-700">
+                  Available Balance
+                </p>
+                <p className="text-3xl font-bold text-emerald-700 mt-2">
+                  ₹{formatNumber(dashboardData.wallet?.balance ?? 0)}
+                </p>
+                {dashboardData.wallet?.monthSpent != null && (
+                  <p className="text-sm text-emerald-600 mt-2">
+                    This Month: ₹{formatNumber(dashboardData.wallet.monthSpent)}{" "}
+                    spent
+                  </p>
+                )}
+                <div className="mt-4">
+                  <button
+                    onClick={() => navigate("/wallet")}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium"
+                  >
+                    Add Money
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-span-2">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                <Icons.clock className="h-4 w-4 text-gray-500 mr-2" />
+                Recent Transactions
+              </h3>
+              {dashboardData.recentTransactions &&
+              dashboardData.recentTransactions.length > 0 ? (
+                <div className="space-y-3 max-h-56 overflow-y-auto custom-scrollbar">
+                  {dashboardData.recentTransactions.map((tx) => (
+                    <div
+                      key={tx._id}
+                      className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        {tx.type === "credit" ? (
+                          <Icons.arrowDownRight className="h-5 w-5 text-emerald-600" />
+                        ) : (
+                          <Icons.arrowUpRight className="h-5 w-5 text-red-600" />
+                        )}
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">
+                            {tx.description ||
+                              (tx.type === "credit"
+                                ? "Wallet recharge"
+                                : "Debit")}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(
+                              tx.createdAt || tx.timestamp
+                            ).toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                      </div>
+                      <div
+                        className={`text-sm font-bold ${
+                          tx.type === "credit"
+                            ? "text-emerald-700"
+                            : "text-red-700"
+                        }`}
+                      >
+                        {tx.type === "credit" ? "+" : "-"}₹
+                        {formatNumber(Math.abs(tx.amount ?? tx.total ?? 0))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500">
+                  No recent transactions
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
 
         {/* Quick Actions */}
         <motion.div

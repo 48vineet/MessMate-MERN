@@ -1,25 +1,25 @@
 // src/components/auth/LoginForm.jsx
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
-  EyeIcon, 
-  EyeSlashIcon, 
-  UserCircleIcon,
-  LockClosedIcon,
+import {
   ArrowRightIcon,
-  ExclamationCircleIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '../../context/AuthContext';
-import { toast } from 'react-hot-toast';
+  ExclamationCircleIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  LockClosedIcon,
+  UserCircleIcon,
+} from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
+import { useState } from "react";
+import { toast } from "react-hot-toast";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const LoginForm = () => {
   const navigate = useNavigate();
   const { login, loading } = useAuth();
-  
+
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -27,16 +27,16 @@ const LoginForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
   };
@@ -45,15 +45,15 @@ const LoginForm = () => {
     const newErrors = {};
 
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = "Password must be at least 6 characters";
     }
 
     setErrors(newErrors);
@@ -62,7 +62,7 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -70,28 +70,28 @@ const LoginForm = () => {
     try {
       const loginData = {
         ...formData,
-        rememberMe
+        rememberMe,
       };
 
       const result = await login(loginData);
-      
+
       if (result.success) {
         toast.success(`Welcome back, ${result.user.name}!`);
-        
+
         // Redirect based on user role
-        if (result.user.role === 'admin') {
-          navigate('/admin/dashboard');
+        if (result.user.role === "admin") {
+          navigate("/admin/dashboard");
         } else {
-          navigate('/dashboard');
+          navigate("/dashboard");
         }
       } else {
-        toast.error(result.error || 'Login failed');
+        toast.error(result.error || "Login failed");
         setErrors({ submit: result.error });
       }
     } catch (error) {
-      console.error('Login error:', error);
-      toast.error('An unexpected error occurred');
-      setErrors({ submit: 'Network error. Please try again.' });
+      console.error("Login error:", error);
+      toast.error("An unexpected error occurred");
+      setErrors({ submit: "Network error. Please try again." });
     }
   };
 
@@ -102,9 +102,9 @@ const LoginForm = () => {
       y: 0,
       transition: {
         duration: 0.6,
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
@@ -112,42 +112,52 @@ const LoginForm = () => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.4 }
-    }
+      transition: { duration: 0.4 },
+    },
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 px-2 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Decorative background shapes for mobile */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
+        <div className="absolute -top-20 -left-20 w-60 h-60 bg-gradient-to-tr from-blue-400 to-purple-400 opacity-30 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-0 right-0 w-40 h-40 bg-gradient-to-br from-indigo-400 to-blue-400 opacity-20 rounded-full blur-2xl"></div>
+      </div>
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-md w-full space-y-8"
+        className="max-w-md w-full space-y-8 z-10"
       >
         {/* Header */}
         <motion.div variants={itemVariants} className="text-center">
           <Link to="/" className="inline-block mb-6">
-            <div className="mx-auto h-12 w-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-2xl font-bold">M</span>
+            <div className="mx-auto h-14 w-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white text-3xl font-bold tracking-wide">
+                M
+              </span>
             </div>
           </Link>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome Back to MessMate
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">
+            Welcome Back
           </h2>
-          <p className="text-gray-600">
-            Sign in to your account to continue your dining journey
+          <p className="text-gray-600 text-base">
+            Sign in to continue your dining journey
           </p>
         </motion.div>
 
         {/* Login Form */}
         <motion.div
           variants={itemVariants}
-          className="bg-white py-8 px-6 shadow-xl rounded-xl border border-gray-100"
+          className="bg-white py-8 px-4 sm:px-6 shadow-2xl rounded-2xl border border-gray-100"
         >
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Email Address
               </label>
               <div className="relative">
@@ -163,8 +173,8 @@ const LoginForm = () => {
                   value={formData.email}
                   onChange={handleChange}
                   className={`appearance-none relative block w-full pl-10 pr-3 py-3 border ${
-                    errors.email ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-colors`}
+                    errors.email ? "border-red-300" : "border-gray-300"
+                  } placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base transition-colors`}
                   placeholder="Enter your email"
                 />
               </div>
@@ -182,7 +192,10 @@ const LoginForm = () => {
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Password
               </label>
               <div className="relative">
@@ -192,14 +205,14 @@ const LoginForm = () => {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   value={formData.password}
                   onChange={handleChange}
                   className={`appearance-none relative block w-full pl-10 pr-10 py-3 border ${
-                    errors.password ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-colors`}
+                    errors.password ? "border-red-300" : "border-gray-300"
+                  } placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base transition-colors`}
                   placeholder="Enter your password"
                 />
                 <button
@@ -227,7 +240,7 @@ const LoginForm = () => {
             </div>
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
               <div className="flex items-center">
                 <input
                   id="rememberMe"
@@ -237,7 +250,10 @@ const LoginForm = () => {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+                <label
+                  htmlFor="rememberMe"
+                  className="ml-2 block text-sm text-gray-700"
+                >
                   Remember me
                 </label>
               </div>
@@ -270,10 +286,10 @@ const LoginForm = () => {
               disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-base font-semibold rounded-xl text-white shadow-lg ${
                 loading
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               } transition-all duration-200`}
             >
               {loading ? (
@@ -283,35 +299,23 @@ const LoginForm = () => {
                 </div>
               ) : (
                 <div className="flex items-center">
-                  <span>Sign in to MessMate</span>
+                  <span>Sign in</span>
                   <ArrowRightIcon className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               )}
             </motion.button>
           </form>
-
-          {/* Demo Credentials */}
-          <motion.div
-            variants={itemVariants}
-            className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200"
-          >
-            <h4 className="text-sm font-medium text-blue-900 mb-2">Demo Credentials:</h4>
-            <div className="text-xs text-blue-700 space-y-1">
-              <p><strong>Student:</strong> student@messmate.com / password123</p>
-              <p><strong>Admin:</strong> admin@messmate.com / admin123</p>
-            </div>
-          </motion.div>
         </motion.div>
 
         {/* Sign Up Link */}
         <motion.div variants={itemVariants} className="text-center">
           <p className="text-sm text-gray-600">
-            Don't have an account?{' '}
+            Don't have an account?{" "}
             <Link
               to="/register"
               className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
             >
-              Sign up for MessMate
+              Sign up
             </Link>
           </p>
         </motion.div>

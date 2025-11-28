@@ -21,36 +21,8 @@ const BookingCard = ({ upcomingBookings = [], onRefresh }) => {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState(null);
   const [generatingQR, setGeneratingQR] = useState(false);
 
-  // Add sample bookings if no data is available
-  const displayBookings =
-    upcomingBookings.length > 0
-      ? upcomingBookings
-      : [
-          {
-            _id: "sample1",
-            mealType: "breakfast",
-            bookingDate: new Date(),
-            mealTime: "breakfast time",
-            status: "booked",
-            totalAmount: 80,
-          },
-          {
-            _id: "sample2",
-            mealType: "lunch",
-            bookingDate: new Date(),
-            mealTime: "lunch time",
-            status: "booked",
-            totalAmount: 120,
-          },
-          {
-            _id: "sample3",
-            mealType: "dinner",
-            bookingDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-            mealTime: "dinner time",
-            status: "pending",
-            totalAmount: 100,
-          },
-        ];
+  // Use real bookings data
+  const displayBookings = upcomingBookings;
 
   const handleCancelBooking = async (bookingId) => {
     setCancellingBooking(bookingId);

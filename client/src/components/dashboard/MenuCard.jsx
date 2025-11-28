@@ -15,6 +15,7 @@ import Icons from "../common/Icons";
 const MenuCard = ({ menu, onRefresh }) => {
   const [selectedMeal, setSelectedMeal] = useState("breakfast");
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [todayMenu, setTodayMenu] = useState({
     breakfast: {
       items: [],
@@ -32,6 +33,9 @@ const MenuCard = ({ menu, onRefresh }) => {
   });
 
   useEffect(() => {
+    // Fetch wallet balance
+    fetchWalletBalance();
+
     // Safe menu initialization with null checking
     if (menu && typeof menu === "object" && Object.keys(menu).length > 0) {
       setTodayMenu(menu);
@@ -40,73 +44,16 @@ const MenuCard = ({ menu, onRefresh }) => {
     }
   }, [menu]);
 
-  // Add sample menu data if no data is available
-  useEffect(() => {
-    if (
-      !todayMenu.breakfast.items.length &&
-      !todayMenu.lunch.items.length &&
-      !todayMenu.dinner.items.length
-    ) {
-      setTodayMenu({
-        breakfast: {
-          items: [
-            {
-              name: "Idli Sambar",
-              icon: "🍛",
-              description: "Soft idlis with hot sambar",
-            },
-            {
-              name: "Dosa",
-              icon: "🥞",
-              description: "Crispy dosa with chutney",
-            },
-            { name: "Tea", icon: "☕", description: "Hot masala tea" },
-          ],
-          price: 80,
-          available: true,
-          time: "7:00 AM - 10:00 AM",
-        },
-        lunch: {
-          items: [
-            { name: "Rice", icon: "🍚", description: "Steamed basmati rice" },
-            {
-              name: "Dal Fry",
-              icon: "🥘",
-              description: "Spicy dal with tempering",
-            },
-            {
-              name: "Chicken Curry",
-              icon: "🍗",
-              description: "Spicy chicken curry",
-            },
-            { name: "Raita", icon: "🥒", description: "Cool cucumber raita" },
-          ],
-          price: 120,
-          available: true,
-          time: "12:00 PM - 3:00 PM",
-        },
-        dinner: {
-          items: [
-            { name: "Roti", icon: "🫓", description: "Soft wheat rotis" },
-            {
-              name: "Paneer Butter Masala",
-              icon: "🧀",
-              description: "Creamy paneer curry",
-            },
-            {
-              name: "Mixed Vegetables",
-              icon: "🥬",
-              description: "Fresh seasonal vegetables",
-            },
-            { name: "Dal", icon: "🥘", description: "Simple dal" },
-          ],
-          price: 100,
-          available: true,
-          time: "7:00 PM - 10:00 PM",
-        },
-      });
+  const fetchWalletBalance = async () => {
+    try {
+      const response = await api.get("/wallet/details");
+      if (response.data?.wallet) {
+        setWalletBalance(response.data.wallet.balance || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching wallet balance:", error);
     }
-  }, [todayMenu]);
+  };
 
   const fetchTodayMenu = async () => {
     try {
@@ -126,11 +73,23 @@ const MenuCard = ({ menu, onRefresh }) => {
     try {
       // Create a booking with the current meal data
       const mealData = todayMenu[mealType];
+      const mealPrice = mealData.price || 80;
+
+      // Check wallet balance before booking
+      if (walletBalance < mealPrice) {
+        toast.error(
+          `Insufficient balance! You have ₹${walletBalance} but need ₹${mealPrice}. Please recharge your wallet.`,
+          { duration: 5000 }
+        );
+        setBookingLoading(false);
+        return;
+      }
+
       const bookingData = {
         mealType: mealType,
         bookingDate: new Date().toISOString().split("T")[0],
         mealTime: `${mealType} time`,
-        totalAmount: mealData.price || 80,
+        totalAmount: mealPrice,
         quantity: 1,
         specialRequests: "",
         status: "booked",
@@ -141,29 +100,23 @@ const MenuCard = ({ menu, onRefresh }) => {
 
         if (response.data.success) {
           toast.success(`${mealType} booked successfully!`);
+          // Update wallet balance after successful booking
+          setWalletBalance((prev) => prev - mealPrice);
+          onRefresh && onRefresh();
         } else {
           throw new Error(response.data.message || "Booking failed");
         }
       } catch (error) {
-        console.error("API booking failed, saving locally:", error);
-        // Save to local storage if API fails
-        const localBookings = JSON.parse(
-          localStorage.getItem("messmate_bookings") || "[]"
-        );
-        const newBooking = {
-          _id: `local_${Date.now()}`,
-          ...bookingData,
-          createdAt: new Date().toISOString(),
-        };
-        localBookings.push(newBooking);
-        localStorage.setItem(
-          "messmate_bookings",
-          JSON.stringify(localBookings)
-        );
-        toast.success(`${mealType} booked successfully! (Saved locally)`);
-      }
+        console.error("Booking error:", error);
+        const errorMessage = error?.response?.data?.message || error.message;
 
-      onRefresh && onRefresh();
+        // Check if it's an insufficient balance error
+        if (errorMessage.includes("Insufficient wallet balance")) {
+          toast.error(errorMessage, { duration: 5000 });
+        } else {
+          toast.error(`Failed to book ${mealType}: ${errorMessage}`);
+        }
+      }
     } finally {
       setBookingLoading(false);
     }

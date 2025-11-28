@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react';
-import { CalendarDaysIcon, ChartBarIcon, TrophyIcon, FireIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../utils/api';
+import {
+  CalendarDaysIcon,
+  ChartBarIcon,
+  FireIcon,
+  TrophyIcon,
+} from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import api from "../../utils/api";
 
 const AttendanceCard = ({ stats = {} }) => {
   const { user } = useAuth(); // get logged-in user dynamically
@@ -9,30 +14,31 @@ const AttendanceCard = ({ stats = {} }) => {
     thisMonth: { present: 0, total: 0, percentage: 0 },
     thisWeek: { present: 0, total: 0, percentage: 0 },
     streak: 0,
-    weeklyData: []
+    weeklyData: [],
   });
 
-  // Sample attendance data for fallback
-  const sampleAttendanceData = {
-    thisMonth: { present: 12, total: 15, percentage: 80 },
-    thisWeek: { present: 4, total: 5, percentage: 80 },
-    streak: 7,
-    weeklyData: []
-  };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   // Attendance endpoint
-  const ATTENDANCE_ENDPOINT = '/user/attendance';
+  const ATTENDANCE_ENDPOINT = "/user/attendance";
 
   // When stats are given via props, use them
   useEffect(() => {
     if (stats && Object.keys(stats).length > 0) {
       setAttendanceData({
-        thisMonth: stats.attendance?.thisMonth || { present: 0, total: 0, percentage: 0 },
-        thisWeek: stats.attendance?.thisWeek || { present: 0, total: 0, percentage: 0 },
+        thisMonth: stats.attendance?.thisMonth || {
+          present: 0,
+          total: 0,
+          percentage: 0,
+        },
+        thisWeek: stats.attendance?.thisWeek || {
+          present: 0,
+          total: 0,
+          percentage: 0,
+        },
         streak: stats.attendance?.streak || 0,
-        weeklyData: stats.attendance?.weeklyData || []
+        weeklyData: stats.attendance?.weeklyData || [],
       });
     }
   }, [stats]);
@@ -41,12 +47,7 @@ const AttendanceCard = ({ stats = {} }) => {
   useEffect(() => {
     if ((!stats || Object.keys(stats).length === 0) && user?._id) {
       fetchAttendanceData();
-    } else if (!stats || Object.keys(stats).length === 0) {
-      // If no stats provided and no user, use sample data
-      setAttendanceData(sampleAttendanceData);
     }
-    // Only re-run if user._id changes or stats changes
-    // eslint-disable-next-line
   }, [user?._id]);
 
   const fetchAttendanceData = async () => {
@@ -55,35 +56,38 @@ const AttendanceCard = ({ stats = {} }) => {
     try {
       // Pass userId as param for dynamic data
       const response = await api.get(ATTENDANCE_ENDPOINT, {
-        params: { userId: user?._id }
+        params: { userId: user?._id },
       });
       if (response.data && response.data.attendance) {
         setAttendanceData(response.data.attendance);
-      } else {
-        // Use sample data if no real data available
-        setAttendanceData(sampleAttendanceData);
       }
     } catch (error) {
-      console.error('Error fetching attendance data:', error);
-      // Use sample data as fallback for better UX
-      setAttendanceData(sampleAttendanceData);
+      console.error("Error fetching attendance data:", error);
+      setError("Failed to load attendance data");
     } finally {
       setLoading(false);
     }
   };
 
   const getAttendanceColor = (percentage) => {
-    if (percentage >= 90) return 'text-green-600 bg-green-100';
-    if (percentage >= 75) return 'text-yellow-600 bg-yellow-100';
-    if (percentage >= 60) return 'text-orange-600 bg-orange-100';
-    return 'text-red-600 bg-red-100';
+    if (percentage >= 90) return "text-green-600 bg-green-100";
+    if (percentage >= 75) return "text-yellow-600 bg-yellow-100";
+    if (percentage >= 60) return "text-orange-600 bg-orange-100";
+    return "text-red-600 bg-red-100";
   };
 
   const getStreakBadge = (streak) => {
-    if (streak >= 30) return { icon: TrophyIcon, color: 'text-yellow-600', label: 'Champion!' };
-    if (streak >= 14) return { icon: FireIcon, color: 'text-orange-600', label: 'On Fire!' };
-    if (streak >= 7) return { icon: ChartBarIcon, color: 'text-blue-600', label: 'Great!' };
-    return { icon: CalendarDaysIcon, color: 'text-gray-600', label: 'Keep Going!' };
+    if (streak >= 30)
+      return { icon: TrophyIcon, color: "text-yellow-600", label: "Champion!" };
+    if (streak >= 14)
+      return { icon: FireIcon, color: "text-orange-600", label: "On Fire!" };
+    if (streak >= 7)
+      return { icon: ChartBarIcon, color: "text-blue-600", label: "Great!" };
+    return {
+      icon: CalendarDaysIcon,
+      color: "text-gray-600",
+      label: "Keep Going!",
+    };
   };
 
   const streakBadge = getStreakBadge(attendanceData.streak);
@@ -132,45 +136,65 @@ const AttendanceCard = ({ stats = {} }) => {
         {/* Monthly Attendance */}
         <div className="mb-3">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium text-gray-700">This Month</span>
-            <span className={`text-xs font-bold px-2 py-1 rounded-full ${getAttendanceColor(attendanceData.thisMonth.percentage)}`}>
+            <span className="text-xs font-medium text-gray-700">
+              This Month
+            </span>
+            <span
+              className={`text-xs font-bold px-2 py-1 rounded-full ${getAttendanceColor(
+                attendanceData.thisMonth.percentage
+              )}`}
+            >
               {attendanceData.thisMonth.percentage.toFixed(1)}%
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-1.5">
             <div
               className={`h-1.5 rounded-full transition-all duration-1000 ease-out ${
-                attendanceData.thisMonth.percentage >= 90 ? 'bg-green-500' :
-                attendanceData.thisMonth.percentage >= 75 ? 'bg-yellow-500' :
-                attendanceData.thisMonth.percentage >= 60 ? 'bg-orange-500' : 'bg-red-500'
+                attendanceData.thisMonth.percentage >= 90
+                  ? "bg-green-500"
+                  : attendanceData.thisMonth.percentage >= 75
+                  ? "bg-yellow-500"
+                  : attendanceData.thisMonth.percentage >= 60
+                  ? "bg-orange-500"
+                  : "bg-red-500"
               }`}
               style={{ width: `${attendanceData.thisMonth.percentage}%` }}
             ></div>
           </div>
           <p className="text-xs text-gray-600 mt-1">
-            {attendanceData.thisMonth.present} of {attendanceData.thisMonth.total} meals
+            {attendanceData.thisMonth.present} of{" "}
+            {attendanceData.thisMonth.total} meals
           </p>
         </div>
         {/* Weekly Attendance */}
         <div className="mb-3">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-medium text-gray-700">This Week</span>
-            <span className={`text-xs font-bold px-2 py-1 rounded-full ${getAttendanceColor(attendanceData.thisWeek.percentage)}`}>
+            <span
+              className={`text-xs font-bold px-2 py-1 rounded-full ${getAttendanceColor(
+                attendanceData.thisWeek.percentage
+              )}`}
+            >
               {attendanceData.thisWeek.percentage.toFixed(1)}%
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-1.5">
             <div
               className={`h-1.5 rounded-full transition-all duration-1000 ease-out delay-200 ${
-                attendanceData.thisWeek.percentage >= 90 ? 'bg-green-500' :
-                attendanceData.thisWeek.percentage >= 75 ? 'bg-yellow-500' :
-                attendanceData.thisWeek.percentage >= 60 ? 'bg-orange-500' : 'bg-red-500'
+                attendanceData.thisWeek.percentage >= 90
+                  ? "bg-green-500"
+                  : attendanceData.thisWeek.percentage >= 75
+                  ? "bg-yellow-500"
+                  : attendanceData.thisWeek.percentage >= 60
+                  ? "bg-orange-500"
+                  : "bg-red-500"
               }`}
               style={{ width: `${attendanceData.thisWeek.percentage}%` }}
             ></div>
           </div>
           <p className="text-xs text-gray-600 mt-1">
-            {attendanceData.thisWeek.present} of {attendanceData.thisWeek.total} meals
+            {attendanceData.thisWeek.present} of {attendanceData.thisWeek.total}{" "}
+            meals
           </p>
         </div>
         {/* Current Streak - Compact */}
@@ -178,7 +202,9 @@ const AttendanceCard = ({ stats = {} }) => {
           <div>
             <p className="text-xs font-medium text-gray-700">Current Streak</p>
             <div className="flex items-center mt-1">
-              <span className="text-lg font-bold text-gray-900">{attendanceData.streak}</span>
+              <span className="text-lg font-bold text-gray-900">
+                {attendanceData.streak}
+              </span>
               <span className="text-xs text-gray-600 ml-1">days</span>
             </div>
           </div>

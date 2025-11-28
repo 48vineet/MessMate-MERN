@@ -1,139 +1,120 @@
 // src/components/dashboard/WalletCard.jsx
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ClockIcon,
+  CreditCardIcon,
   CurrencyRupeeIcon,
   PlusIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  CreditCardIcon,
-  ClockIcon
-} from '@heroicons/react/24/outline';
-import { useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
-import { toast } from 'react-hot-toast';
+} from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import api from "../../utils/api";
 
-const WalletCard = ({ wallet = {}, onRefresh }) => {
+const WalletCard = () => {
   const navigate = useNavigate();
   const [walletData, setWalletData] = useState({
     balance: 0,
     monthlySpent: 0,
-    recentTransactions: []
+    recentTransactions: [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const hasFetchedRef = useRef(false);
 
   // Use the correct backend endpoint for wallet details
-  const WALLET_DETAILS_ENDPOINT = '/wallet/details';
+  const WALLET_DETAILS_ENDPOINT = "/wallet/details";
 
-  useEffect(() => {
-    if (wallet && Object.keys(wallet).length > 0) {
-      setWalletData(wallet);
-    } else {
-      fetchWalletData();
-    }
-    // eslint-disable-next-line
-  }, [wallet]);
+  const fetchWalletData = useCallback(async () => {
+    // Prevent multiple simultaneous fetches
+    if (loading) return;
 
-  // Add sample wallet data if no data is available
-  useEffect(() => {
-    if (walletData.balance === 0 && walletData.recentTransactions.length === 0) {
-      setWalletData({
-        balance: 1300,
-        monthlySpent: 200,
-        recentTransactions: [
-          {
-            _id: 'sample1',
-            type: 'credit',
-            amount: 1500,
-            description: 'Wallet recharge',
-            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-          },
-          {
-            _id: 'sample2',
-            type: 'debit',
-            amount: 80,
-            description: 'Breakfast booking',
-            date: new Date(Date.now() - 2 * 60 * 60 * 1000)
-          },
-          {
-            _id: 'sample3',
-            type: 'debit',
-            amount: 120,
-            description: 'Lunch booking',
-            date: new Date(Date.now() - 1 * 60 * 60 * 1000)
-          }
-        ]
-      });
-    }
-  }, [walletData]);
-
-  const fetchWalletData = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await api.get(WALLET_DETAILS_ENDPOINT);
       if (response.data && response.data.wallet) {
-        setWalletData(response.data.wallet);
+        const walletInfo = response.data.wallet;
+        setWalletData({
+          balance: walletInfo.balance || 0,
+          monthlySpent: walletInfo.monthlySpent || 0,
+          totalRecharged: walletInfo.totalRecharged || 0,
+          totalSpent: walletInfo.totalSpent || 0,
+          recentTransactions: walletInfo.recentTransactions || [],
+          upiId: walletInfo.upiId || null,
+          qrCode: walletInfo.qrCode || null,
+        });
       } else {
         setWalletData({
           balance: 0,
           monthlySpent: 0,
-          recentTransactions: []
+          totalRecharged: 0,
+          totalSpent: 0,
+          recentTransactions: [],
         });
-        toast.error('No wallet data found.');
       }
     } catch (error) {
-      console.error('Error fetching wallet data:', error);
+      console.error("Error fetching wallet data:", error);
       if (error?.response?.status === 404) {
-        setError('API route not found. Please inform support.');
-        toast.error('API route /wallet/details not found.');
+        setError("Wallet service unavailable. Please contact support.");
+        toast.error("Wallet API not found.");
+      } else if (error?.response?.status === 401) {
+        setError("Please login to view wallet.");
+        toast.error("Authentication required.");
       } else {
-        setError('Failed to load wallet data.');
-        toast.error('Failed to load wallet data.');
+        setError("Failed to load wallet data.");
+        toast.error(
+          error?.response?.data?.message || "Failed to load wallet data."
+        );
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [loading]);
+
+  useEffect(() => {
+    // Fetch only once on mount using ref to prevent double fetching in strict mode
+    if (!hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      fetchWalletData();
+    }
+  }, [fetchWalletData]);
 
   const handleRecharge = () => {
-    navigate('/wallet/recharge');
+    navigate("/wallet/recharge");
   };
 
   const getTransactionIcon = (type) => {
     switch (type) {
-      case 'credit':
-      case 'recharge':
-        return { icon: ArrowUpIcon, color: 'text-green-600 bg-green-100' };
-      case 'debit':
-      case 'meal':
-      case 'booking':
-        return { icon: ArrowDownIcon, color: 'text-red-600 bg-red-100' };
+      case "credit":
+      case "recharge":
+      case "refund":
+        return { icon: ArrowUpIcon, color: "text-green-600 bg-green-100" };
+      case "debit":
+      case "meal":
+      case "booking":
+        return { icon: ArrowDownIcon, color: "text-red-600 bg-red-100" };
       default:
-        return { icon: CurrencyRupeeIcon, color: 'text-gray-600 bg-gray-100' };
+        return { icon: CurrencyRupeeIcon, color: "text-gray-600 bg-gray-100" };
     }
   };
 
-  const formatAmount = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2
-    }).format(amount);
-  };
-
   const getTimeAgo = (date) => {
-    if (!date) return '-';
+    if (!date) return "-";
     const now = new Date();
     const transactionDate = new Date(date);
-    const diffInHours = Math.floor((now - transactionDate) / (1000 * 60 * 60));
+    const diffInMinutes = Math.floor((now - transactionDate) / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
 
-    if (diffInHours < 1) return 'Just now';
+    if (diffInMinutes < 1) return "Just now";
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInHours < 48) return 'Yesterday';
-    return transactionDate.toLocaleDateString('en-IN');
+    if (diffInDays === 1) return "Yesterday";
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    return transactionDate.toLocaleDateString("en-IN");
   };
 
   if (loading) {
@@ -184,7 +165,7 @@ const WalletCard = ({ wallet = {}, onRefresh }) => {
           <div className="flex items-center">
             <CurrencyRupeeIcon className="h-5 w-5 mr-1" />
             <span className="text-xl font-bold">
-              {Number(walletData.balance)?.toLocaleString('en-IN') || '0'}
+              {Number(walletData.balance)?.toLocaleString("en-IN") || "0"}
             </span>
           </div>
         </div>
@@ -192,7 +173,10 @@ const WalletCard = ({ wallet = {}, onRefresh }) => {
         <div className="flex items-center justify-between text-xs">
           <div>
             <p className="text-green-100">This Month</p>
-            <p className="font-semibold">₹{Number(walletData.monthlySpent)?.toLocaleString('en-IN') || '0'} spent</p>
+            <p className="font-semibold">
+              ₹{Number(walletData.monthlySpent)?.toLocaleString("en-IN") || "0"}{" "}
+              spent
+            </p>
           </div>
           <button
             onClick={handleRecharge}
@@ -207,44 +191,83 @@ const WalletCard = ({ wallet = {}, onRefresh }) => {
       {/* Recent Transactions */}
       <div className="p-3">
         <div className="flex items-center justify-between mb-2">
-          <h4 className="text-xs font-semibold text-gray-900">Recent Transactions</h4>
+          <h4 className="text-xs font-semibold text-gray-900">
+            Recent Transactions
+          </h4>
           <button
-            onClick={() => navigate('/wallet/transactions')}
+            onClick={() => navigate("/wallet/transactions")}
             className="text-xs text-blue-600 hover:text-blue-800 font-medium"
           >
             View All
           </button>
         </div>
 
-        {walletData.recentTransactions && walletData.recentTransactions.length > 0 ? (
+        {walletData.recentTransactions &&
+        walletData.recentTransactions.length > 0 ? (
           <div className="space-y-1">
-            {walletData.recentTransactions.slice(0, 2).map((transaction, index) => {
-              const { icon: IconComponent, color } = getTransactionIcon(transaction.type);
-              return (
-                <motion.div
-                  key={transaction._id || index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center justify-between p-1 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${color} mr-2`}>
-                      <IconComponent className="h-3 w-3" />
+            {walletData.recentTransactions
+              .filter((t) => t.status === "completed") // Only show completed transactions
+              .slice(-3) // Get last 3 transactions
+              .reverse() // Show newest first
+              .slice(0, 2) // Display only 2
+              .map((transaction, index) => {
+                const { icon: IconComponent, color } = getTransactionIcon(
+                  transaction.type
+                );
+                return (
+                  <motion.div
+                    key={transaction._id || index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center justify-between p-1 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center min-w-0 flex-1">
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center ${color} mr-2 flex-shrink-0`}
+                      >
+                        <IconComponent className="h-3 w-3" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-gray-900 truncate">
+                          {transaction.description || transaction.type}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {getTimeAgo(
+                            transaction.createdAt || transaction.date
+                          )}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-900 truncate">{transaction.description || transaction.type}</p>
-                      <p className="text-xs text-gray-500">{getTimeAgo(transaction.date)}</p>
+                    <div className="text-right ml-2 flex-shrink-0">
+                      <p
+                        className={`text-xs font-semibold ${
+                          transaction.type === "credit" ||
+                          transaction.type === "recharge" ||
+                          transaction.type === "refund"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {transaction.type === "credit" ||
+                        transaction.type === "recharge" ||
+                        transaction.type === "refund"
+                          ? "+"
+                          : "-"}
+                        ₹
+                        {Number(transaction.amount)?.toLocaleString("en-IN") ||
+                          "0"}
+                      </p>
+                      {transaction.status === "pending" && (
+                        <p className="text-xs text-yellow-600 flex items-center">
+                          <ClockIcon className="h-3 w-3 mr-0.5" />
+                          Pending
+                        </p>
+                      )}
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-xs font-semibold ${transaction.type === 'credit' || transaction.type === 'recharge' ? 'text-green-600' : 'text-red-600'}`}>
-                      {transaction.type === 'credit' || transaction.type === 'recharge' ? '+' : '-'}₹{Number(transaction.amount)?.toLocaleString('en-IN') || '0'}
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
+                  </motion.div>
+                );
+              })}
           </div>
         ) : (
           <div className="text-center py-2">
@@ -261,7 +284,9 @@ const WalletCard = ({ wallet = {}, onRefresh }) => {
 
         {/* Wallet Benefits */}
         <div className="mt-3 pt-2 border-t border-gray-100">
-          <h5 className="text-xs font-semibold text-gray-900 mb-1">Wallet Benefits</h5>
+          <h5 className="text-xs font-semibold text-gray-900 mb-1">
+            Wallet Benefits
+          </h5>
           <div className="space-y-1">
             <div className="flex items-center text-xs text-gray-600">
               <div className="w-1 h-1 bg-green-500 rounded-full mr-1"></div>

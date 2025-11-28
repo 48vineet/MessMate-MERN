@@ -124,28 +124,32 @@ const UserDashboard = () => {
   const quickStats = [
     {
       title: "This Month",
-      value: `₹${dashboardData.stats.monthlySpent || 200}`,
+      value: `₹${
+        dashboardData.stats.monthlySpent ||
+        dashboardData.wallet.monthlySpent ||
+        0
+      }`,
       subtitle: "Total Spent",
       icon: Icons.rupee,
       color: "text-green-600 bg-green-100",
     },
     {
       title: "Meals Taken",
-      value: dashboardData.stats.mealsThisMonth || 15,
+      value: dashboardData.stats.mealsThisMonth || 0,
       subtitle: "This Month",
       icon: Icons.chart,
       color: "text-blue-600 bg-blue-100",
     },
     {
       title: "Attendance",
-      value: `${dashboardData.stats.attendanceRate || 85}%`,
+      value: `${dashboardData.stats.attendanceRate || 0}%`,
       subtitle: "This Month",
       icon: Icons.calendar,
       color: "text-purple-600 bg-purple-100",
     },
     {
       title: "Notifications",
-      value: dashboardData.notifications.length || 2,
+      value: dashboardData.unreadCount || 0,
       subtitle: "Unread",
       icon: Icons.bell,
       color: "text-orange-600 bg-orange-100",
@@ -256,10 +260,7 @@ const UserDashboard = () => {
             <QuickActions onRefresh={fetchDashboardData} />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
               <ProfileCard user={user} />
-              <WalletCard
-                wallet={dashboardData.wallet}
-                onRefresh={fetchDashboardData}
-              />
+              <WalletCard />
               <AttendanceCard />
             </div>
           </div>

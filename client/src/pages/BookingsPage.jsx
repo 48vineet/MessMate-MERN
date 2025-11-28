@@ -26,6 +26,7 @@ const BookingsPage = () => {
   const [showNewBookingModal, setShowNewBookingModal] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
   const [creatingBooking, setCreatingBooking] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   // New booking form state
   const [newBooking, setNewBooking] = useState({
@@ -34,10 +35,12 @@ const BookingsPage = () => {
     quantity: 1,
     specialRequests: "",
     menuItem: "",
+    selectedItemIndex: null,
   });
 
   useEffect(() => {
     fetchBookings();
+    fetchWalletBalance();
     fetchMenuItems();
   }, []);
 
@@ -62,91 +65,14 @@ const BookingsPage = () => {
 
         // Combine API bookings with local bookings
         const allBookings = [...fetchedBookings, ...localBookings];
-
-        if (allBookings.length === 0) {
-          // Show sample data if no bookings
-          const sampleBookings = [
-            {
-              _id: "sample1",
-              mealType: "breakfast",
-              bookingDate: new Date(),
-              mealTime: "breakfast time",
-              status: "booked",
-              totalAmount: 80,
-              quantity: 1,
-              specialRequests: "",
-              bookingId: "BK001",
-            },
-            {
-              _id: "sample2",
-              mealType: "lunch",
-              bookingDate: new Date(),
-              mealTime: "lunch time",
-              status: "booked",
-              totalAmount: 120,
-              quantity: 1,
-              specialRequests: "Less spicy please",
-              bookingId: "BK002",
-            },
-            {
-              _id: "sample3",
-              mealType: "dinner",
-              bookingDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-              mealTime: "dinner time",
-              status: "pending",
-              totalAmount: 100,
-              quantity: 1,
-              specialRequests: "",
-              bookingId: "BK003",
-            },
-          ];
-          setBookings(sampleBookings);
-        } else {
-          setBookings(allBookings);
-        }
+        setBookings(allBookings);
       } catch (error) {
         console.error("Error fetching bookings from API:", error);
         // Use local bookings if API fails
         if (localBookings.length > 0) {
           setBookings(localBookings);
         } else {
-          // Show sample data
-          const sampleBookings = [
-            {
-              _id: "sample1",
-              mealType: "breakfast",
-              bookingDate: new Date(),
-              mealTime: "breakfast time",
-              status: "booked",
-              totalAmount: 80,
-              quantity: 1,
-              specialRequests: "",
-              bookingId: "BK001",
-            },
-            {
-              _id: "sample2",
-              mealType: "lunch",
-              bookingDate: new Date(),
-              mealTime: "lunch time",
-              status: "booked",
-              totalAmount: 120,
-              quantity: 1,
-              specialRequests: "Less spicy please",
-              bookingId: "BK002",
-            },
-            {
-              _id: "sample3",
-              mealType: "dinner",
-              bookingDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-              mealTime: "dinner time",
-              status: "pending",
-              totalAmount: 100,
-              quantity: 1,
-              specialRequests: "",
-              bookingId: "BK003",
-            },
-          ];
-          setBookings(sampleBookings);
+          setBookings([]);
         }
       }
     } catch (error) {
@@ -165,6 +91,17 @@ const BookingsPage = () => {
       setMenuItems(response.data.data || []);
     } catch (error) {
       console.error("Error fetching daily menu items:", error);
+    }
+  };
+
+  const fetchWalletBalance = async () => {
+    try {
+      const response = await api.get("/wallet/details");
+      if (response.data?.wallet) {
+        setWalletBalance(response.data.wallet.balance || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching wallet balance:", error);
     }
   };
 
@@ -238,15 +175,39 @@ const BookingsPage = () => {
         return;
       }
 
-      // Use the daily menu's price or default to 80
-      const itemPrice = selectedMenuItem.price || 80;
+      // Calculate price based on selected item index or menu-level price
+      let itemPrice = selectedMenuItem.price || 80;
+
+      if (
+        newBooking.selectedItemIndex !== null &&
+        selectedMenuItem.items &&
+        selectedMenuItem.items.length > 0
+      ) {
+        const selectedItem =
+          selectedMenuItem.items[newBooking.selectedItemIndex];
+        if (selectedItem && selectedItem.price) {
+          itemPrice = selectedItem.price;
+        }
+      }
+
       const totalAmount = itemPrice * newBooking.quantity;
       const finalAmount = totalAmount;
 
+      // Check wallet balance before booking
+      if (walletBalance < finalAmount) {
+        toast.error(
+          `Insufficient balance! You have ₹${walletBalance} but need ₹${finalAmount}. Please recharge your wallet.`,
+          { duration: 5000 }
+        );
+        setCreatingBooking(false);
+        return;
+      }
+
       const bookingData = {
         menuItem: newBooking.menuItem,
+        selectedItemIndex: newBooking.selectedItemIndex,
         quantity: newBooking.quantity,
-        mealType: selectedMenuItem.mealType, // Use the meal type from the daily menu
+        mealType: selectedMenuItem.mealType,
         bookingDate: newBooking.bookingDate,
         mealTime: newBooking.mealTime,
         specialRequests: newBooking.specialRequests,
@@ -258,23 +219,21 @@ const BookingsPage = () => {
       try {
         await api.post("/bookings", bookingData);
         toast.success("Booking created successfully!");
+        // Update wallet balance after successful booking
+        setWalletBalance((prev) => prev - finalAmount);
+        fetchBookings();
       } catch (error) {
-        console.error("API booking failed, saving locally:", error);
-        // Save to local storage if API fails
-        const localBookings = JSON.parse(
-          localStorage.getItem("messmate_bookings") || "[]"
-        );
-        const newBooking = {
-          _id: `local_${Date.now()}`,
-          ...bookingData,
-          createdAt: new Date().toISOString(),
-        };
-        localBookings.push(newBooking);
-        localStorage.setItem(
-          "messmate_bookings",
-          JSON.stringify(localBookings)
-        );
-        toast.success("Booking created successfully! (Saved locally)");
+        console.error("Booking failed:", error);
+        const errorMessage = error?.response?.data?.message || error.message;
+
+        // Check if it's an insufficient balance error
+        if (errorMessage.includes("Insufficient wallet balance")) {
+          toast.error(errorMessage, { duration: 5000 });
+        } else {
+          toast.error(`Failed to create booking: ${errorMessage}`);
+        }
+        setCreatingBooking(false);
+        return;
       }
 
       setShowNewBookingModal(false);
@@ -295,6 +254,7 @@ const BookingsPage = () => {
       quantity: 1,
       specialRequests: "",
       menuItem: "",
+      selectedItemIndex: null,
     });
   };
 
@@ -691,6 +651,47 @@ const BookingsPage = () => {
                   </button>
                 </div>
 
+                {/* Wallet Balance Display */}
+                <div className="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                        <svg
+                          className="w-6 h-6 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-xs text-green-700 font-medium">
+                          Wallet Balance
+                        </p>
+                        <p className="text-lg font-bold text-green-900">
+                          ₹{walletBalance.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    {walletBalance < 50 && (
+                      <div className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                        Low Balance
+                      </div>
+                    )}
+                  </div>
+                  {walletBalance === 0 && (
+                    <p className="text-xs text-red-600 mt-2">
+                      Please recharge your wallet before booking meals.
+                    </p>
+                  )}
+                </div>
+
                 <div className="space-y-4">
                   {/* Menu Item */}
                   <div>
@@ -699,12 +700,13 @@ const BookingsPage = () => {
                     </label>
                     <select
                       value={newBooking.menuItem}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setNewBooking({
                           ...newBooking,
                           menuItem: e.target.value,
-                        })
-                      }
+                          selectedItemIndex: null, // Reset item selection when menu changes
+                        });
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select a menu item</option>
@@ -727,6 +729,80 @@ const BookingsPage = () => {
                       </p>
                     )}
                   </div>
+
+                  {/* Individual Items Selection - Show if selected menu has items array */}
+                  {newBooking.menuItem &&
+                    (() => {
+                      const selectedMenu = menuItems.find(
+                        (m) => m._id === newBooking.menuItem
+                      );
+                      return (
+                        selectedMenu?.items &&
+                        selectedMenu.items.length > 0 && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Select Specific Item{" "}
+                              {selectedMenu.items.some((item) => item.price) &&
+                                "*"}
+                            </label>
+                            <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                              {selectedMenu.items.map((item, index) => (
+                                <label
+                                  key={index}
+                                  className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                    newBooking.selectedItemIndex === index
+                                      ? "border-blue-500 bg-blue-50"
+                                      : "border-gray-200 hover:border-gray-300 bg-white"
+                                  } ${
+                                    item.isAvailable === false
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }`}
+                                >
+                                  <div className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      name="menuItemSelection"
+                                      checked={
+                                        newBooking.selectedItemIndex === index
+                                      }
+                                      onChange={() => {
+                                        if (item.isAvailable !== false) {
+                                          setNewBooking({
+                                            ...newBooking,
+                                            selectedItemIndex: index,
+                                          });
+                                        }
+                                      }}
+                                      disabled={item.isAvailable === false}
+                                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                    />
+                                    <span className="ml-3 text-sm font-medium text-gray-900">
+                                      {item.icon} {item.name}
+                                      {item.isAvailable === false && (
+                                        <span className="ml-2 text-xs text-red-600">
+                                          (Not Available)
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                  {item.price && (
+                                    <span className="text-sm font-bold text-green-600">
+                                      ₹{item.price}
+                                    </span>
+                                  )}
+                                </label>
+                              ))}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {selectedMenu.items.some((item) => item.price)
+                                ? "Please select a specific item to continue"
+                                : "All items have the same price"}
+                            </p>
+                          </div>
+                        )
+                      );
+                    })()}
 
                   {/* Booking Date */}
                   <div>

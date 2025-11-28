@@ -1,19 +1,19 @@
 // src/components/payments/WalletManagement.jsx
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  CurrencyRupeeIcon,
-  PlusIcon,
+import {
   ArrowPathIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  CreditCardIcon,
   BanknotesIcon,
-  ChartBarIcon
-} from '@heroicons/react/24/outline';
-import { useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
-import { toast } from 'react-hot-toast';
+  ChartBarIcon,
+  CreditCardIcon,
+  CurrencyRupeeIcon,
+  LockClosedIcon,
+  LockOpenIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import api from "../../utils/api";
 
 const WalletManagement = () => {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ const WalletManagement = () => {
     totalSpent: 0,
     totalRecharged: 0,
     monthlySpent: 0,
-    recentTransactions: []
+    recentTransactions: [],
   });
   const [loading, setLoading] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
@@ -34,11 +34,11 @@ const WalletManagement = () => {
 
   const fetchWalletData = async () => {
     try {
-      const response = await api.get('/wallet/details');
+      const response = await api.get("/wallet/details");
       setWalletData(response.data.wallet);
     } catch (error) {
-      console.error('Error fetching wallet data:', error);
-      toast.error('Failed to load wallet information');
+      console.error("Error fetching wallet data:", error);
+      toast.error("Failed to load wallet information");
     } finally {
       setLoading(false);
     }
@@ -48,35 +48,35 @@ const WalletManagement = () => {
     setRefreshing(true);
     await fetchWalletData();
     setRefreshing(false);
-    toast.success('Wallet data refreshed');
+    toast.success("Wallet data refreshed");
   };
 
   const handleRecharge = () => {
-    navigate('/wallet/recharge', {
+    navigate("/wallet/recharge", {
       state: {
-        amount: null
-      }
+        amount: null,
+      },
     });
   };
 
   const quickRechargeAmounts = [100, 200, 500, 1000];
 
   const handleQuickRecharge = (amount) => {
-    navigate('/wallet/recharge', {
+    navigate("/wallet/recharge", {
       state: {
-        amount
-      }
+        amount,
+      },
     });
   };
 
   const formatCurrency = (amount) => {
     if (amount === undefined || amount === null || isNaN(amount)) {
-      return '₹0';
+      return "₹0";
     }
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -109,15 +109,23 @@ const WalletManagement = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">My Wallet</h1>
-              <p className="text-gray-600">Manage your MessMate wallet and payments</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                My Wallet
+              </h1>
+              <p className="text-gray-600">
+                Manage your MessMate wallet and payments
+              </p>
             </div>
             <button
               onClick={handleRefresh}
               disabled={refreshing}
               className="p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              <span className={`text-lg ${refreshing ? 'animate-spin' : ''}`}>🔄</span>
+              <ArrowPathIcon
+                className={`h-6 w-6 text-gray-600 ${
+                  refreshing ? "animate-spin" : ""
+                }`}
+              />
             </button>
           </div>
         </motion.div>
@@ -135,12 +143,12 @@ const WalletManagement = () => {
             </div>
             <button
               onClick={() => setShowBalance(!showBalance)}
-              className="p-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors text-white"
+              className="p-2 bg-white rounded-lg hover:bg-gray-100 transition-colors"
             >
               {showBalance ? (
-                <span>🙈</span>
+                <LockOpenIcon className="h-6 w-6 text-gray-700" />
               ) : (
-                <span>👁️</span>
+                <LockClosedIcon className="h-6 w-6 text-gray-700" />
               )}
             </button>
           </div>
@@ -150,7 +158,9 @@ const WalletManagement = () => {
             <div className="flex items-center">
               <CurrencyRupeeIcon className="h-12 w-12 mr-2" />
               <span className="text-5xl font-bold">
-                {showBalance ? walletData.balance.toLocaleString('en-IN') : '****'}
+                {showBalance
+                  ? walletData.balance.toLocaleString("en-IN")
+                  : "****"}
               </span>
             </div>
           </div>
@@ -159,14 +169,17 @@ const WalletManagement = () => {
             <div>
               <p className="text-blue-100 text-sm">This Month Spent</p>
               <p className="text-xl font-semibold">
-                ₹{showBalance ? walletData.monthlySpent.toLocaleString('en-IN') : '****'}
+                ₹
+                {showBalance
+                  ? walletData.monthlySpent.toLocaleString("en-IN")
+                  : "****"}
               </p>
             </div>
             <button
               onClick={handleRecharge}
               className="bg-white hover:bg-gray-100 px-6 py-3 rounded-lg font-semibold transition-all flex items-center text-blue-600"
             >
-              <span className="mr-2">+</span>
+              <PlusIcon className="h-5 w-5 mr-2" />
               Add Money
             </button>
           </div>
@@ -180,7 +193,9 @@ const WalletManagement = () => {
             animate={{ opacity: 1, x: 0 }}
             className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Recharge</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Quick Recharge
+            </h3>
             <div className="grid grid-cols-2 gap-3 mb-4">
               {quickRechargeAmounts.map((amount) => (
                 <button
@@ -206,7 +221,9 @@ const WalletManagement = () => {
             animate={{ opacity: 1, x: 0 }}
             className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Wallet Statistics</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Wallet Statistics
+            </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Total Recharged</span>
@@ -236,7 +253,7 @@ const WalletManagement = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            onClick={() => navigate('/payments/history')}
+            onClick={() => navigate("/payments/history")}
             className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow text-left"
           >
             <div className="flex items-center">
@@ -294,55 +311,76 @@ const WalletManagement = () => {
         >
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Recent Transactions
+              </h3>
               <button
-                onClick={() => navigate('/payments/history')}
+                onClick={() => navigate("/payments/history")}
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium"
               >
                 View All
               </button>
             </div>
           </div>
-          
+
           <div className="divide-y divide-gray-200">
             {walletData.recentTransactions.length > 0 ? (
-              walletData.recentTransactions.slice(0, 5).map((transaction, index) => (
-                <motion.div
-                  key={transaction._id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="p-6 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
-                        transaction.type === 'credit' ? 'bg-green-100' : 'bg-red-100'
-                      }`}>
-                        <CurrencyRupeeIcon className={`h-5 w-5 ${
-                          transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
-                        }`} />
+              walletData.recentTransactions
+                .slice(0, 5)
+                .map((transaction, index) => (
+                  <motion.div
+                    key={transaction._id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="p-6 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
+                            transaction.type === "credit"
+                              ? "bg-green-100"
+                              : "bg-red-100"
+                          }`}
+                        >
+                          <CurrencyRupeeIcon
+                            className={`h-5 w-5 ${
+                              transaction.type === "credit"
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {transaction.description || "Payment Transaction"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {new Date(transaction.createdAt).toLocaleDateString(
+                              "en-IN"
+                            )}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {transaction.description || 'Payment Transaction'}
+                      <div className="text-right">
+                        <p
+                          className={`font-bold ${
+                            transaction.type === "credit"
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {transaction.type === "credit" ? "+" : "-"}₹
+                          {transaction.amount.toLocaleString("en-IN")}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(transaction.createdAt).toLocaleDateString('en-IN')}
+                        <p className="text-sm text-gray-500 capitalize">
+                          {transaction.status}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-bold ${
-                        transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {transaction.type === 'credit' ? '+' : '-'}₹{transaction.amount.toLocaleString('en-IN')}
-                      </p>
-                      <p className="text-sm text-gray-500 capitalize">{transaction.status}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))
+                  </motion.div>
+                ))
             ) : (
               <div className="p-12 text-center">
                 <CurrencyRupeeIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />

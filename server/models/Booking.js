@@ -29,6 +29,15 @@ const bookingSchema = new mongoose.Schema(
       ref: "DailyMenu",
       required: [true, "Menu item is required"],
     },
+    selectedItemIndex: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    itemName: {
+      type: String,
+      trim: true,
+    },
     quantity: {
       type: Number,
       required: [true, "Quantity is required"],

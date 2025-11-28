@@ -5,89 +5,6 @@ const DailyMenu = require("../models/DailyMenu");
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 
-// @desc    Test QR generation (no auth required)
-// @route   GET /api/bookings/test-qr
-// @access  Public
-exports.testQRGeneration = async (req, res) => {
-  try {
-    console.log("=== Test QR Generation ===");
-
-    // Create test data
-    const qrData = {
-      bookingId: "BK" + Date.now(),
-      userId: "test-user-123",
-      mealType: "dinner",
-      timestamp: Date.now(),
-      bookingDate: new Date().toISOString(),
-    };
-
-    console.log("Test QR data:", qrData);
-
-    // Generate actual QR code
-    const QRCode = require("qrcode");
-    const qrString = JSON.stringify(qrData);
-    const qrUrl = await QRCode.toDataURL(qrString, {
-      width: 256,
-      margin: 2,
-      color: {
-        dark: "#000000",
-        light: "#FFFFFF",
-      },
-    });
-
-    const qrCode = {
-      data: qrString,
-      url: qrUrl,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    };
-
-    console.log("Test QR code generated successfully");
-    console.log("QR URL length:", qrUrl.length);
-
-    res.status(200).json({
-      success: true,
-      qrCode: qrCode,
-      booking: {
-        id: "test-booking-id",
-        bookingId: qrData.bookingId,
-        mealType: qrData.mealType,
-        status: "confirmed",
-        bookingDate: new Date(),
-        createdAt: new Date(),
-        menuName: "Test Dinner",
-      },
-    });
-  } catch (error) {
-    console.error("Test QR generation error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error generating test QR code",
-      error: error.message,
-    });
-  }
-};
-
-// @desc    Test endpoint
-// @route   GET /api/bookings/test
-// @access  Public
-exports.testBookings = async (req, res) => {
-  try {
-    console.log("Test endpoint hit");
-    res.status(200).json({
-      success: true,
-      message: "Bookings API is working",
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Test endpoint error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Test endpoint error",
-      error: error.message,
-    });
-  }
-};
-
 // @desc    Get all bookings
 // @route   GET /api/bookings
 // @access  Private
@@ -156,17 +73,6 @@ exports.getBookings = async (req, res) => {
       .skip(startIndex);
 
     console.log("Bookings found:", bookings.length);
-    console.log(
-      "Sample booking data:",
-      bookings.slice(0, 2).map((b) => ({
-        id: b._id,
-        bookingId: b.bookingId,
-        mealType: b.mealType,
-        bookingDate: b.bookingDate,
-        status: b.status,
-        user: b.user,
-      }))
-    );
 
     const total = await Booking.countDocuments(query);
     console.log("Total bookings count:", total);
@@ -242,8 +148,14 @@ exports.getBooking = async (req, res) => {
 // @access  Private
 exports.createBooking = async (req, res) => {
   try {
-    const { menuItem, quantity, bookingDate, mealTime, specialRequests } =
-      req.body;
+    const {
+      menuItem,
+      selectedItemIndex,
+      quantity,
+      bookingDate,
+      mealTime,
+      specialRequests,
+    } = req.body;
 
     // Get menu item details
     const menuItemDoc = await DailyMenu.findById(menuItem);
@@ -262,6 +174,38 @@ exports.createBooking = async (req, res) => {
       });
     }
 
+    // Get the specific item from the items array
+    let itemPrice;
+    let itemName;
+
+    if (
+      selectedItemIndex !== undefined &&
+      menuItemDoc.items &&
+      menuItemDoc.items.length > 0
+    ) {
+      const selectedItem = menuItemDoc.items[selectedItemIndex];
+      if (!selectedItem) {
+        return res.status(400).json({
+          success: false,
+          message: "Selected item not found in menu",
+        });
+      }
+
+      if (selectedItem.isAvailable === false) {
+        return res.status(400).json({
+          success: false,
+          message: `${selectedItem.name} is not available`,
+        });
+      }
+
+      itemPrice = selectedItem.price || menuItemDoc.price || 80;
+      itemName = selectedItem.name;
+    } else {
+      // Fallback to menu-level price if no specific item selected
+      itemPrice = menuItemDoc.price || 80;
+      itemName = menuItemDoc.name || menuItemDoc.items[0]?.name || "Meal";
+    }
+
     // Get user and wallet
     const user = await User.findById(req.user.id);
     let wallet = await Wallet.findOne({ userId: req.user.id });
@@ -273,7 +217,6 @@ exports.createBooking = async (req, res) => {
     }
 
     // Calculate pricing
-    const itemPrice = menuItemDoc.price || 80;
     const totalAmount = itemPrice * quantity;
     const finalAmount = totalAmount; // Add any discounts here
 
@@ -281,6 +224,7 @@ exports.createBooking = async (req, res) => {
       userBalance: wallet.balance,
       finalAmount: finalAmount,
       itemPrice: itemPrice,
+      itemName: itemName,
       quantity: quantity,
     });
 
@@ -298,6 +242,9 @@ exports.createBooking = async (req, res) => {
     const booking = await Booking.create({
       user: req.user.id,
       menuItem,
+      selectedItemIndex:
+        selectedItemIndex !== undefined ? selectedItemIndex : 0,
+      itemName,
       quantity,
       mealType: menuItemDoc.mealType,
       bookingDate: new Date(bookingDate),
@@ -912,71 +859,14 @@ exports.getCurrentQR = async (req, res) => {
     console.log("Found booking:", booking ? booking._id : "No booking found");
 
     if (!booking) {
-      console.log("No active booking found, creating a test booking...");
-
-      // Create a test booking for demonstration
-      const testBooking = await Booking.create({
-        user: req.user.id,
-        bookingId: "BK" + Date.now(),
-        menuItem: "507f1f77bcf86cd799439011", // Mock menu item ID
-        quantity: 1,
-        mealType: "dinner",
-        bookingDate: new Date(),
-        mealTime: "dinner time",
-        itemPrice: 80,
-        totalAmount: 80,
-        finalAmount: 80,
-        status: "confirmed",
-        paymentStatus: "paid",
-      });
-
-      console.log("Test booking created:", testBooking._id);
-
-      // Use the test booking
-      const qrData = {
-        bookingId: testBooking.bookingId,
-        userId: testBooking.user.toString(),
-        mealType: testBooking.mealType,
-        timestamp: testBooking.createdAt.getTime(),
-        bookingDate: testBooking.bookingDate.toISOString(),
-      };
-
-      // Generate actual QR code
-      const QRCode = require("qrcode");
-      const qrString = JSON.stringify(qrData);
-      const qrUrl = await QRCode.toDataURL(qrString, {
-        width: 256,
-        margin: 2,
-        color: {
-          dark: "#000000",
-          light: "#FFFFFF",
-        },
-      });
-
-      const qrCode = {
-        data: qrString,
-        url: qrUrl,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      };
-
-      console.log("Test QR code generated successfully");
-
-      return res.status(200).json({
-        success: true,
-        qrCode: qrCode,
-        booking: {
-          id: testBooking._id,
-          bookingId: testBooking.bookingId,
-          mealType: testBooking.mealType,
-          status: testBooking.status,
-          bookingDate: testBooking.bookingDate,
-          createdAt: testBooking.createdAt,
-          menuName: "Today's Dinner",
-        },
+      return res.status(404).json({
+        success: false,
+        message:
+          "No active booking found for today. Please create a booking first.",
       });
     }
 
-    // Generate QR code data for existing booking
+    // Generate QR code for the actual booking
     const qrData = {
       bookingId: booking.bookingId,
       userId: booking.user.toString(),
@@ -984,8 +874,6 @@ exports.getCurrentQR = async (req, res) => {
       timestamp: booking.createdAt.getTime(),
       bookingDate: booking.bookingDate.toISOString(),
     };
-
-    console.log("QR data to encode:", qrData);
 
     // Generate actual QR code
     const QRCode = require("qrcode");
@@ -1005,7 +893,7 @@ exports.getCurrentQR = async (req, res) => {
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     };
 
-    console.log("Real QR code generated for booking:", booking._id);
+    console.log("QR code generated for booking:", booking._id);
     console.log("QR URL length:", qrUrl.length);
 
     res.status(200).json({

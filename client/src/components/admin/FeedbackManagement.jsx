@@ -1,19 +1,18 @@
 // src/components/admin/FeedbackManagement.jsx
-import { useState, useEffect } from "react";
 import {
-  ChatBubbleLeftRightIcon,
-  StarIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  EyeIcon,
-  TrashIcon,
-  ChartBarIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   ArrowPathIcon,
+  ChartBarIcon,
+  ChatBubbleLeftRightIcon,
+  CheckCircleIcon,
+  EyeIcon,
+  MagnifyingGlassIcon,
+  StarIcon,
+  TrashIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
-import api from "../../utils/api";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import api from "../../utils/api";
 
 const FeedbackManagement = () => {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -85,32 +84,6 @@ const FeedbackManagement = () => {
       toast.error("Failed to refresh data");
     } finally {
       setRefreshing(false);
-    }
-  };
-
-  const createSampleFeedback = async () => {
-    try {
-      const sampleFeedback = {
-        feedbackType: "meal-review",
-        category: "food-quality",
-        title: "Sample Feedback",
-        comment: "This is a sample feedback for testing purposes.",
-        rating: {
-          overall: 4,
-          taste: 4,
-          presentation: 3,
-          portion: 4,
-          temperature: 5,
-        },
-        isAnonymous: false,
-      };
-
-      await api.post("/feedback", sampleFeedback);
-      toast.success("Sample feedback created");
-      refreshData();
-    } catch (error) {
-      console.error("Error creating sample feedback:", error);
-      toast.error("Failed to create sample feedback");
     }
   };
 
@@ -425,16 +398,6 @@ const FeedbackManagement = () => {
               />
               <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
             </button>
-
-            {feedbacks.length === 0 && (
-              <button
-                onClick={createSampleFeedback}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                title="Create sample feedback for testing"
-              >
-                Create Sample Data
-              </button>
-            )}
           </div>
         </div>
 
