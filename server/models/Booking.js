@@ -86,6 +86,7 @@ const bookingSchema = new mongoose.Schema(
         "confirmed",
         "prepared",
         "served",
+        "completed",
         "cancelled",
         "no-show",
       ],
@@ -199,10 +200,10 @@ bookingSchema.pre("save", function (next) {
 });
 
 // Method to confirm booking
-bookingSchema.methods.confirm = function () {
+bookingSchema.methods.confirm = async function () {
   this.status = "confirmed";
   this.estimatedPickupTime = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
-  return this.save();
+  return await this.save();
 };
 
 // Method to cancel booking
@@ -219,21 +220,21 @@ bookingSchema.methods.cancel = async function (reason, cancelledBy) {
     this.paymentStatus = "refunded";
   }
 
-  return this.save();
+  return await this.save();
 };
 
 // Method to mark as prepared
-bookingSchema.methods.markPrepared = function () {
+bookingSchema.methods.markPrepared = async function () {
   this.status = "prepared";
   this.preparationEndTime = new Date();
-  return this.save();
+  return await this.save();
 };
 
 // Method to mark as served
-bookingSchema.methods.markServed = function () {
+bookingSchema.methods.markServed = async function () {
   this.status = "served";
   this.actualPickupTime = new Date();
-  return this.save();
+  return await this.save();
 };
 
 // Method to add feedback

@@ -28,6 +28,7 @@ router.get("/my-bookings", getBookings);
 router.get("/search", searchBookings); // Add search route
 router.get("/:id", getBooking);
 router.patch("/:id/status", updateBookingStatus);
+router.patch("/:id/cancel", cancelBooking);
 router.delete("/:id", cancelBooking);
 router.post("/:id/feedback", addFeedback);
 

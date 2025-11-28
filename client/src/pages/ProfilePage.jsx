@@ -1,35 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  UserIcon,
-  EnvelopeIcon,
-  PhoneIcon,
-  MapPinIcon,
+import {
   AcademicCapIcon,
   CalendarIcon,
   CameraIcon,
-  PencilIcon,
   CheckIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
-import { toast } from 'react-hot-toast';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import api from '../utils/api';
+  EnvelopeIcon,
+  PencilIcon,
+  PhoneIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
+import api from "../utils/api";
 
 const ProfilePage = () => {
   const { user, updateProfile, updateAvatar } = useAuth();
   const { isDark } = useTheme();
   const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    studentId: '',
+    name: "",
+    email: "",
+    phone: "",
+    studentId: "",
     preferences: {
-      dietary: ['vegetarian'],
+      dietary: ["vegetarian"],
       allergies: [],
-      favoriteItems: []
-    }
+      favoriteItems: [],
+    },
   });
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,33 +36,33 @@ const ProfilePage = () => {
   useEffect(() => {
     if (user) {
       setProfile({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        studentId: user.studentId || '',
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        studentId: user.studentId || "",
         preferences: user.preferences || {
-          dietary: ['vegetarian'],
+          dietary: ["vegetarian"],
           allergies: [],
-          favoriteItems: []
-        }
+          favoriteItems: [],
+        },
       });
     }
   }, [user]);
 
   const handleInputChange = (field, value) => {
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      setProfile(prev => ({
+    if (field.includes(".")) {
+      const [parent, child] = field.split(".");
+      setProfile((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: value
-        }
+          [child]: value,
+        },
       }));
     } else {
-      setProfile(prev => ({
+      setProfile((prev) => ({
         ...prev,
-        [field]: value
+        [field]: value,
       }));
     }
   };
@@ -73,16 +71,16 @@ const ProfilePage = () => {
     setLoading(true);
     try {
       const result = await updateProfile(profile);
-      
+
       if (result.success) {
-        toast.success('Profile updated successfully!');
+        toast.success("Profile updated successfully!");
         setIsEditing(false);
       } else {
-        toast.error(result.error || 'Failed to update profile');
+        toast.error(result.error || "Failed to update profile");
       }
     } catch (error) {
-      console.error('Profile update error:', error);
-      toast.error('Failed to update profile');
+      console.error("Profile update error:", error);
+      toast.error("Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -93,15 +91,15 @@ const ProfilePage = () => {
     // Reset to original user data
     if (user) {
       setProfile({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        studentId: user.studentId || '',
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        studentId: user.studentId || "",
         preferences: user.preferences || {
-          dietary: ['vegetarian'],
+          dietary: ["vegetarian"],
           allergies: [],
-          favoriteItems: []
-        }
+          favoriteItems: [],
+        },
       });
     }
   };
@@ -113,44 +111,46 @@ const ProfilePage = () => {
     // Validate file
     const maxSize = 2 * 1024 * 1024; // 2MB
     if (file.size > maxSize) {
-      toast.error('Image size should be less than 2MB');
+      toast.error("Image size should be less than 2MB");
       return;
     }
 
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Please upload a valid image file (JPEG, JPG, PNG)');
+      toast.error("Please upload a valid image file (JPEG, JPG, PNG)");
       return;
     }
 
     setAvatarLoading(true);
     try {
       const formData = new FormData();
-      formData.append('avatar', file);
+      formData.append("avatar", file);
 
-      const response = await api.put('/auth/upload-avatar', formData, {
+      const response = await api.put("/auth/upload-avatar", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       if (response.data.success) {
-        toast.success('Avatar updated successfully!');
+        toast.success("Avatar updated successfully!");
         // Update the user context with new avatar
         await updateAvatar(response.data.avatar);
       } else {
-        toast.error(response.data.message || 'Failed to upload avatar');
+        toast.error(response.data.message || "Failed to upload avatar");
       }
     } catch (error) {
-      console.error('Avatar upload error:', error);
-      toast.error('Failed to upload avatar');
+      console.error("Avatar upload error:", error);
+      toast.error("Failed to upload avatar");
     } finally {
       setAvatarLoading(false);
     }
   };
 
   return (
-    <div className={`min-h-screen bg-gray-50 p-6 ${isDark ? 'dark' : ''}`}>
+    <div
+      className={`min-h-screen bg-gray-50 p-6 pb-24 ${isDark ? "dark" : ""}`}
+    >
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <motion.div
@@ -223,7 +223,7 @@ const ProfilePage = () => {
                     ) : (
                       <div className="w-full h-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
                         <span className="text-white font-bold text-4xl">
-                          {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                          {user?.name?.charAt(0)?.toUpperCase() || "U"}
                         </span>
                       </div>
                     )}
@@ -244,7 +244,9 @@ const ProfilePage = () => {
                   </label>
                 </div>
 
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">{user?.name}</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                  {user?.name}
+                </h2>
                 <p className="text-gray-600 mb-4 capitalize">{user?.role}</p>
 
                 {/* Quick Stats */}
@@ -273,8 +275,10 @@ const ProfilePage = () => {
             className="lg:col-span-2"
           >
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Personal Information</h3>
-              
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                Personal Information
+              </h3>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Name */}
                 <div>
@@ -285,12 +289,14 @@ const ProfilePage = () => {
                     <input
                       type="text"
                       value={profile.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("name", e.target.value)
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   ) : (
                     <div className="px-3 py-2 bg-gray-50 rounded-lg">
-                      {profile.name || 'Not provided'}
+                      {profile.name || "Not provided"}
                     </div>
                   )}
                 </div>
@@ -315,14 +321,16 @@ const ProfilePage = () => {
                     <input
                       type="tel"
                       value={profile.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value)
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Enter phone number"
                     />
                   ) : (
                     <div className="px-3 py-2 bg-gray-50 rounded-lg flex items-center">
                       <PhoneIcon className="h-4 w-4 text-gray-400 mr-2" />
-                      {profile.phone || 'Not provided'}
+                      {profile.phone || "Not provided"}
                     </div>
                   )}
                 </div>
@@ -334,7 +342,7 @@ const ProfilePage = () => {
                   </label>
                   <div className="px-3 py-2 bg-gray-50 rounded-lg flex items-center">
                     <AcademicCapIcon className="h-4 w-4 text-gray-400 mr-2" />
-                    {profile.studentId || 'Not provided'}
+                    {profile.studentId || "Not provided"}
                   </div>
                 </div>
 
@@ -345,11 +353,13 @@ const ProfilePage = () => {
                   </label>
                   <div className="px-3 py-2 bg-gray-50 rounded-lg flex items-center">
                     <CalendarIcon className="h-4 w-4 text-gray-400 mr-2" />
-                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    }) : 'Recently'}
+                    {user?.createdAt
+                      ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : "Recently"}
                   </div>
                 </div>
               </div>
@@ -357,25 +367,34 @@ const ProfilePage = () => {
               {/* Dietary Preferences */}
               {isEditing && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
-                  <h4 className="text-md font-semibold text-gray-900 mb-4">Dietary Preferences</h4>
+                  <h4 className="text-md font-semibold text-gray-900 mb-4">
+                    Dietary Preferences
+                  </h4>
                   <div className="grid grid-cols-2 gap-4">
-                    {['vegetarian', 'non-vegetarian', 'vegan', 'jain'].map((diet) => (
-                      <label key={diet} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={profile.preferences?.dietary?.includes(diet)}
-                          onChange={(e) => {
-                            const current = profile.preferences?.dietary || [];
-                            const updated = e.target.checked
-                              ? [...current, diet]
-                              : current.filter(d => d !== diet);
-                            handleInputChange('preferences.dietary', updated);
-                          }}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-2 text-sm text-gray-700 capitalize">{diet}</span>
-                      </label>
-                    ))}
+                    {["vegetarian", "non-vegetarian", "vegan", "jain"].map(
+                      (diet) => (
+                        <label key={diet} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={profile.preferences?.dietary?.includes(
+                              diet
+                            )}
+                            onChange={(e) => {
+                              const current =
+                                profile.preferences?.dietary || [];
+                              const updated = e.target.checked
+                                ? [...current, diet]
+                                : current.filter((d) => d !== diet);
+                              handleInputChange("preferences.dietary", updated);
+                            }}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 text-sm text-gray-700 capitalize">
+                            {diet}
+                          </span>
+                        </label>
+                      )
+                    )}
                   </div>
                 </div>
               )}
@@ -387,4 +406,4 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage; 
+export default ProfilePage;

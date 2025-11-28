@@ -82,7 +82,7 @@ const WalletManagement = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-6 pb-24">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-300 rounded w-1/4"></div>
@@ -99,7 +99,7 @@ const WalletManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6 pb-24">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <motion.div

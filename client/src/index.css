@@ -4,6 +4,37 @@ body {
   font-family: "Inter", sans-serif;
 }
 
+/* Mobile-friendly global tweaks */
+/* Text size adjust removed to satisfy linter; can re-enable per target */
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Respect device safe areas */
+.safe-pb {
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+
+.safe-pt {
+  padding-top: max(env(safe-area-inset-top), 1rem);
+}
+
+/* Consistent horizontal padding on mobile */
+.container-px {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Touch target utility */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Smooth scrolling on iOS */
+/* reserved: add platform-specific smooth scrolling if needed */
+
 /* Custom Animations for Enhanced Components */
 @keyframes fadeIn {
   from {
@@ -70,28 +101,49 @@ body {
 }
 
 /* Animation Classes */
+/* Slightly reduced durations for low-end devices */
 .animate-fadeIn {
-  animation: fadeIn 0.6s ease-out forwards;
+  animation: fadeIn 0.45s ease-out forwards;
 }
 
 .animate-fadeInUp {
-  animation: fadeInUp 0.8s ease-out forwards;
+  animation: fadeInUp 0.6s ease-out forwards;
 }
 
 .animate-slideInLeft {
-  animation: slideInLeft 0.6s ease-out forwards;
+  animation: slideInLeft 0.45s ease-out forwards;
 }
 
 .animate-slideInRight {
-  animation: slideInRight 0.6s ease-out forwards;
+  animation: slideInRight 0.45s ease-out forwards;
 }
 
 .animate-scaleIn {
-  animation: scaleIn 0.5s ease-out forwards;
+  animation: scaleIn 0.4s ease-out forwards;
 }
 
 .animate-shimmer {
   animation: shimmer 2s infinite;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .animate-fadeIn,
+  .animate-fadeInUp,
+  .animate-slideInLeft,
+  .animate-slideInRight,
+  .animate-scaleIn,
+  .animate-shimmer {
+    animation: none !important;
+  }
 }
 
 /* Enhanced Hover Effects */
@@ -141,4 +193,14 @@ body {
 body {
   background-color: #f9fafb; /* Default light background */
   color: #111827; /* Default light text color */
+}
+
+/* Hide scrollbar for horizontal scrolling filters */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

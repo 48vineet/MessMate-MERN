@@ -8,6 +8,7 @@ import {
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import api from "../utils/api";
 
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
@@ -15,17 +16,30 @@ const NotificationsPage = () => {
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    // Fetch real notifications from API
     const fetchNotifications = async () => {
       try {
-        const response = await fetch("/api/notifications");
-        const data = await response.json();
+        const { data } = await api.get("/notifications", {
+          params: { limit: 50 },
+        });
         if (data.success) {
-          setNotifications(data.notifications || []);
+          const mapped = (data.notifications || []).map((n) => ({
+            id: n._id,
+            title: n.title || "Notification",
+            message: n.message || "",
+            type: n.type || "info",
+            read: n.isRead || false,
+            createdAt: n.createdAt ? new Date(n.createdAt) : new Date(),
+          }));
+          setNotifications(mapped);
+        } else {
+          setNotifications([]);
         }
       } catch (error) {
         console.error("Error fetching notifications:", error);
-        toast.error("Failed to load notifications");
+        toast.error(
+          error.response?.data?.message || "Failed to load notifications"
+        );
+        setNotifications([]);
       } finally {
         setLoading(false);
       }
@@ -111,7 +125,7 @@ const NotificationsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 pb-24">
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
@@ -130,20 +144,20 @@ const NotificationsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 pb-24">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 Notifications
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 {unreadCount > 0
                   ? `${unreadCount} unread notification${
                       unreadCount !== 1 ? "s" : ""
@@ -154,7 +168,7 @@ const NotificationsPage = () => {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base whitespace-nowrap touch-target"
               >
                 Mark All as Read
               </button>
@@ -166,15 +180,15 @@ const NotificationsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="mb-4 sm:mb-6"
         >
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
             {["all", "unread", "success", "warning", "info"].map(
               (filterType) => (
                 <button
                   key={filterType}
                   onClick={() => setFilter(filterType)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap touch-target ${
                     filter === filterType
                       ? "bg-blue-600 text-white"
                       : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
@@ -191,55 +205,57 @@ const NotificationsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-4"
+          className="space-y-3 sm:space-y-4"
         >
           {filteredNotifications.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-              <BellIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 text-center">
+              <BellIcon className="h-10 sm:h-12 w-10 sm:w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                 No notifications
               </h3>
-              <p className="text-gray-600">You're all caught up!</p>
+              <p className="text-sm sm:text-base text-gray-600">
+                You're all caught up!
+              </p>
             </div>
           ) : (
             filteredNotifications.map((notification, index) => {
-              const IconComponent = notification.icon;
+              const IconComponent = getTypeIcon(notification.type);
               return (
                 <motion.div
                   key={notification.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${
+                  transition={{ delay: index * 0.05 }}
+                  className={`bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 ${
                     !notification.read ? "border-l-4 border-l-blue-500" : ""
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
                       <div
-                        className={`p-2 rounded-lg ${getTypeColor(
+                        className={`p-2 rounded-lg flex-shrink-0 ${getTypeColor(
                           notification.type
                         )}`}
                       >
-                        <IconComponent className="h-5 w-5" />
+                        <IconComponent className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-medium text-gray-900">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-2">
+                          <h3 className="text-sm sm:text-base font-medium text-gray-900 truncate">
                             {notification.title}
                           </h3>
-                          <span className="text-sm text-gray-500">
-                            {formatTimestamp(notification.timestamp)}
+                          <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
+                            {formatTimestamp(notification.createdAt)}
                           </span>
                         </div>
-                        <p className="text-gray-600 mb-3">
+                        <p className="text-xs sm:text-sm text-gray-600 mb-3 break-words">
                           {notification.message}
                         </p>
                         <div className="flex space-x-2">
                           {!notification.read && (
                             <button
                               onClick={() => markAsRead(notification.id)}
-                              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                              className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium touch-target"
                             >
                               Mark as read
                             </button>
@@ -249,9 +265,9 @@ const NotificationsPage = () => {
                     </div>
                     <button
                       onClick={() => deleteNotification(notification.id)}
-                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 touch-target"
                     >
-                      <XMarkIcon className="h-5 w-5" />
+                      <XMarkIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
                   </div>
                 </motion.div>

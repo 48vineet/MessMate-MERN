@@ -343,6 +343,12 @@ exports.createBooking = async (req, res) => {
 // @route   PATCH /api/bookings/:id/status
 // @access  Private/Admin
 exports.updateBookingStatus = async (req, res) => {
+  console.log("========================================");
+  console.log("UPDATE BOOKING STATUS CALLED");
+  console.log("Booking ID:", req.params.id);
+  console.log("Requested Status:", req.body.status);
+  console.log("========================================");
+
   try {
     const { status, adminNotes } = req.body;
 
@@ -355,50 +361,85 @@ exports.updateBookingStatus = async (req, res) => {
       });
     }
 
-    // Update booking based on status
-    booking.status = status;
-    booking.handledBy = req.user.id;
+    console.log("Current booking status:", booking.status);
+    console.log("Current payment status:", booking.paymentStatus);
 
-    if (adminNotes) {
-      booking.adminNotes = adminNotes;
+    // Check if booking is already in the target status
+    if (booking.status === status) {
+      return res.status(200).json({
+        success: true,
+        message: `Booking is already ${status}`,
+        data: booking,
+      });
     }
 
     // Handle specific status updates
     switch (status) {
       case "confirmed":
+        booking.handledBy = req.user.id;
+        if (adminNotes) booking.adminNotes = adminNotes;
         await booking.confirm();
         break;
+
       case "prepared":
-        await booking.markPrepared();
+        booking.handledBy = req.user.id;
+        if (adminNotes) booking.adminNotes = adminNotes;
         booking.preparationStartTime = new Date();
+        await booking.markPrepared();
         break;
+
       case "served":
+        booking.handledBy = req.user.id;
+        if (adminNotes) booking.adminNotes = adminNotes;
         await booking.markServed();
         break;
-      case "cancelled":
-        await booking.cancel(adminNotes || "Cancelled by admin", req.user.id);
 
-        // Refund money if payment was made
+      case "cancelled":
+        // Refund 50% of the amount if payment was made (service charge deduction)
+        console.log("=== CANCELLATION REFUND PROCESS ===");
+        console.log("Booking payment status:", booking.paymentStatus);
+        console.log("Booking final amount:", booking.finalAmount);
+
         if (booking.paymentStatus === "paid") {
+          const refundAmount = booking.finalAmount * 0.5; // 50% refund
+          console.log("Refund amount (50%):", refundAmount);
+
           const wallet = await Wallet.findOne({ userId: booking.user });
+          console.log("Wallet found:", wallet ? "YES" : "NO");
+          console.log("Wallet balance before refund:", wallet?.balance);
+
           if (wallet) {
-            wallet.balance += booking.finalAmount;
+            wallet.balance += refundAmount;
             wallet.recentTransactions.push({
               type: "credit",
-              amount: booking.finalAmount,
-              description: `Refund for booking ${booking.bookingId}`,
+              amount: refundAmount,
+              description: `Refund for cancelled booking ${booking.bookingId} (50% - service charge applied)`,
               status: "completed",
               paymentMethod: "wallet",
               transactionId: `REFUND_${booking.bookingId}`,
             });
             await wallet.save();
+            console.log("Wallet balance after refund:", wallet.balance);
+            console.log("Refund transaction added to wallet");
+          } else {
+            console.log("WARNING: Wallet not found for user", booking.user);
           }
-          booking.paymentStatus = "refunded";
+        } else {
+          console.log("No refund: Payment status is not 'paid'");
         }
-        break;
-    }
 
-    await booking.save();
+        booking.handledBy = req.user.id;
+        await booking.cancel(adminNotes || "Cancelled by admin", req.user.id);
+        console.log("=== CANCELLATION COMPLETE ===");
+        break;
+
+      default:
+        // For any other status, just update and save
+        booking.status = status;
+        booking.handledBy = req.user.id;
+        if (adminNotes) booking.adminNotes = adminNotes;
+        await booking.save();
+    }
 
     res.status(200).json({
       success: true,
@@ -407,9 +448,16 @@ exports.updateBookingStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("Update booking status error:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      bookingId: req.params.id,
+      requestedStatus: req.body.status,
+    });
     res.status(500).json({
       success: false,
       message: "Server error updating booking status",
+      error: error.message,
     });
   }
 };
@@ -457,6 +505,10 @@ exports.cancelBooking = async (req, res) => {
         message: "Cannot cancel this booking",
       });
     }
+
+    // Capture original payment status before any mutations
+    const wasPaid = booking.paymentStatus === "paid";
+    console.log("Original payment status (wasPaid):", wasPaid);
 
     // Cancel booking
     try {
@@ -514,37 +566,51 @@ exports.cancelBooking = async (req, res) => {
       });
     }
 
-    // Refund money if payment was made
-    if (booking.paymentStatus === "paid") {
+    // Refund 50% of the amount if payment was made (service charge deduction)
+    // Use original status captured before cancellation to avoid race with model method updates
+    if (wasPaid) {
       try {
+        const refundAmount = booking.finalAmount * 0.5; // 50% refund
+        console.log("=== USER CANCELLATION REFUND ===");
+        console.log("Booking ID:", booking.bookingId);
+        console.log("Booking final amount:", booking.finalAmount);
+        console.log("Refund amount (50%):", refundAmount);
+
         const wallet = await Wallet.findOne({ userId: booking.user });
+        console.log("Wallet found:", wallet ? "YES" : "NO");
+        console.log("Wallet balance before refund:", wallet?.balance);
+
         if (wallet) {
-          wallet.balance += booking.finalAmount;
+          wallet.balance += refundAmount;
           wallet.recentTransactions.push({
             type: "credit",
-            amount: booking.finalAmount,
-            description: `Refund for cancelled booking ${booking.bookingId}`,
+            amount: refundAmount,
+            description: `Refund for cancelled booking ${booking.bookingId} (50% - service charge applied)`,
             status: "completed",
             paymentMethod: "wallet",
             transactionId: `CANCEL_${booking.bookingId}`,
           });
           await wallet.save();
+          console.log("Wallet balance after refund:", wallet.balance);
+          console.log("Refund successful!");
         } else {
+          console.log("Creating new wallet with refund amount");
           // Create wallet if doesn't exist
           await Wallet.create({
             userId: booking.user,
-            balance: booking.finalAmount,
+            balance: refundAmount,
             recentTransactions: [
               {
                 type: "credit",
-                amount: booking.finalAmount,
-                description: `Refund for cancelled booking ${booking.bookingId}`,
+                amount: refundAmount,
+                description: `Refund for cancelled booking ${booking.bookingId} (50% - service charge applied)`,
                 status: "completed",
                 paymentMethod: "wallet",
                 transactionId: `CANCEL_${booking.bookingId}`,
               },
             ],
           });
+          console.log("New wallet created with refund");
         }
       } catch (walletError) {
         console.error("Error refunding to wallet:", walletError);

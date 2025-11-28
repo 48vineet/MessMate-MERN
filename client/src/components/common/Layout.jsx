@@ -5,6 +5,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Footer from "./Footer";
 import Header from "./Header";
+import MobileNav from "./MobileNav";
 import Sidebar from "./Sidebar";
 
 const Layout = ({ children }) => {
@@ -109,7 +110,7 @@ const Layout = ({ children }) => {
             sidebarOpen ? "lg:pl-64" : "lg:pl-0"
           }`}
         >
-          <main className="min-h-screen pt-16 lg:pt-16">
+          <main className="min-h-screen pt-16 lg:pt-16 pb-24 lg:pb-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
@@ -125,8 +126,10 @@ const Layout = ({ children }) => {
             </AnimatePresence>
           </main>
 
-          {/* Footer */}
-          <Footer />
+          {/* Footer (desktop) */}
+          <div className="hidden lg:block">
+            <Footer />
+          </div>
         </div>
       </div>
 
@@ -142,6 +145,9 @@ const Layout = ({ children }) => {
           />
         )}
       </AnimatePresence>
+
+      {/* Mobile bottom navigation */}
+      <MobileNav />
     </div>
   );
 };

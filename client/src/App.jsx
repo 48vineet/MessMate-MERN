@@ -17,6 +17,7 @@ import { PaymentProvider } from "./context/PaymentContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
 // Common Components
+import { lazy, Suspense } from "react";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import Layout from "./components/common/Layout";
 import { PageLoader } from "./components/common/LoadingSpinner";
@@ -47,20 +48,28 @@ import SearchPage from "./pages/SearchPage";
 import SettingsPage from "./pages/SettingsPage";
 
 // Admin Components
-import AddUser from "./components/admin/AddUser";
-import AdminDashboard from "./components/admin/AdminDashboard";
-import Analytics from "./components/admin/Analytics";
-import BookingManagement from "./components/admin/BookingManagement";
-import FeedbackManagement from "./components/admin/FeedbackManagement";
-import InventoryManagement from "./components/admin/InventoryManagement";
-import MenuAnalytics from "./components/admin/MenuAnalytics";
-import MenuManagement from "./components/admin/MenuManagement";
-import MenuTemplates from "./components/admin/MenuTemplates";
-import ReportsPanel from "./components/admin/ReportsPanel";
-import SystemSettings from "./components/admin/SystemSettings";
-import UserManagement from "./components/admin/UserManagement";
-import UserReports from "./components/admin/UserReports";
-import WalletManagementAdmin from "./components/admin/WalletManagement";
+const AddUser = lazy(() => import("./components/admin/AddUser"));
+const AdminDashboard = lazy(() => import("./components/admin/AdminDashboard"));
+const Analytics = lazy(() => import("./components/admin/Analytics"));
+const BookingManagement = lazy(() =>
+  import("./components/admin/BookingManagement")
+);
+const FeedbackManagement = lazy(() =>
+  import("./components/admin/FeedbackManagement")
+);
+const InventoryManagement = lazy(() =>
+  import("./components/admin/InventoryManagement")
+);
+const MenuAnalytics = lazy(() => import("./components/admin/MenuAnalytics"));
+const MenuManagement = lazy(() => import("./components/admin/MenuManagement"));
+const MenuTemplates = lazy(() => import("./components/admin/MenuTemplates"));
+const ReportsPanel = lazy(() => import("./components/admin/ReportsPanel"));
+const SystemSettings = lazy(() => import("./components/admin/SystemSettings"));
+const UserManagement = lazy(() => import("./components/admin/UserManagement"));
+const UserReports = lazy(() => import("./components/admin/UserReports"));
+const WalletManagementAdmin = lazy(() =>
+  import("./components/admin/WalletManagement")
+);
 
 // Hooks
 import useAuth from "./hooks/useAuth";
@@ -222,12 +231,18 @@ const App = () => {
                                 </ProtectedRoute>
                               }
                             />
-
+                            {/* Admin Routes (lazy loaded) */}
                             <Route
                               path="/wallet/transactions"
                               element={
                                 <ProtectedRoute>
-                                  <PaymentHistory />
+                                  <Suspense
+                                    fallback={
+                                      <PageLoader text="Loading Admin Dashboard..." />
+                                    }
+                                  >
+                                    <AdminDashboard />
+                                  </Suspense>
                                 </ProtectedRoute>
                               }
                             />
@@ -242,6 +257,7 @@ const App = () => {
                               }
                             />
 
+                            {/* UPI Payment Route */}
                             <Route
                               path="/payments/upi"
                               element={
@@ -259,7 +275,7 @@ const App = () => {
                                 </ProtectedRoute>
                               }
                             />
-
+                            {/* Payments Refund Route */}
                             <Route
                               path="/payments/refund"
                               element={
@@ -269,7 +285,7 @@ const App = () => {
                               }
                             />
 
-                            {/* Profile Routes */}
+                            {/* Profile Route */}
                             <Route
                               path="/profile"
                               element={
@@ -307,7 +323,6 @@ const App = () => {
                                 </ProtectedRoute>
                               }
                             />
-
                             {/* Contact Us Route */}
                             <Route
                               path="/contact"
@@ -323,61 +338,12 @@ const App = () => {
                               path="/feedback"
                               element={
                                 <ProtectedRoute>
-                                  <div className="min-h-screen bg-gray-50 p-6">
-                                    <div className="max-w-7xl mx-auto">
-                                      <div className="mb-8">
-                                        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                                          Feedback & Reviews
-                                        </h1>
-                                        <p className="text-gray-600">
-                                          Share your experience and help us
-                                          improve
-                                        </p>
-                                      </div>
-                                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                                        <div className="flex items-center justify-between mb-6">
-                                          <h2 className="text-xl font-bold text-gray-900">
-                                            My Feedback
-                                          </h2>
-                                          <button
-                                            onClick={() =>
-                                              (window.location.href =
-                                                "/dashboard")
-                                            }
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                          >
-                                            Submit New Feedback
-                                          </button>
-                                        </div>
-                                        <div className="text-center py-8">
-                                          <p className="text-gray-500 mb-4">
-                                            Submit feedback from your dashboard
-                                          </p>
-                                          <button
-                                            onClick={() =>
-                                              (window.location.href =
-                                                "/dashboard")
-                                            }
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                          >
-                                            Go to Dashboard
-                                          </button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
+                                  <ComingSoon title="Feedback & Reviews" />
                                 </ProtectedRoute>
                               }
                             />
 
-                            <Route
-                              path="/qr-display"
-                              element={
-                                <ProtectedRoute>
-                                  <ComingSoon title="QR Code Display" />
-                                </ProtectedRoute>
-                              }
-                            />
+                            {/* Duplicate QR Display placeholder removed (route already defined above) */}
 
                             <Route
                               path="/notifications"
@@ -552,12 +518,17 @@ const App = () => {
 
                       {/* Global Toast Notifications */}
                       <Toaster
-                        position="top-right"
+                        position={
+                          window.innerWidth < 640 ? "top-center" : "top-right"
+                        }
                         toastOptions={{
                           duration: 4000,
                           style: {
                             background: "#363636",
                             color: "#fff",
+                            fontSize: window.innerWidth < 640 ? "14px" : "16px",
+                            maxWidth:
+                              window.innerWidth < 640 ? "90vw" : "350px",
                           },
                           success: {
                             duration: 3000,

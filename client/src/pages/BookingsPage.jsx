@@ -609,7 +609,7 @@ const BookingsPage = () => {
                 </div>
               ))
             ) : (
-              <div className="p-12 text-center">
+              <div className="p-12 pb-24 text-center">
                 <CalendarDaysIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">No bookings found</p>
                 <p className="text-gray-400 text-sm mt-2">

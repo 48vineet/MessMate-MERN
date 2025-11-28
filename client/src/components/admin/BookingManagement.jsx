@@ -1,18 +1,15 @@
 // src/components/admin/BookingManagement.jsx
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
-  CalendarDaysIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
   CheckCircleIcon,
-  XCircleIcon,
   ClockIcon,
   EyeIcon,
-  QrCodeIcon,
+  MagnifyingGlassIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
-import api from "../../utils/api";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import api from "../../utils/api";
 
 const BookingManagement = () => {
   const [bookings, setBookings] = useState([]);
@@ -98,6 +95,13 @@ const BookingManagement = () => {
 
   const handleStatusUpdate = async (bookingId, newStatus) => {
     try {
+      // Check if booking is already in the target status
+      const booking = bookings.find((b) => b._id === bookingId);
+      if (booking && booking.status === newStatus) {
+        toast.info(`Booking is already ${newStatus}`);
+        return;
+      }
+
       await api.patch(`/bookings/${bookingId}/status`, { status: newStatus });
       setBookings((prev) =>
         prev.map((booking) =>
@@ -351,18 +355,12 @@ const BookingManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {new Date(booking.date).toLocaleDateString("en-IN")}
+                        {new Date(booking.bookingDate).toLocaleDateString(
+                          "en-IN"
+                        )}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {booking.mealTime
-                          ? new Date(booking.mealTime).toLocaleTimeString(
-                              "en-IN",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )
-                          : "Not set"}
+                        {booking.mealTime || "Not set"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -527,7 +525,7 @@ const BookingManagement = () => {
                     Date & Time
                   </label>
                   <p className="mt-1 text-gray-900">
-                    {new Date(selectedBooking.date).toLocaleDateString(
+                    {new Date(selectedBooking.bookingDate).toLocaleDateString(
                       "en-IN",
                       {
                         weekday: "long",
@@ -539,9 +537,7 @@ const BookingManagement = () => {
                   </p>
                   {selectedBooking.mealTime && (
                     <p className="text-sm text-gray-600">
-                      {new Date(selectedBooking.mealTime).toLocaleTimeString(
-                        "en-IN"
-                      )}
+                      {selectedBooking.mealTime}
                     </p>
                   )}
                 </div>
