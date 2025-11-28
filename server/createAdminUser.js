@@ -12,6 +12,7 @@ const createAdminUser = async () => {
     });
     console.log("📊 MongoDB Connected");
 
+<<<<<<< HEAD
     // Admin user details
     const adminUser = {
       name: "Admin Vineet",
@@ -19,9 +20,19 @@ const createAdminUser = async () => {
       password: "test@123",
       role: "admin",
       phone: "7038738012",
+=======
+    // Admin user details
+const adminUser = {
+      name: 'Admin User',
+      email: 'admin@messmate.com',
+      password: 'admin123456',
+      role: 'admin',
+      phone: '1234567890',
+>>>>>>> 7b72af79c0f24dddb578a21944187dc385eb4f73
       isVerified: true,
       isActive: true,
     };
+    
 
     // Check if admin already exists
     const existingAdmin = await User.findOne({ email: adminUser.email });
