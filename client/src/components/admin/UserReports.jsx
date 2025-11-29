@@ -8,15 +8,20 @@ import {
   UserPlusIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
+import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
 
 const UserReports = () => {
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
+  const [live, setLive] = useState(false);
+  const socketRef = useRef(null);
   const [selectedDateRange, setSelectedDateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       .toISOString()
@@ -28,6 +33,51 @@ const UserReports = () => {
     fetchUserReport();
   }, [selectedDateRange]);
 
+  // Establish a real-time socket connection (without auto-refresh)
+  useEffect(() => {
+    const API_BASE =
+      import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const SOCKET_URL = API_BASE.replace(/\/api$/, "");
+
+    if (!token) return;
+
+    const socket = io(SOCKET_URL, {
+      auth: { token },
+      transports: ["websocket"],
+      reconnectionAttempts: 5,
+    });
+
+    socketRef.current = socket;
+
+    socket.on("connect", () => setLive(true));
+    socket.on("disconnect", () => setLive(false));
+
+    // Removed auto-refresh on user events and periodic polling
+    // Users can manually click "Generate Again" to refresh
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [token]);
+
+  const buildEmptyUserData = () => ({
+    summary: {
+      totalUsers: 0,
+      newUsers: 0,
+      activeUsers: 0,
+      verifiedUsers: 0,
+      activeUserPercentage: 0,
+    },
+    usersByRole: {},
+    activity: {
+      avgBookingsPerUser: 0,
+      avgAmountPerUser: 0,
+      activeUserCount: 0,
+    },
+    registrationTrends: [],
+    dateRange: selectedDateRange,
+  });
+
   const fetchUserReport = async () => {
     setLoading(true);
     try {
@@ -37,10 +87,18 @@ const UserReports = () => {
         includeCharts: true,
       });
 
-      setUserData(response.data.report.data);
+      console.log("📥 Client received response:", response.data);
+
+      // The server returns report.data directly, not nested
+      const payload = response?.data?.report?.data || response?.data?.report;
+      console.log("📊 Client payload:", payload);
+
+      setUserData(payload || buildEmptyUserData());
     } catch (error) {
       console.error("Error fetching user report:", error);
       toast.error("Failed to load user report");
+      // Show an empty, informative state instead of a blank page
+      setUserData(buildEmptyUserData());
     } finally {
       setLoading(false);
     }
@@ -118,8 +176,22 @@ const UserReports = () => {
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 User Analytics Report
               </h1>
-              <p className="text-sm sm:text-base text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600 flex items-center gap-2">
                 Comprehensive user statistics and insights
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                    live
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  <span
+                    className={`mr-1 h-2 w-2 rounded-full ${
+                      live ? "bg-green-600" : "bg-gray-400"
+                    }`}
+                  ></span>
+                  {live ? "Live" : "Offline"}
+                </span>
               </p>
             </div>
 
@@ -173,6 +245,28 @@ const UserReports = () => {
 
         {userData && (
           <>
+            {/* Empty Notice */}
+            {userData.summary.totalUsers === 0 && (
+              <div className="mb-4 sm:mb-6 rounded-lg border border-dashed border-gray-300 bg-white p-4 sm:p-5">
+                <p className="text-sm sm:text-base text-gray-600">
+                  No user data found for the selected range.
+                </p>
+                <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                  <button
+                    onClick={fetchUserReport}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Generate Again
+                  </button>
+                  <button
+                    onClick={() => downloadUserReport("pdf")}
+                    className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                  >
+                    Download Empty Template (PDF)
+                  </button>
+                </div>
+              </div>
+            )}
             {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -247,35 +341,55 @@ const UserReports = () => {
                   Users by Role
                 </h3>
                 <div className="space-y-4">
-                  {Object.entries(userData.usersByRole).map(([role, count]) => (
-                    <div
-                      key={role}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(
-                            role
-                          )}`}
-                        >
-                          {role.charAt(0).toUpperCase() + role.slice(1)}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-lg font-semibold text-gray-900">
-                          {count}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          (
-                          {(
-                            (count / userData.summary.totalUsers) *
-                            100
-                          ).toFixed(1)}
-                          %)
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                  {Object.keys(userData.usersByRole).length === 0 ? (
+                    <p className="text-sm text-gray-500">
+                      No role data available.
+                    </p>
+                  ) : (
+                    Object.entries(userData.usersByRole).map(
+                      ([role, count]) => (
+                        <div key={role} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <span
+                                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(
+                                  role
+                                )}`}
+                              >
+                                {role.charAt(0).toUpperCase() + role.slice(1)}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-lg font-semibold text-gray-900">
+                                {count}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                (
+                                {(
+                                  (count /
+                                    Math.max(userData.summary.totalUsers, 1)) *
+                                  100
+                                ).toFixed(1)}
+                                %)
+                              </span>
+                            </div>
+                          </div>
+                          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-2 bg-gradient-to-r from-blue-500 to-indigo-500"
+                              style={{
+                                width: `${(
+                                  (count /
+                                    Math.max(userData.summary.totalUsers, 1)) *
+                                  100
+                                ).toFixed(0)}%`,
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      )
+                    )
+                  )}
                 </div>
               </div>
 

@@ -12,6 +12,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import Logo from "../common/Logo";
 
 const LoginForm = () => {
   const navigate = useNavigate();
@@ -132,11 +133,7 @@ const LoginForm = () => {
         {/* Header */}
         <motion.div variants={itemVariants} className="text-center">
           <Link to="/" className="inline-block mb-6">
-            <div className="mx-auto h-14 w-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-3xl font-bold tracking-wide">
-                M
-              </span>
-            </div>
+            <Logo size="xl" showText={false} />
           </Link>
           <h2 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">
             Welcome Back

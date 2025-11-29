@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Icons from "../components/common/Icons";
+import Logo from "../components/common/Logo";
 import api from "../utils/api";
 
 const HomePage = () => {
@@ -85,14 +86,7 @@ const HomePage = () => {
       <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="h-10 w-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">M</span>
-              </div>
-              <span className="ml-3 text-2xl font-bold text-gray-900">
-                MessMate
-              </span>
-            </div>
+            <Logo size="md" showText={true} />
             <div className="hidden md:flex items-center space-x-8">
               <a
                 href="#features"

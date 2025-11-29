@@ -1,37 +1,38 @@
 // src/components/common/LoadingSpinner.jsx
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
+import Logo from "./Logo";
 
-const LoadingSpinner = ({ 
-  size = 'md', 
-  color = 'blue', 
-  text = '', 
+const LoadingSpinner = ({
+  size = "md",
+  color = "blue",
+  text = "",
   overlay = false,
-  fullScreen = false 
+  fullScreen = false,
 }) => {
   const sizeClasses = {
-    xs: 'h-4 w-4',
-    sm: 'h-6 w-6',
-    md: 'h-8 w-8',
-    lg: 'h-12 w-12',
-    xl: 'h-16 w-16'
+    xs: "h-4 w-4",
+    sm: "h-6 w-6",
+    md: "h-8 w-8",
+    lg: "h-12 w-12",
+    xl: "h-16 w-16",
   };
 
   const colorClasses = {
-    blue: 'border-blue-600',
-    green: 'border-green-600',
-    red: 'border-red-600',
-    purple: 'border-purple-600',
-    orange: 'border-orange-600',
-    gray: 'border-gray-600',
-    white: 'border-white'
+    blue: "border-blue-600",
+    green: "border-green-600",
+    red: "border-red-600",
+    purple: "border-purple-600",
+    orange: "border-orange-600",
+    gray: "border-gray-600",
+    white: "border-white",
   };
 
   const textSizeClasses = {
-    xs: 'text-xs',
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-lg',
-    xl: 'text-xl'
+    xs: "text-xs",
+    sm: "text-sm",
+    md: "text-base",
+    lg: "text-lg",
+    xl: "text-xl",
   };
 
   const spinnerElement = (
@@ -41,11 +42,11 @@ const LoadingSpinner = ({
         transition={{
           duration: 1,
           repeat: Infinity,
-          ease: "linear"
+          ease: "linear",
         }}
         className={`
-          ${sizeClasses[size]} 
-          ${colorClasses[color]} 
+          ${sizeClasses[size]}
+          ${colorClasses[color]}
           border-4 border-t-transparent rounded-full
         `}
       />
@@ -74,9 +75,7 @@ const LoadingSpinner = ({
       >
         <div className="text-center">
           <div className="mb-6">
-            <div className="h-16 w-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-2xl">M</span>
-            </div>
+            <Logo size="xl" showText={false} className="mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">MessMate</h2>
           </div>
           {spinnerElement}
@@ -126,7 +125,7 @@ export const SkeletonLoader = ({ lines = 3, className = "" }) => (
       <div
         key={i}
         className={`h-4 bg-gray-300 rounded ${
-          i === lines - 1 ? 'w-3/4' : 'w-full'
+          i === lines - 1 ? "w-3/4" : "w-full"
         }`}
       />
     ))}
@@ -159,7 +158,10 @@ export const TableSkeleton = ({ rows = 5, cols = 4 }) => (
     <div className="bg-white shadow-sm rounded-lg overflow-hidden">
       {/* Header */}
       <div className="bg-gray-50 px-6 py-3">
-        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+        <div
+          className="grid gap-4"
+          style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+        >
           {[...Array(cols)].map((_, i) => (
             <div key={i} className="h-4 bg-gray-300 rounded"></div>
           ))}
@@ -169,12 +171,15 @@ export const TableSkeleton = ({ rows = 5, cols = 4 }) => (
       <div className="divide-y divide-gray-200">
         {[...Array(rows)].map((_, rowIndex) => (
           <div key={rowIndex} className="px-6 py-4">
-            <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+            <div
+              className="grid gap-4"
+              style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+            >
               {[...Array(cols)].map((_, colIndex) => (
                 <div
                   key={colIndex}
                   className={`h-4 bg-gray-300 rounded ${
-                    colIndex === 0 ? 'w-3/4' : 'w-full'
+                    colIndex === 0 ? "w-3/4" : "w-full"
                   }`}
                 />
               ))}

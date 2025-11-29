@@ -11,6 +11,7 @@ import {
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import Avatar from "../components/common/Avatar";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import api from "../utils/api";
@@ -221,10 +222,8 @@ const ProfilePage = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                        <span className="text-white font-bold text-4xl">
-                          {user?.name?.charAt(0)?.toUpperCase() || "U"}
-                        </span>
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Avatar user={user} size="2xl" className="w-32 h-32" />
                       </div>
                     )}
                   </div>

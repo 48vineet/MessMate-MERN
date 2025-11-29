@@ -2,26 +2,26 @@
 // WhatsApp-style avatar utility for generating consistent colorful default avatars
 
 /**
- * Predefined color combinations for default avatars
- * Similar to WhatsApp's color palette - vibrant and distinct
+ * WhatsApp-inspired solid color palette for default avatars
+ * Clean, minimal, and modern - single solid colors with white text
  */
 const AVATAR_COLORS = [
-  { bg: "bg-blue-500", text: "text-white" },
-  { bg: "bg-green-500", text: "text-white" },
-  { bg: "bg-yellow-500", text: "text-gray-900" },
-  { bg: "bg-red-500", text: "text-white" },
-  { bg: "bg-purple-500", text: "text-white" },
-  { bg: "bg-pink-500", text: "text-white" },
-  { bg: "bg-indigo-500", text: "text-white" },
-  { bg: "bg-teal-500", text: "text-white" },
-  { bg: "bg-orange-500", text: "text-white" },
-  { bg: "bg-cyan-500", text: "text-white" },
-  { bg: "bg-emerald-500", text: "text-white" },
-  { bg: "bg-rose-500", text: "text-white" },
-  { bg: "bg-violet-500", text: "text-white" },
-  { bg: "bg-fuchsia-500", text: "text-white" },
-  { bg: "bg-lime-500", text: "text-gray-900" },
-  { bg: "bg-amber-500", text: "text-gray-900" },
+  { bg: "#00A884", text: "#FFFFFF" }, // WhatsApp Green
+  { bg: "#0088CC", text: "#FFFFFF" }, // Telegram Blue
+  { bg: "#FF6B6B", text: "#FFFFFF" }, // Coral Red
+  { bg: "#4ECDC4", text: "#FFFFFF" }, // Turquoise
+  { bg: "#A463F2", text: "#FFFFFF" }, // Purple
+  { bg: "#FF9F43", text: "#FFFFFF" }, // Orange
+  { bg: "#5F27CD", text: "#FFFFFF" }, // Deep Purple
+  { bg: "#00D2D3", text: "#FFFFFF" }, // Cyan
+  { bg: "#EE5A6F", text: "#FFFFFF" }, // Pink
+  { bg: "#FD79A8", text: "#FFFFFF" }, // Light Pink
+  { bg: "#FDCB6E", text: "#2D3436" }, // Yellow
+  { bg: "#6C5CE7", text: "#FFFFFF" }, // Indigo
+  { bg: "#00B894", text: "#FFFFFF" }, // Mint Green
+  { bg: "#0984E3", text: "#FFFFFF" }, // Bright Blue
+  { bg: "#D63031", text: "#FFFFFF" }, // Red
+  { bg: "#E17055", text: "#FFFFFF" }, // Terracotta
 ];
 
 /**

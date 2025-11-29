@@ -14,6 +14,7 @@ import { toast } from "react-hot-toast";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
+import Avatar from "./Avatar";
 
 const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
   const { logout } = useAuth();
@@ -118,6 +119,7 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
   };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   return (
     <header
@@ -145,9 +147,7 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
 
             {/* Logo */}
             <Link to="/dashboard" className="flex items-center ml-4 lg:ml-0">
-              <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
-                <span className="text-white font-bold text-sm">M</span>
-              </div>
+              <Avatar user={{ name: "MessMate" }} size="sm" className="mr-3" />
               <span className="text-xl font-bold text-gray-900 hidden sm:block">
                 MessMate
               </span>
@@ -181,7 +181,15 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Mobile Search Button */}
+            <button
+              onClick={() => setShowMobileSearch(!showMobileSearch)}
+              className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <MagnifyingGlassIcon className="h-5 w-5" />
+            </button>
+
             {/* Notifications */}
             <div className="relative" ref={notificationRef}>
               <button
@@ -263,19 +271,11 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 className="flex items-center space-x-3 p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
               >
-                {user?.avatar?.url ? (
-                  <img
-                    src={user.avatar.url}
-                    alt={user.name}
-                    className="h-9 w-9 rounded-full object-cover border-2 border-gray-200 hover:border-blue-300 transition-colors"
-                  />
-                ) : (
-                  <div className="h-9 w-9 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center border-2 border-gray-200 hover:border-blue-300 transition-colors">
-                    <span className="text-white font-semibold text-sm">
-                      {user?.name?.charAt(0)?.toUpperCase() || "U"}
-                    </span>
-                  </div>
-                )}
+                <Avatar
+                  user={user}
+                  size="sm"
+                  className="ring-2 ring-gray-200 hover:ring-blue-300 transition-all"
+                />
                 <div className="hidden md:block text-left">
                   <span className="font-medium text-sm">{user?.name}</span>
                   <div className="text-xs text-gray-500 capitalize">
@@ -301,19 +301,11 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
                     {/* User Info Header */}
                     <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-100">
                       <div className="flex items-center space-x-4">
-                        {user?.avatar?.url ? (
-                          <img
-                            src={user.avatar.url}
-                            alt={user.name}
-                            className="h-16 w-16 rounded-full object-cover border-4 border-white shadow-lg"
-                          />
-                        ) : (
-                          <div className="h-16 w-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-                            <span className="text-white font-bold text-xl">
-                              {user?.name?.charAt(0)?.toUpperCase() || "U"}
-                            </span>
-                          </div>
-                        )}
+                        <Avatar
+                          user={user}
+                          size="xl"
+                          className="ring-4 ring-white shadow-lg"
+                        />
                         <div className="flex-1 min-w-0">
                           <h3 className="text-lg font-bold text-gray-900 truncate">
                             {user?.name}
@@ -409,6 +401,41 @@ const Header = ({ user, sidebarOpen, setSidebarOpen }) => {
             </div>
           </div>
         </div>
+
+        {/* Mobile Search Bar - Shows below header on mobile */}
+        <AnimatePresence>
+          {showMobileSearch && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden border-t border-gray-200 overflow-hidden"
+            >
+              <div className="py-3">
+                <form
+                  onSubmit={(e) => {
+                    handleSearch(e);
+                    setShowMobileSearch(false);
+                  }}
+                  className="w-full"
+                >
+                  <div className="relative">
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      placeholder="Search menus, bookings..."
+                      autoFocus
+                    />
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </header>
   );

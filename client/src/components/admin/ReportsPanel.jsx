@@ -298,12 +298,16 @@ const ReportsPanel = () => {
                       <ArrowDownTrayIcon className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() =>
-                        window.open(
-                          `/reports/${reportData[reportType.id].id}/view`,
-                          "_blank"
-                        )
-                      }
+                      onClick={() => {
+                        const url = `/api/reports/${
+                          reportData[reportType.id].id
+                        }/download?format=pdf&type=${
+                          reportType.id
+                        }&dateRange=${encodeURIComponent(
+                          JSON.stringify(selectedDateRange)
+                        )}`;
+                        window.open(url, "_blank");
+                      }}
                       className="p-2 text-gray-600 hover:text-blue-600 rounded transition-colors touch-target"
                       title="View Report"
                     >
@@ -478,7 +482,13 @@ const ReportsPanel = () => {
                           <button
                             onClick={() =>
                               window.open(
-                                `/reports/${report._id}/view`,
+                                `/api/reports/${
+                                  report._id
+                                }/download?format=pdf&type=${
+                                  report.type
+                                }&dateRange=${encodeURIComponent(
+                                  JSON.stringify(selectedDateRange)
+                                )}`,
                                 "_blank"
                               )
                             }
@@ -566,7 +576,16 @@ const ReportsPanel = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() =>
-                          window.open(`/reports/${report._id}/view`, "_blank")
+                          window.open(
+                            `/api/reports/${
+                              report._id
+                            }/download?format=pdf&type=${
+                              report.type
+                            }&dateRange=${encodeURIComponent(
+                              JSON.stringify(selectedDateRange)
+                            )}`,
+                            "_blank"
+                          )
                         }
                         className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs touch-target flex items-center justify-center"
                       >

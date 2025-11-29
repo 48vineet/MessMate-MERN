@@ -23,7 +23,7 @@ const Avatar = ({ user, size = "md", className = "", border = false }) => {
     "2xl": "h-20 w-20 text-2xl",
   };
 
-  const borderClass = border ? "ring-2 ring-white ring-offset-2" : "";
+  const borderClass = border ? "ring-2 ring-white" : "";
   const sizeClass = sizeClasses[size] || sizeClasses.md;
 
   return (
@@ -31,15 +31,18 @@ const Avatar = ({ user, size = "md", className = "", border = false }) => {
       className={`
         ${sizeClass}
         rounded-full flex items-center justify-center flex-shrink-0
-        ${
-          avatarData.url
-            ? ""
-            : `${avatarData.colors.bg} ${avatarData.colors.text}`
-        }
         ${borderClass}
         ${className}
         overflow-hidden
       `}
+      style={
+        !avatarData.url
+          ? {
+              backgroundColor: avatarData.colors.bg,
+              color: avatarData.colors.text,
+            }
+          : {}
+      }
       title={avatarData.name}
     >
       {avatarData.url ? (

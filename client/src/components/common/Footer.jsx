@@ -1,6 +1,7 @@
 // src/components/common/Footer.jsx
 import { Link } from "react-router-dom";
 import Icons from "./Icons";
+import Logo from "./Logo";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -46,11 +47,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="lg:col-span-2">
-            <div className="flex items-center mb-4">
-              <div className="h-10 w-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
-                <span className="text-white font-bold text-lg">M</span>
-              </div>
-              <span className="text-2xl font-bold">MessMate</span>
+            <div className="mb-4">
+              <Logo size="md" showText={true} />
             </div>
             <p className="text-gray-400 mb-6 max-w-md">
               Revolutionizing hostel dining with smart technology, seamless
@@ -80,7 +78,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center">
                 <Icons.location className="h-4 w-4 mr-2" />
-                <span>Tech Park, Bangalore, India</span>
+                <span>Dhule, Maharastra, India</span>
               </div>
             </div>
           </div>

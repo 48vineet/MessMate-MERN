@@ -1,26 +1,26 @@
 // server/controllers/authController.js
-const User = require('../models/User');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const User = require("../models/User");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
-// Configure email transporter (CORRECTED METHOD NAME) 
+// Configure email transporter (CORRECTED METHOD NAME)
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE,
   auth: {
     user: process.env.EMAIL_USERNAME,
-    pass: process.env.EMAIL_PASSWORD
-  }
+    pass: process.env.EMAIL_PASSWORD,
+  },
 });
 
 // Generate JWT Token
 const generateToken = (user) => {
   return jwt.sign(
-    { 
-      id: user._id, 
-      email: user.email, 
-      role: user.role 
+    {
+      id: user._id,
+      email: user.email,
+      role: user.role,
     },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRE }
@@ -30,35 +30,38 @@ const generateToken = (user) => {
 // Send token response
 const sendTokenResponse = (user, statusCode, res, message) => {
   const token = generateToken(user);
-  
+
   const options = {
-    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+    ),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
   };
 
   // Remove password from output
   user.password = undefined;
 
-  res.status(statusCode)
-     .cookie('token', token, options)
-     .json({
-       success: true,
-       message,
-       token,
-       user: {
-         id: user._id,
-         name: user.name,
-         email: user.email,
-         role: user.role,
-         studentId: user.studentId,
-         avatar: user.avatar,
-         wallet: user.wallet,
-         isVerified: user.isVerified,
-         preferences: user.preferences
-       }
-     });
+  res
+    .status(statusCode)
+    .cookie("token", token, options)
+    .json({
+      success: true,
+      message,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        studentId: user.studentId,
+        avatar: user.avatar,
+        wallet: user.wallet,
+        isVerified: user.isVerified,
+        preferences: user.preferences,
+      },
+    });
 };
 
 // @desc    Register user
@@ -73,17 +76,17 @@ exports.register = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with this email already exists'
+        message: "User with this email already exists",
       });
     }
 
     // Check if student ID already exists (for students)
-    if (role === 'student' && studentId) {
+    if (role === "student" && studentId) {
       const existingStudentId = await User.findOne({ studentId });
       if (existingStudentId) {
         return res.status(400).json({
           success: false,
-          message: 'Student ID already exists'
+          message: "Student ID already exists",
         });
       }
     }
@@ -93,9 +96,9 @@ exports.register = async (req, res) => {
       name,
       email,
       password,
-      role: role || 'student',
-      studentId: role === 'student' ? studentId : undefined,
-      phone
+      role: role || "student",
+      studentId: role === "student" ? studentId : undefined,
+      phone,
     });
 
     // Send welcome email
@@ -103,7 +106,7 @@ exports.register = async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL_FROM,
         to: email,
-        subject: 'Welcome to MessMate! 🍽️',
+        subject: "Welcome to MessMate! 🍽️",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;">
@@ -123,7 +126,7 @@ exports.register = async (req, res) => {
                 <li>📊 Track your dining statistics</li>
               </ul>
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${process.env.CLIENT_URL}/login" 
+                <a href="${process.env.CLIENT_URL}/login"
                    style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                   Login to MessMate
                 </a>
@@ -134,20 +137,19 @@ exports.register = async (req, res) => {
               </p>
             </div>
           </div>
-        `
+        `,
       });
     } catch (emailError) {
-      console.log('Welcome email failed to send:', emailError);
+      console.log("Welcome email failed to send:", emailError);
     }
 
-    sendTokenResponse(user, 201, res, 'User registered successfully');
-
+    sendTokenResponse(user, 201, res, "User registered successfully");
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error("Registration error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error during registration',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: "Server error during registration",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -163,17 +165,17 @@ exports.login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide email and password'
+        message: "Please provide email and password",
       });
     }
 
     // Check for user (include password for comparison)
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: "Invalid credentials",
       });
     }
 
@@ -181,7 +183,8 @@ exports.login = async (req, res) => {
     if (user.isLocked) {
       return res.status(423).json({
         success: false,
-        message: 'Account temporarily locked due to too many failed login attempts'
+        message:
+          "Account temporarily locked due to too many failed login attempts",
       });
     }
 
@@ -189,7 +192,7 @@ exports.login = async (req, res) => {
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
-        message: 'Account has been deactivated'
+        message: "Account has been deactivated",
       });
     }
 
@@ -199,17 +202,17 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       // Increment login attempts
       await user.incLoginAttempts();
-      
+
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: "Invalid credentials",
       });
     }
 
     // Reset login attempts on successful login
     if (user.loginAttempts > 0) {
       await user.updateOne({
-        $unset: { loginAttempts: 1, lockUntil: 1 }
+        $unset: { loginAttempts: 1, lockUntil: 1 },
       });
     }
 
@@ -217,14 +220,13 @@ exports.login = async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    sendTokenResponse(user, 200, res, 'Login successful');
-
+    sendTokenResponse(user, 200, res, "Login successful");
   } catch (error) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error during login',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: "Server error during login",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -234,20 +236,20 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.logout = async (req, res) => {
   try {
-    res.cookie('token', 'none', {
+    res.cookie("token", "none", {
       expires: new Date(Date.now() + 10 * 1000),
       httpOnly: true,
     });
 
     res.status(200).json({
       success: true,
-      message: 'User logged out successfully'
+      message: "User logged out successfully",
     });
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error("Logout error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error during logout'
+      message: "Server error during logout",
     });
   }
 };
@@ -257,7 +259,10 @@ exports.logout = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate('wallet.transactions', '-__v');
+    const user = await User.findById(req.user.id).populate(
+      "wallet.transactions",
+      "-__v"
+    );
 
     res.status(200).json({
       success: true,
@@ -274,14 +279,14 @@ exports.getMe = async (req, res) => {
         preferences: user.preferences,
         stats: user.stats,
         lastLogin: user.lastLogin,
-        createdAt: user.createdAt
-      }
+        createdAt: user.createdAt,
+      },
     });
   } catch (error) {
-    console.error('Get me error:', error);
+    console.error("Get me error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching user data'
+      message: "Server error fetching user data",
     });
   }
 };
@@ -296,25 +301,25 @@ exports.verifyToken = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Token is valid',
+      message: "Token is valid",
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
   } catch (error) {
-    console.error('Token verification error:', error);
+    console.error("Token verification error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error during token verification'
+      message: "Server error during token verification",
     });
   }
 };
@@ -331,18 +336,18 @@ exports.forgotPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'No user found with this email'
+        message: "No user found with this email",
       });
     }
 
     // Generate reset token
-    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetToken = crypto.randomBytes(20).toString("hex");
 
     // Hash and set resetPasswordToken
     user.resetPasswordToken = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(resetToken)
-      .digest('hex');
+      .digest("hex");
 
     // Set expire time (10 minutes)
     user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
@@ -357,7 +362,7 @@ exports.forgotPassword = async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL_FROM,
         to: email,
-        subject: 'MessMate Password Reset Request 🔐',
+        subject: "MessMate Password Reset Request 🔐",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;">
@@ -366,11 +371,11 @@ exports.forgotPassword = async (req, res) => {
             <div style="padding: 30px; background: #f8f9fa;">
               <h2 style="color: #333;">Hello ${user.name}! 👋</h2>
               <p style="color: #666; line-height: 1.6;">
-                You have requested a password reset for your MessMate account. 
+                You have requested a password reset for your MessMate account.
                 Click the button below to reset your password:
               </p>
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${resetUrl}" 
+                <a href="${resetUrl}"
                    style="background: #dc3545; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                   Reset Password
                 </a>
@@ -385,32 +390,30 @@ exports.forgotPassword = async (req, res) => {
               </p>
             </div>
           </div>
-        `
+        `,
       });
 
       res.status(200).json({
         success: true,
-        message: 'Password reset email sent successfully'
+        message: "Password reset email sent successfully",
       });
-
     } catch (emailError) {
-      console.log('Password reset email failed:', emailError);
-      
+      console.log("Password reset email failed:", emailError);
+
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
       await user.save({ validateBeforeSave: false });
 
       return res.status(500).json({
         success: false,
-        message: 'Email could not be sent'
+        message: "Email could not be sent",
       });
     }
-
   } catch (error) {
-    console.error('Forgot password error:', error);
+    console.error("Forgot password error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error during password reset request'
+      message: "Server error during password reset request",
     });
   }
 };
@@ -424,19 +427,19 @@ exports.resetPassword = async (req, res) => {
 
     // Get hashed token
     const resetPasswordToken = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(req.params.resettoken)
-      .digest('hex');
+      .digest("hex");
 
     const user = await User.findOne({
       resetPasswordToken,
-      resetPasswordExpire: { $gt: Date.now() }
+      resetPasswordExpire: { $gt: Date.now() },
     });
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired reset token'
+        message: "Invalid or expired reset token",
       });
     }
 
@@ -446,13 +449,12 @@ exports.resetPassword = async (req, res) => {
     user.resetPasswordExpire = undefined;
     await user.save();
 
-    sendTokenResponse(user, 200, res, 'Password reset successful');
-
+    sendTokenResponse(user, 200, res, "Password reset successful");
   } catch (error) {
-    console.error('Reset password error:', error);
+    console.error("Reset password error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error during password reset'
+      message: "Server error during password reset",
     });
   }
 };
@@ -466,35 +468,35 @@ exports.updateDetails = async (req, res) => {
       name: req.body.name,
       email: req.body.email,
       phone: req.body.phone,
-      preferences: req.body.preferences
+      preferences: req.body.preferences,
     };
 
     // Remove undefined fields
-    Object.keys(fieldsToUpdate).forEach(key => 
-      fieldsToUpdate[key] === undefined && delete fieldsToUpdate[key]
+    Object.keys(fieldsToUpdate).forEach(
+      (key) => fieldsToUpdate[key] === undefined && delete fieldsToUpdate[key]
     );
 
     const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
       new: true,
-      runValidators: true
+      runValidators: true,
     });
 
     res.status(200).json({
       success: true,
-      message: 'Profile updated successfully',
+      message: "Profile updated successfully",
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         phone: user.phone,
-        preferences: user.preferences
-      }
+        preferences: user.preferences,
+      },
     });
   } catch (error) {
-    console.error('Update details error:', error);
+    console.error("Update details error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error updating profile'
+      message: "Server error updating profile",
     });
   }
 };
@@ -506,26 +508,25 @@ exports.updatePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user.id).select('+password');
+    const user = await User.findById(req.user.id).select("+password");
 
     // Check current password
     if (!(await user.matchPassword(currentPassword))) {
       return res.status(401).json({
         success: false,
-        message: 'Current password is incorrect'
+        message: "Current password is incorrect",
       });
     }
 
     user.password = newPassword;
     await user.save();
 
-    sendTokenResponse(user, 200, res, 'Password updated successfully');
-
+    sendTokenResponse(user, 200, res, "Password updated successfully");
   } catch (error) {
-    console.error('Update password error:', error);
+    console.error("Update password error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error updating password'
+      message: "Server error updating password",
     });
   }
 };
@@ -542,17 +543,17 @@ exports.adminCreateUser = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with this email already exists'
+        message: "User with this email already exists",
       });
     }
 
     // Check if student ID already exists (for students)
-    if (role === 'student' && studentId) {
+    if (role === "student" && studentId) {
       const existingStudentId = await User.findOne({ studentId });
       if (existingStudentId) {
         return res.status(400).json({
           success: false,
-          message: 'Student ID already exists'
+          message: "Student ID already exists",
         });
       }
     }
@@ -562,12 +563,12 @@ exports.adminCreateUser = async (req, res) => {
       name,
       email,
       password,
-      role: role || 'student',
-      studentId: role === 'student' ? studentId : undefined,
+      role: role || "student",
+      studentId: role === "student" ? studentId : undefined,
       phone,
       hostel,
       isActive: true,
-      isVerified: true // Admin-created users are automatically verified
+      isVerified: true, // Admin-created users are automatically verified
     });
 
     // Send welcome email
@@ -575,7 +576,7 @@ exports.adminCreateUser = async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL_FROM,
         to: email,
-        subject: 'Welcome to MessMate! 🍽️',
+        subject: "Welcome to MessMate! 🍽️",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;">
@@ -595,7 +596,7 @@ exports.adminCreateUser = async (req, res) => {
                 <li>📊 Track your dining statistics</li>
               </ul>
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${process.env.CLIENT_URL}/login" 
+                <a href="${process.env.CLIENT_URL}/login"
                    style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                   Login to MessMate
                 </a>
@@ -606,10 +607,10 @@ exports.adminCreateUser = async (req, res) => {
               </p>
             </div>
           </div>
-        `
+        `,
       });
     } catch (emailError) {
-      console.log('Welcome email failed to send:', emailError);
+      console.log("Welcome email failed to send:", emailError);
     }
 
     // Remove password from response
@@ -617,16 +618,15 @@ exports.adminCreateUser = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'User created successfully',
-      data: user
+      message: "User created successfully",
+      data: user,
     });
-
   } catch (error) {
-    console.error('Admin create user error:', error);
+    console.error("Admin create user error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error during user creation',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: "Server error during user creation",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -639,7 +639,7 @@ exports.uploadAvatar = async (req, res) => {
     if (!req.cloudinaryResult) {
       return res.status(400).json({
         success: false,
-        message: 'No image uploaded'
+        message: "No image uploaded",
       });
     }
 
@@ -648,17 +648,17 @@ exports.uploadAvatar = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
     // Delete old avatar from Cloudinary if exists
     if (user.avatar && user.avatar.public_id) {
       try {
-        const { deleteFromCloudinary } = require('../middleware/upload');
+        const { deleteFromCloudinary } = require("../middleware/upload");
         await deleteFromCloudinary(user.avatar.public_id);
       } catch (error) {
-        console.error('Error deleting old avatar:', error);
+        console.error("Error deleting old avatar:", error);
         // Continue with upload even if deletion fails
       }
     }
@@ -666,21 +666,122 @@ exports.uploadAvatar = async (req, res) => {
     // Update user avatar
     user.avatar = {
       public_id: req.cloudinaryResult.public_id,
-      url: req.cloudinaryResult.url
+      url: req.cloudinaryResult.url,
     };
 
     await user.save();
 
     res.status(200).json({
       success: true,
-      message: 'Avatar uploaded successfully',
-      avatar: user.avatar
+      message: "Avatar uploaded successfully",
+      avatar: user.avatar,
     });
   } catch (error) {
-    console.error('Upload avatar error:', error);
+    console.error("Upload avatar error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error uploading avatar'
+      message: "Server error uploading avatar",
+    });
+  }
+};
+
+// @desc    Send test email
+// @route   POST /api/auth/test-email
+// @access  Public (for testing)
+exports.sendTestEmail = async (req, res) => {
+  try {
+    const { email, name } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email address is required",
+      });
+    }
+
+    // Test email content
+    const mailOptions = {
+      from: process.env.EMAIL_USERNAME,
+      to: email,
+      subject: "MessMate - Email Test ✅",
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+            .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+            .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px 20px; text-align: center; }
+            .content { padding: 30px 20px; }
+            .footer { background-color: #f8f9fa; padding: 20px; text-align: center; color: #6c757d; font-size: 14px; }
+            .success-icon { font-size: 48px; margin-bottom: 10px; }
+            .info-box { background-color: #e8f5e9; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 4px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="success-icon">✅</div>
+              <h1 style="margin: 0; font-size: 28px;">Email System Working!</h1>
+              <p style="margin: 10px 0 0 0; font-size: 16px;">MessMate Email Test</p>
+            </div>
+            <div class="content">
+              <h2 style="color: #333;">Hello ${name || "User"}! 👋</h2>
+
+              <p style="color: #666; line-height: 1.6; font-size: 16px;">
+                This is a test email to confirm that the MessMate email system is working correctly.
+              </p>
+
+              <div class="info-box">
+                <strong>✨ Email System Status: Active</strong><br>
+                <strong>📧 Recipient:</strong> ${email}<br>
+                <strong>⏰ Sent at:</strong> ${new Date().toLocaleString(
+                  "en-IN",
+                  { timeZone: "Asia/Kolkata" }
+                )}<br>
+                <strong>🌐 Environment:</strong> ${
+                  process.env.NODE_ENV || "development"
+                }
+              </div>
+
+              <h3 style="color: #333; margin-top: 25px;">Email Features Available:</h3>
+              <ul style="color: #666; line-height: 1.8; font-size: 15px;">
+                <li>✅ Welcome emails for new users</li>
+                <li>✅ Password reset emails</li>
+                <li>✅ Booking confirmation emails</li>
+                <li>✅ Payment receipt emails</li>
+                <li>✅ Daily menu notifications</li>
+                <li>✅ Contact form submissions</li>
+              </ul>
+
+              <p style="color: #666; line-height: 1.6; font-size: 16px; margin-top: 20px;">
+                If you received this email, it means all email alerts and notifications are working perfectly! 🎉
+              </p>
+            </div>
+            <div class="footer">
+              <p>© ${new Date().getFullYear()} MessMate - Smart Mess Management System</p>
+              <p>Made with ❤️ by Vineet Mali DEV</p>
+              <p>Email: 7038vineet@gmail.com | Phone: +91 70387 38012</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({
+      success: true,
+      message: `Test email sent successfully to ${email}`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Test email error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to send test email",
+      error: error.message,
     });
   }
 };

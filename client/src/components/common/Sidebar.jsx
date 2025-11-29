@@ -20,6 +20,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import Avatar from "./Avatar";
 
 const Sidebar = ({ user, sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
@@ -109,9 +110,7 @@ const Sidebar = ({ user, sidebarOpen, setSidebarOpen }) => {
           {/* Logo with Hide Button */}
           <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
             <Link to="/dashboard" className="flex items-center">
-              <div className="h-10 w-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
-                <span className="text-white font-bold text-lg">M</span>
-              </div>
+              <Avatar user={{ name: "MessMate" }} size="md" className="mr-3" />
               <span className="text-xl font-bold text-gray-900">MessMate</span>
             </Link>
             <button
@@ -125,19 +124,11 @@ const Sidebar = ({ user, sidebarOpen, setSidebarOpen }) => {
           {/* User Info */}
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center">
-              {user?.avatar?.url ? (
-                <img
-                  src={user.avatar.url}
-                  alt={user.name}
-                  className="h-10 w-10 rounded-full object-cover mr-3 border-2 border-gray-200"
-                />
-              ) : (
-                <div className="h-10 w-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3 border-2 border-gray-200">
-                  <span className="text-white font-medium">
-                    {user?.name?.charAt(0)?.toUpperCase() || "U"}
-                  </span>
-                </div>
-              )}
+              <Avatar
+                user={user}
+                size="md"
+                className="mr-3 ring-2 ring-gray-200"
+              />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
                   {user?.name}
@@ -253,9 +244,11 @@ const Sidebar = ({ user, sidebarOpen, setSidebarOpen }) => {
                   className="flex items-center"
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <div className="h-10 w-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-white font-bold text-lg">M</span>
-                  </div>
+                  <Avatar
+                    user={{ name: "MessMate" }}
+                    size="md"
+                    className="mr-3"
+                  />
                   <span className="text-xl font-bold text-gray-900">
                     MessMate
                   </span>
@@ -271,19 +264,11 @@ const Sidebar = ({ user, sidebarOpen, setSidebarOpen }) => {
               {/* User Info */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center">
-                  {user?.avatar?.url ? (
-                    <img
-                      src={user.avatar.url}
-                      alt={user.name}
-                      className="h-10 w-10 rounded-full object-cover mr-3 border-2 border-gray-200"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3 border-2 border-gray-200">
-                      <span className="text-white font-medium">
-                        {user?.name?.charAt(0)?.toUpperCase() || "U"}
-                      </span>
-                    </div>
-                  )}
+                  <Avatar
+                    user={user}
+                    size="md"
+                    className="mr-3 ring-2 ring-gray-200"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {user?.name}

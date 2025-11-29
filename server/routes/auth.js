@@ -13,6 +13,7 @@ const {
   updatePassword,
   adminCreateUser,
   uploadAvatar,
+  sendTestEmail,
 } = require("../controllers/authController");
 const { protect, authorize } = require("../middleware/auth");
 const { body } = require("express-validator");
@@ -63,6 +64,9 @@ router.put("/update-details", updateDetails);
 router.put("/update-password", updatePassword);
 router.put("/upload-avatar", uploadAvatarMiddleware, uploadAvatar);
 router.put("/profile", updateDetails); // Add profile update route
+
+// Test email endpoint (Public for testing)
+router.post("/test-email", sendTestEmail);
 
 // Admin routes
 router.post(

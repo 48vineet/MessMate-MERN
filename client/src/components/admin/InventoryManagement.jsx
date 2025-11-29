@@ -1,20 +1,19 @@
 // src/components/admin/InventoryManagement.jsx
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
   ArchiveBoxIcon,
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  ExclamationTriangleIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
   ArrowPathIcon,
   CheckCircleIcon,
+  ExclamationTriangleIcon,
+  MagnifyingGlassIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import api from "../../utils/api";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import api from "../../utils/api";
 
 const InventoryManagement = () => {
   const [inventory, setInventory] = useState([]);
@@ -482,7 +481,7 @@ const InventoryManagement = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
         >
           {filteredInventory.map((item, index) => {
             const stockStatus = getStockStatus(item);
@@ -494,98 +493,112 @@ const InventoryManagement = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow"
+                className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300"
               >
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <span className="text-2xl mr-3">
-                      {getCategoryIcon(item.category)}
-                    </span>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 truncate">
-                        {item.name}
-                      </h3>
-                      <p className="text-sm text-gray-600 capitalize">
-                        {item.category}
-                      </p>
+                {/* Card Header with Icon and Actions */}
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-4 sm:p-5 border-b border-gray-100">
+                  <div className="flex items-start justify-between mb-3">
+                    {/* Icon */}
+                    <div className="flex items-center justify-center w-12 h-12 bg-white rounded-xl shadow-sm">
+                      <span className="text-2xl">
+                        {getCategoryIcon(item.category)}
+                      </span>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleEdit(item)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit Item"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item._id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete Item"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <button
-                      onClick={() => handleEdit(item)}
-                      className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                      title="Edit Item"
+
+                  {/* Item Name and Category */}
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-tight">
+                      {item.name}
+                    </h3>
+                    <p className="text-xs text-gray-600 capitalize font-medium">
+                      {item.category}
+                    </p>
+                  </div>
+
+                  {/* Stock Status Badge */}
+                  <div className="mt-3">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${stockStatus.color}`}
                     >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item._id)}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                      title="Delete Item"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                      <IconComponent className="h-3.5 w-3.5 mr-1" />
+                      {stockStatus.status}
+                    </span>
                   </div>
                 </div>
 
-                {/* Stock Status */}
-                <div className="mb-4">
-                  <span
-                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${stockStatus.color}`}
-                  >
-                    <IconComponent className="h-3 w-3 mr-1" />
-                    {stockStatus.status}
-                  </span>
-                </div>
-
-                {/* Stock Info */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">
-                      Current Stock:
-                    </span>
-                    <span className="font-medium text-gray-900">
-                      {item.currentStock} {item.unit}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Min Stock:</span>
-                    <span className="text-sm text-gray-900">
-                      {item.minStock} {item.unit}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Max Stock:</span>
-                    <span className="text-sm text-gray-900">
-                      {item.maxStock} {item.unit}
-                    </span>
+                {/* Card Body */}
+                <div className="p-4 sm:p-5 space-y-4">
+                  {/* Stock Information */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500 font-medium">
+                        Current Stock:
+                      </span>
+                      <span className="font-bold text-gray-900 text-sm">
+                        {item.currentStock} {item.unit}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">Min Stock:</span>
+                      <span className="text-xs text-gray-700 font-medium">
+                        {item.minStock} {item.unit}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">Max Stock:</span>
+                      <span className="text-xs text-gray-700 font-medium">
+                        {item.maxStock} {item.unit}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        item.currentStock <= item.minStock
-                          ? "bg-red-500"
-                          : item.currentStock <= item.maxStock * 0.5
-                          ? "bg-yellow-500"
-                          : "bg-green-500"
-                      }`}
-                      style={{
-                        width: `${Math.min(
-                          (item.currentStock / item.maxStock) * 100,
-                          100
-                        )}%`,
-                      }}
-                    ></div>
+                  <div>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className={`h-1.5 rounded-full transition-all duration-500 ${
+                          item.currentStock <= item.minStock
+                            ? "bg-gradient-to-r from-red-500 to-red-600"
+                            : item.currentStock <= item.maxStock * 0.5
+                            ? "bg-gradient-to-r from-yellow-400 to-yellow-500"
+                            : "bg-gradient-to-r from-emerald-500 to-teal-500"
+                        }`}
+                        style={{
+                          width: `${Math.min(
+                            (item.currentStock / item.maxStock) * 100,
+                            100
+                          )}%`,
+                        }}
+                      ></div>
+                    </div>
                   </div>
 
                   {/* Cost Per Unit */}
                   {item.costPerUnit && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Cost/Unit:</span>
-                      <span className="text-sm font-medium text-green-600">
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                      <span className="text-xs text-gray-500 font-medium">
+                        Cost/Unit:
+                      </span>
+                      <span className="text-sm font-bold text-emerald-600">
                         ₹{item.costPerUnit}
                       </span>
                     </div>
@@ -594,28 +607,36 @@ const InventoryManagement = () => {
                   {/* Expiry Date */}
                   {item.expiryDate && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Expires:</span>
+                      <span className="text-xs text-gray-500 font-medium">
+                        Expires:
+                      </span>
                       <span
-                        className={`text-sm font-medium ${
+                        className={`text-xs font-bold ${
                           isExpired(item.expiryDate)
                             ? "text-red-600"
                             : isExpiringSoon(item.expiryDate)
                             ? "text-yellow-600"
-                            : "text-gray-900"
+                            : "text-gray-700"
                         }`}
                       >
-                        {new Date(item.expiryDate).toLocaleDateString("en-IN")}
+                        {new Date(item.expiryDate).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
                         {isExpired(item.expiryDate) && " (Expired)"}
-                        {isExpiringSoon(item.expiryDate) && " (Soon)"}
                       </span>
                     </div>
                   )}
 
-                  {/* Supplier */}
+                  {/* Supplier Info */}
                   {item.supplierName && (
-                    <div className="pt-2 border-t border-gray-100">
-                      <p className="text-xs text-gray-600">
-                        Supplier: {item.supplierName}
+                    <div className="pt-3 border-t border-gray-100 space-y-1">
+                      <p className="text-xs text-gray-500 font-medium">
+                        Supplier:
+                      </p>
+                      <p className="text-xs text-gray-700 font-semibold">
+                        {item.supplierName}
                       </p>
                       {item.supplierContact && (
                         <p className="text-xs text-gray-600">
@@ -626,13 +647,13 @@ const InventoryManagement = () => {
                   )}
                 </div>
 
-                {/* Quick Stock Update */}
-                <div className="mt-4 pt-3 border-t border-gray-100">
-                  <div className="flex items-center space-x-2">
+                {/* Quick Stock Update Footer */}
+                <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                     <input
                       type="number"
                       placeholder="New stock"
-                      className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full sm:flex-1 max-w-[220px] sm:max-w-none px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       onKeyPress={(e) => {
                         if (e.key === "Enter") {
                           const newStock = parseFloat(e.target.value);
@@ -653,7 +674,7 @@ const InventoryManagement = () => {
                           input.value = "";
                         }
                       }}
-                      className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
+                      className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-sm hover:shadow-md"
                     >
                       Update
                     </button>

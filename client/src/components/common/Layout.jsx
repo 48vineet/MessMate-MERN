@@ -5,6 +5,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Footer from "./Footer";
 import Header from "./Header";
+import Logo from "./Logo";
 import MobileNav from "./MobileNav";
 import Sidebar from "./Sidebar";
 
@@ -61,10 +62,11 @@ const Layout = ({ children }) => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          <Logo size="xl" showText={false} className="mx-auto mb-4" />
+          <div className="mt-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
           </div>
-          <p className="text-gray-600 font-medium">Loading MessMate...</p>
+          <p className="text-gray-600 font-medium mt-4">Loading MessMate...</p>
         </div>
       </div>
     );
