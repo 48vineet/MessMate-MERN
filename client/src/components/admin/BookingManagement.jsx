@@ -183,18 +183,18 @@ const BookingManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 pb-24">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-4 sm:mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             Booking Management
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Manage all meal bookings and reservations
           </p>
         </motion.div>
@@ -203,18 +203,18 @@ const BookingManagement = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6"
         >
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 sm:gap-4">
             {/* Search */}
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search bookings..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
               />
             </div>
 
@@ -222,7 +222,7 @@ const BookingManagement = () => {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
             >
               <option value="today">Today</option>
               <option value="tomorrow">Tomorrow</option>
@@ -234,7 +234,7 @@ const BookingManagement = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -248,7 +248,7 @@ const BookingManagement = () => {
             <select
               value={mealFilter}
               onChange={(e) => setMealFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
             >
               <option value="all">All Meals</option>
               <option value="breakfast">Breakfast</option>
@@ -258,7 +258,7 @@ const BookingManagement = () => {
 
             <button
               onClick={fetchBookings}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base touch-target"
             >
               Refresh
             </button>
@@ -271,13 +271,14 @@ const BookingManagement = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
         >
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-bold text-gray-900">
+          <div className="p-4 sm:p-6 border-b border-gray-200">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900">
               Bookings ({filteredBookings.length})
             </h2>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="overflow-x-auto hidden sm:block">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -375,7 +376,7 @@ const BookingManagement = () => {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => setSelectedBooking(booking)}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                          className="text-blue-600 hover:text-blue-900 p-2 rounded transition-colors touch-target"
                           title="View Details"
                         >
                           <EyeIcon className="h-4 w-4" />
@@ -387,7 +388,7 @@ const BookingManagement = () => {
                               onClick={() =>
                                 handleStatusUpdate(booking._id, "confirmed")
                               }
-                              className="text-green-600 hover:text-green-900 p-1 rounded transition-colors"
+                              className="text-green-600 hover:text-green-900 p-2 rounded transition-colors touch-target"
                               title="Confirm Booking"
                             >
                               <CheckCircleIcon className="h-4 w-4" />
@@ -396,7 +397,7 @@ const BookingManagement = () => {
                               onClick={() =>
                                 handleStatusUpdate(booking._id, "cancelled")
                               }
-                              className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
+                              className="text-red-600 hover:text-red-900 p-2 rounded transition-colors touch-target"
                               title="Cancel Booking"
                             >
                               <XCircleIcon className="h-4 w-4" />
@@ -409,7 +410,7 @@ const BookingManagement = () => {
                             onClick={() =>
                               handleStatusUpdate(booking._id, "completed")
                             }
-                            className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                            className="text-blue-600 hover:text-blue-900 p-2 rounded transition-colors touch-target"
                             title="Mark Complete"
                           >
                             <CheckCircleIcon className="h-4 w-4" />
@@ -423,11 +424,128 @@ const BookingManagement = () => {
             </table>
           </div>
 
+          {/* Mobile Card List */}
+          <div className="sm:hidden">
+            <div className="divide-y divide-gray-100">
+              {getCurrentPageBookings().map((booking, index) => (
+                <motion.div
+                  key={booking._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="p-4"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500">
+                          #{booking.bookingId || booking._id.slice(-8)}
+                        </span>
+                        {getStatusBadge(booking.status)}
+                      </div>
+                      <div className="mt-2 flex items-center">
+                        <div className="h-9 w-9 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-white font-medium text-xs">
+                            {booking.user?.name?.charAt(0)?.toUpperCase() ||
+                              "U"}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-gray-900">
+                            {booking.user?.name || "Unknown User"}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {booking.user?.email}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedBooking(booking)}
+                      className="text-blue-600 hover:text-blue-900 p-2 rounded transition-colors touch-target"
+                      title="View Details"
+                    >
+                      <EyeIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-xs text-gray-500">Meal</div>
+                      <div className="flex items-center mt-1">
+                        <span className="text-xl mr-2">
+                          {getMealIcon(booking.mealType)}
+                        </span>
+                        <span className="text-sm capitalize text-gray-900">
+                          {booking.mealType}
+                        </span>
+                      </div>
+                      {booking.menuItems && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {booking.menuItems.length} items
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500">Date & Time</div>
+                      <div className="mt-1 text-sm text-gray-900">
+                        {new Date(booking.bookingDate).toLocaleDateString(
+                          "en-IN"
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {booking.mealTime || "Not set"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="text-sm font-semibold text-green-600">
+                      ₹{booking.totalAmount || booking.amount || 0}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {booking.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() =>
+                              handleStatusUpdate(booking._id, "confirmed")
+                            }
+                            className="px-3 py-2 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors touch-target"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleStatusUpdate(booking._id, "cancelled")
+                            }
+                            className="px-3 py-2 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors touch-target"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
+                      {booking.status === "confirmed" && (
+                        <button
+                          onClick={() =>
+                            handleStatusUpdate(booking._id, "completed")
+                          }
+                          className="px-3 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors touch-target"
+                        >
+                          Complete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
+            <div className="px-4 sm:px-6 py-4 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
                   Showing {(currentPage - 1) * bookingsPerPage + 1} to{" "}
                   {Math.min(
                     currentPage * bookingsPerPage,
@@ -441,11 +559,11 @@ const BookingManagement = () => {
                       setCurrentPage((prev) => Math.max(prev - 1, 1))
                     }
                     disabled={currentPage === 1}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 touch-target"
                   >
                     Previous
                   </button>
-                  <span className="px-3 py-1 text-sm">
+                  <span className="px-2 sm:px-3 py-1 text-xs sm:text-sm">
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
@@ -453,7 +571,7 @@ const BookingManagement = () => {
                       setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 touch-target"
                   >
                     Next
                   </button>
@@ -469,17 +587,17 @@ const BookingManagement = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-xl p-6 max-w-lg w-full max-h-screen overflow-y-auto"
+              className="bg-white rounded-xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   Booking Details
                 </h3>
                 <button
                   onClick={() => setSelectedBooking(null)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors touch-target"
                 >
-                  <XCircleIcon className="h-5 w-5" />
+                  <XCircleIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                 </button>
               </div>
 
@@ -585,13 +703,13 @@ const BookingManagement = () => {
 
                 {/* Action Buttons */}
                 {selectedBooking.status === "pending" && (
-                  <div className="flex space-x-3 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3 pt-3 sm:pt-4">
                     <button
                       onClick={() => {
                         handleStatusUpdate(selectedBooking._id, "confirmed");
                         setSelectedBooking(null);
                       }}
-                      className="flex-1 py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      className="flex-1 py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base touch-target"
                     >
                       Confirm
                     </button>
@@ -600,7 +718,7 @@ const BookingManagement = () => {
                         handleStatusUpdate(selectedBooking._id, "cancelled");
                         setSelectedBooking(null);
                       }}
-                      className="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      className="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base touch-target"
                     >
                       Cancel
                     </button>
@@ -608,13 +726,13 @@ const BookingManagement = () => {
                 )}
 
                 {selectedBooking.status === "confirmed" && (
-                  <div className="pt-4">
+                  <div className="pt-3 sm:pt-4">
                     <button
                       onClick={() => {
                         handleStatusUpdate(selectedBooking._id, "completed");
                         setSelectedBooking(null);
                       }}
-                      className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base touch-target"
                     >
                       Mark as Completed
                     </button>

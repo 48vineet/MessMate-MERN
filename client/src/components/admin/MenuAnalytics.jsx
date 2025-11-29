@@ -65,12 +65,14 @@ const MenuAnalytics = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6"
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+          <p className="text-xs sm:text-sm font-medium text-gray-600">
+            {title}
+          </p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">
             {typeof value === "number" && title.includes("Price")
               ? `₹${value}`
               : typeof value === "number" && title.includes("Revenue")
@@ -80,12 +82,12 @@ const MenuAnalytics = () => {
           {change && (
             <div className="flex items-center mt-2">
               {changeType === "positive" ? (
-                <ArrowTrendingUpIcon className="h-4 w-4 text-green-500 mr-1" />
+                <ArrowTrendingUpIcon className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 mr-1" />
               ) : changeType === "negative" ? (
-                <ArrowTrendingDownIcon className="h-4 w-4 text-red-500 mr-1" />
+                <ArrowTrendingDownIcon className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mr-1" />
               ) : null}
               <span
-                className={`text-sm font-medium ${
+                className={`text-xs sm:text-sm font-medium ${
                   changeType === "positive"
                     ? "text-green-600"
                     : changeType === "negative"
@@ -98,8 +100,8 @@ const MenuAnalytics = () => {
             </div>
           )}
         </div>
-        <div className="p-3 bg-blue-50 rounded-lg">
-          <Icon className="h-6 w-6 text-blue-600" />
+        <div className="p-2 sm:p-3 bg-blue-50 rounded-lg">
+          <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
         </div>
       </div>
     </motion.div>
@@ -109,27 +111,35 @@ const MenuAnalytics = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6"
     >
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+        {title}
+      </h3>
       {children}
     </motion.div>
   );
 
   if (loading) {
     return (
-      <div className="bg-gray-50 p-6">
+      <div className="bg-gray-50 p-4 sm:p-6 pb-24">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-300 rounded w-1/4 mb-6"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="h-8 bg-gray-300 rounded w-1/3 sm:w-1/4 mb-4 sm:mb-6"></div>
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-300 rounded-xl"></div>
+                <div
+                  key={`stat-skeleton-${i}`}
+                  className="h-24 sm:h-32 bg-gray-300 rounded-xl"
+                ></div>
               ))}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
               {[...Array(2)].map((_, i) => (
-                <div key={i} className="h-64 bg-gray-300 rounded-xl"></div>
+                <div
+                  key={`chart-skeleton-${i}`}
+                  className="h-48 sm:h-64 bg-gray-300 rounded-xl"
+                ></div>
               ))}
             </div>
           </div>
@@ -139,35 +149,35 @@ const MenuAnalytics = () => {
   }
 
   return (
-    <div className="bg-gray-50 p-6">
+    <div className="bg-gray-50 p-4 sm:p-6 pb-24">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-4 sm:mb-8"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 Menu Analytics
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 Comprehensive insights into your menu performance
               </p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <select
                 value={selectedPeriod}
                 onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full sm:w-auto px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
               >
                 <option value="week">Last Week</option>
                 <option value="month">Last Month</option>
                 <option value="quarter">Last Quarter</option>
                 <option value="year">Last Year</option>
               </select>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <input
                   type="date"
                   value={selectedDateRange.start}
@@ -177,9 +187,9 @@ const MenuAnalytics = () => {
                       start: e.target.value,
                     }))
                   }
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-base touch-target"
                 />
-                <span className="text-gray-500">to</span>
+                <span className="text-gray-500 text-xs sm:text-sm">to</span>
                 <input
                   type="date"
                   value={selectedDateRange.end}
@@ -189,7 +199,7 @@ const MenuAnalytics = () => {
                       end: e.target.value,
                     }))
                   }
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-base touch-target"
                 />
               </div>
             </div>
@@ -197,7 +207,7 @@ const MenuAnalytics = () => {
         </motion.div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
           <StatCard
             title="Total Menus"
             value={analytics.totalMenus}
@@ -229,7 +239,7 @@ const MenuAnalytics = () => {
         </div>
 
         {/* Charts and Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 mb-6 sm:mb-8">
           {/* Meal Type Distribution */}
           <ChartCard title="Meal Type Distribution">
             <div className="space-y-4">
@@ -253,7 +263,7 @@ const MenuAnalytics = () => {
                     </span>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div className="w-24 sm:w-32 bg-gray-200 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full ${
                           index === 0
@@ -312,14 +322,14 @@ const MenuAnalytics = () => {
 
         {/* Recent Activity */}
         <ChartCard title="Recent Activity">
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {analytics.recentActivity.map((activity, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0"
+                className="flex items-start sm:items-center justify-between p-2 sm:p-3 border-b border-gray-100 last:border-b-0"
               >
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                <div className="flex items-start sm:items-center">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
                     {activity.action.includes("Created") && (
                       <CheckCircleIcon className="h-4 w-4 text-green-600" />
                     )}
@@ -331,14 +341,18 @@ const MenuAnalytics = () => {
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="text-sm sm:text-base font-medium text-gray-900">
                       {activity.action}
                     </p>
-                    <p className="text-sm text-gray-600">{activity.item}</p>
+                    <p className="text-xs sm:text-sm text-gray-600">
+                      {activity.item}
+                    </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">{activity.time}</p>
+                <div className="text-right flex-shrink-0 ml-2">
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    {activity.time}
+                  </p>
                   <p className="text-xs text-gray-500">by {activity.user}</p>
                 </div>
               </div>

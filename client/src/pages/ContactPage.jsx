@@ -1,75 +1,82 @@
 // src/pages/ContactPage.jsx
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  EnvelopeIcon,
-  PhoneIcon,
-  MapPinIcon,
-  ClockIcon,
+import {
   CheckIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
-import { toast } from 'react-hot-toast';
-import api from '../utils/api';
+  ClockIcon,
+  EnvelopeIcon,
+  MapPinIcon,
+  PhoneIcon,
+} from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
+import { useState } from "react";
+import { toast } from "react-hot-toast";
+import api from "../utils/api";
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    mobile: '',
-    subject: '',
-    description: ''
+    name: "",
+    email: "",
+    mobile: "",
+    subject: "",
+    description: "",
   });
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Basic validation
-    if (!formData.name || !formData.email || !formData.mobile || !formData.subject || !formData.description) {
-      toast.error('Please fill in all fields');
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.mobile ||
+      !formData.subject ||
+      !formData.description
+    ) {
+      toast.error("Please fill in all fields");
       return;
     }
 
-    if (!formData.email.includes('@')) {
-      toast.error('Please enter a valid email address');
+    if (!formData.email.includes("@")) {
+      toast.error("Please enter a valid email address");
       return;
     }
 
     if (formData.mobile.length < 10) {
-      toast.error('Please enter a valid mobile number');
+      toast.error("Please enter a valid mobile number");
       return;
     }
 
     setLoading(true);
     try {
-      const response = await api.post('/contact', {
+      const response = await api.post("/contact", {
         ...formData,
-        to: 'vinitmali991@gmail.com'
+        to: "vinitmali991@gmail.com",
       });
 
       if (response.data.success) {
-        toast.success('Message sent successfully! We will get back to you soon.');
+        toast.success(
+          "Message sent successfully! We will get back to you soon."
+        );
         setFormData({
-          name: '',
-          email: '',
-          mobile: '',
-          subject: '',
-          description: ''
+          name: "",
+          email: "",
+          mobile: "",
+          subject: "",
+          description: "",
         });
       } else {
-        toast.error(response.data.message || 'Failed to send message');
+        toast.error(response.data.message || "Failed to send message");
       }
     } catch (error) {
-      console.error('Contact form error:', error);
-      toast.error('Failed to send message. Please try again.');
+      console.error("Contact form error:", error);
+      toast.error("Failed to send message. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -77,43 +84,43 @@ const ContactPage = () => {
 
   const contactInfo = [
     {
-      title: 'Email',
-      value: 'vinitmali991@gmail.com',
+      title: "Email",
+      value: "vinitmali991@gmail.com",
       icon: EnvelopeIcon,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
+      color: "text-blue-600",
+      bgColor: "bg-blue-100",
     },
     {
-      title: 'Phone',
-      value: '+91 98765 43210',
+      title: "Phone",
+      value: "+91 70387 38012",
       icon: PhoneIcon,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100'
+      color: "text-green-600",
+      bgColor: "bg-green-100",
     },
     {
-      title: 'Address',
-      value: 'MessMate Headquarters, Tech Park, Bangalore',
+      title: "Address",
+      value: "MessMate Headquarters, Dhule, Maharastra",
       icon: MapPinIcon,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100'
+      color: "text-purple-600",
+      bgColor: "bg-purple-100",
     },
     {
-      title: 'Working Hours',
-      value: 'Monday - Friday: 9:00 AM - 6:00 PM',
+      title: "Working Hours",
+      value: "Monday - Friday: 9:00 AM - 6:00 PM",
       icon: ClockIcon,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100'
-    }
+      color: "text-orange-600",
+      bgColor: "bg-orange-100",
+    },
   ];
 
   const reasons = [
-    'General Inquiry',
-    'Technical Support',
-    'Billing Issue',
-    'Feature Request',
-    'Bug Report',
-    'Account Problem',
-    'Other'
+    "General Inquiry",
+    "Technical Support",
+    "Billing Issue",
+    "Feature Request",
+    "Bug Report",
+    "Account Problem",
+    "Other",
   ];
 
   return (
@@ -129,7 +136,9 @@ const ContactPage = () => {
             <EnvelopeIcon className="h-8 w-8 text-blue-600 mr-3" />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Contact Us</h1>
-              <p className="text-gray-600">Get in touch with us. We'd love to hear from you.</p>
+              <p className="text-gray-600">
+                Get in touch with us. We'd love to hear from you.
+              </p>
             </div>
           </div>
         </motion.div>
@@ -141,8 +150,10 @@ const ContactPage = () => {
             animate={{ opacity: 1, x: 0 }}
             className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
           >
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Send us a Message</h2>
-            
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Send us a Message
+            </h2>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Name */}
               <div>
@@ -152,7 +163,7 @@ const ContactPage = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter your full name"
                   required
@@ -167,7 +178,7 @@ const ContactPage = () => {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter your email address"
                   required
@@ -182,7 +193,7 @@ const ContactPage = () => {
                 <input
                   type="tel"
                   value={formData.mobile}
-                  onChange={(e) => handleInputChange('mobile', e.target.value)}
+                  onChange={(e) => handleInputChange("mobile", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter your mobile number"
                   required
@@ -196,13 +207,15 @@ const ContactPage = () => {
                 </label>
                 <select
                   value={formData.subject}
-                  onChange={(e) => handleInputChange('subject', e.target.value)}
+                  onChange={(e) => handleInputChange("subject", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 >
                   <option value="">Select a reason</option>
                   {reasons.map((reason) => (
-                    <option key={reason} value={reason}>{reason}</option>
+                    <option key={reason} value={reason}>
+                      {reason}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -214,7 +227,9 @@ const ContactPage = () => {
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Please describe your issue or inquiry in detail..."
@@ -261,7 +276,9 @@ const ContactPage = () => {
                       <info.icon className={`h-6 w-6 ${info.color}`} />
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900">{info.title}</h3>
+                      <h3 className="text-sm font-medium text-gray-900">
+                        {info.title}
+                      </h3>
                       <p className="text-sm text-gray-600">{info.value}</p>
                     </div>
                   </div>
@@ -273,7 +290,9 @@ const ContactPage = () => {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
               <div className="flex items-center mb-4">
                 <CheckIcon className="h-8 w-8 text-blue-600 mr-3" />
-                <h3 className="text-lg font-semibold text-blue-900">Response Time</h3>
+                <h3 className="text-lg font-semibold text-blue-900">
+                  Response Time
+                </h3>
               </div>
               <div className="space-y-2 text-sm text-blue-800">
                 <p>• Email: Within 2 hours</p>
@@ -284,7 +303,9 @@ const ContactPage = () => {
 
             {/* FAQ Link */}
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Need Quick Help?</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Need Quick Help?
+              </h3>
               <p className="text-gray-600 mb-4">
                 Check our FAQ section for quick answers to common questions.
               </p>

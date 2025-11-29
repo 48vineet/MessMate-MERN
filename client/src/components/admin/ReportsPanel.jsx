@@ -1,19 +1,17 @@
 // src/components/admin/ReportsPanel.jsx
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
-  DocumentChartBarIcon,
   ArrowDownTrayIcon,
   CalendarDaysIcon,
-  CurrencyRupeeIcon,
-  UsersIcon,
   ChartBarIcon,
-  PrinterIcon,
+  CurrencyRupeeIcon,
+  DocumentChartBarIcon,
   EyeIcon,
-  ClockIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline";
-import api from "../../utils/api";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import api from "../../utils/api";
 
 const ReportsPanel = () => {
   const [reports, setReports] = useState([]);
@@ -196,11 +194,11 @@ const ReportsPanel = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 pb-24">
         <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-300 rounded w-1/4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="animate-pulse space-y-4 sm:space-y-6">
+            <div className="h-6 sm:h-8 bg-gray-300 rounded w-1/2 sm:w-1/4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="h-64 bg-gray-300 rounded-lg"></div>
               ))}
@@ -212,18 +210,18 @@ const ReportsPanel = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 pb-24">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-4 sm:mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             Reports & Analytics
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Generate comprehensive reports and insights
           </p>
         </motion.div>
@@ -232,15 +230,15 @@ const ReportsPanel = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-8"
         >
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">
               Report Parameters
             </h2>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <CalendarDaysIcon className="h-5 w-5 text-gray-400" />
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="flex items-center gap-2">
+                <CalendarDaysIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                 <input
                   type="date"
                   value={selectedDateRange.startDate}
@@ -250,9 +248,9 @@ const ReportsPanel = () => {
                       startDate: e.target.value,
                     }))
                   }
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-base touch-target"
                 />
-                <span className="text-gray-500">to</span>
+                <span className="text-gray-500 text-xs sm:text-sm">to</span>
                 <input
                   type="date"
                   value={selectedDateRange.endDate}
@@ -262,7 +260,7 @@ const ReportsPanel = () => {
                       endDate: e.target.value,
                     }))
                   }
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-base touch-target"
                 />
               </div>
             </div>
@@ -270,22 +268,22 @@ const ReportsPanel = () => {
         </motion.div>
 
         {/* Report Types Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-4 sm:mb-8">
           {reportTypes.map((reportType, index) => (
             <motion.div
               key={reportType.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow"
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-lg transition-shadow"
             >
               {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-full ${reportType.color}`}>
-                  <reportType.icon className="h-6 w-6" />
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className={`p-2 sm:p-3 rounded-full ${reportType.color}`}>
+                  <reportType.icon className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
                 {reportData[reportType.id] && (
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() =>
                         downloadReport(
@@ -294,7 +292,7 @@ const ReportsPanel = () => {
                           reportType.id
                         )
                       }
-                      className="p-1 text-gray-600 hover:text-blue-600 rounded transition-colors"
+                      className="p-2 text-gray-600 hover:text-blue-600 rounded transition-colors touch-target"
                       title="Download PDF"
                     >
                       <ArrowDownTrayIcon className="h-4 w-4" />
@@ -306,7 +304,7 @@ const ReportsPanel = () => {
                           "_blank"
                         )
                       }
-                      className="p-1 text-gray-600 hover:text-blue-600 rounded transition-colors"
+                      className="p-2 text-gray-600 hover:text-blue-600 rounded transition-colors touch-target"
                       title="View Report"
                     >
                       <EyeIcon className="h-4 w-4" />
@@ -316,11 +314,11 @@ const ReportsPanel = () => {
               </div>
 
               {/* Content */}
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <div className="mb-4 sm:mb-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                   {reportType.title}
                 </h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                   {reportType.description}
                 </p>
 
@@ -348,11 +346,11 @@ const ReportsPanel = () => {
               </div>
 
               {/* Actions */}
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <button
                   onClick={() => generateReport(reportType.id)}
                   disabled={generatingReport === reportType.id}
-                  className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
+                  className={`w-full py-2 px-4 rounded-lg font-medium transition-colors text-sm sm:text-base touch-target ${
                     generatingReport === reportType.id
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                       : "bg-blue-600 text-white hover:bg-blue-700"
@@ -393,11 +391,13 @@ const ReportsPanel = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-xl shadow-sm border border-gray-200"
         >
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-bold text-gray-900">Recent Reports</h2>
+          <div className="p-4 sm:p-6 border-b border-gray-200">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900">
+              Recent Reports
+            </h2>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto hidden sm:block">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -474,7 +474,7 @@ const ReportsPanel = () => {
                         {getReportStatusBadge(report.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-2">
                           <button
                             onClick={() =>
                               window.open(
@@ -482,7 +482,7 @@ const ReportsPanel = () => {
                                 "_blank"
                               )
                             }
-                            className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                            className="text-blue-600 hover:text-blue-900 p-2 rounded transition-colors touch-target"
                             title="View Report"
                           >
                             <EyeIcon className="h-4 w-4" />
@@ -491,7 +491,7 @@ const ReportsPanel = () => {
                             onClick={() =>
                               downloadReport(report._id, "pdf", report.type)
                             }
-                            className="text-green-600 hover:text-green-900 p-1 rounded transition-colors"
+                            className="text-green-600 hover:text-green-900 p-2 rounded transition-colors touch-target"
                             title="Download PDF"
                           >
                             <ArrowDownTrayIcon className="h-4 w-4" />
@@ -500,7 +500,7 @@ const ReportsPanel = () => {
                             onClick={() =>
                               downloadReport(report._id, "excel", report.type)
                             }
-                            className="text-purple-600 hover:text-purple-900 p-1 rounded transition-colors"
+                            className="text-purple-600 hover:text-purple-900 p-2 rounded transition-colors touch-target"
                             title="Download Excel"
                           >
                             <DocumentChartBarIcon className="h-4 w-4" />
@@ -519,6 +519,85 @@ const ReportsPanel = () => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Reports Cards */}
+          <div className="sm:hidden p-4">
+            {reports.length > 0 ? (
+              <div className="space-y-3">
+                {reports.map((report, index) => (
+                  <motion.div
+                    key={report._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="border border-gray-200 rounded-lg p-3"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900 capitalize">
+                          {report.type} Report
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          ID: {report._id.slice(-8)}
+                        </p>
+                      </div>
+                      {getReportStatusBadge(report.status)}
+                    </div>
+                    <div className="text-xs text-gray-600 mb-3">
+                      <div>
+                        {new Date(
+                          report.dateRange.startDate
+                        ).toLocaleDateString("en-IN")}{" "}
+                        -
+                        {new Date(report.dateRange.endDate).toLocaleDateString(
+                          "en-IN"
+                        )}
+                      </div>
+                      <div className="text-gray-500">
+                        Generated:{" "}
+                        {new Date(report.createdAt).toLocaleDateString("en-IN")}{" "}
+                        {new Date(report.createdAt).toLocaleTimeString(
+                          "en-IN",
+                          { hour: "2-digit", minute: "2-digit" }
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() =>
+                          window.open(`/reports/${report._id}/view`, "_blank")
+                        }
+                        className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs touch-target flex items-center justify-center"
+                      >
+                        <EyeIcon className="h-3 w-3 mr-1" /> View
+                      </button>
+                      <button
+                        onClick={() =>
+                          downloadReport(report._id, "pdf", report.type)
+                        }
+                        className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs touch-target flex items-center justify-center"
+                      >
+                        <ArrowDownTrayIcon className="h-3 w-3 mr-1" /> PDF
+                      </button>
+                      <button
+                        onClick={() =>
+                          downloadReport(report._id, "excel", report.type)
+                        }
+                        className="flex-1 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs touch-target flex items-center justify-center"
+                      >
+                        <DocumentChartBarIcon className="h-3 w-3 mr-1" /> Excel
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <DocumentChartBarIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No reports generated yet</p>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

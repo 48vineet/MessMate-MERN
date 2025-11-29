@@ -1,18 +1,18 @@
 // src/components/admin/Analytics.jsx
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
-  ChartBarIcon,
-  UsersIcon,
-  CurrencyRupeeIcon,
-  CalendarDaysIcon,
   ArrowDownTrayIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
   ArrowPathIcon,
+  ArrowTrendingDownIcon,
+  ArrowTrendingUpIcon,
+  CalendarDaysIcon,
+  ChartBarIcon,
+  CurrencyRupeeIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline";
-import api from "../../utils/api";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import api from "../../utils/api";
 
 const Analytics = () => {
   const [analyticsData, setAnalyticsData] = useState({
@@ -25,14 +25,15 @@ const Analytics = () => {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("month");
   const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(() => {
     fetchAnalytics();
 
-    // Auto-refresh every 5 minutes
+    // Auto-refresh every 30 seconds for real-time data
     const interval = setInterval(() => {
-      fetchAnalytics();
-    }, 5 * 60 * 1000);
+      fetchAnalytics(true); // Silent refresh
+    }, 30 * 1000);
 
     return () => clearInterval(interval);
   }, [dateRange]);
@@ -43,7 +44,7 @@ const Analytics = () => {
     setRefreshing(false);
   };
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (silent = false) => {
     try {
       const response = await api.get(`/analytics?range=${dateRange}`);
       const data = response.data.analytics || {};
@@ -68,9 +69,13 @@ const Analytics = () => {
           ...data.charts,
         },
       });
+
+      setLastUpdated(new Date());
     } catch (error) {
       console.error("Error fetching analytics:", error);
-      toast.error("Failed to load analytics data");
+      if (!silent) {
+        toast.error("Failed to load analytics data");
+      }
     } finally {
       setLoading(false);
     }
@@ -148,11 +153,11 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 pb-24">
         <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-300 rounded w-1/4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="animate-pulse space-y-4 sm:space-y-6">
+            <div className="h-6 sm:h-8 bg-gray-300 rounded w-1/2 sm:w-1/4"></div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="h-32 bg-gray-300 rounded-lg"></div>
               ))}
@@ -168,24 +173,45 @@ const Analytics = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 pb-24">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-4 sm:mb-8"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 Analytics Dashboard
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 Comprehensive insights and performance metrics
               </p>
+              {lastUpdated && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                    <span className="text-xs text-green-600 font-medium">
+                      Live
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    Updated{" "}
+                    {lastUpdated.toLocaleTimeString("en-IN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
@@ -218,24 +244,26 @@ const Analytics = () => {
         </motion.div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-8">
           {metrics.map((metric, index) => (
             <motion.div
               key={metric.title}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-full ${metric.color}`}>
-                  <metric.icon className="h-6 w-6" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3 sm:mb-4">
+                <div
+                  className={`p-2 sm:p-3 rounded-full ${metric.color} w-fit`}
+                >
+                  <metric.icon className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
                 <div className="flex items-center">
                   {metric.growth > 0 ? (
-                    <ArrowTrendingUpIcon className="h-4 w-4 text-green-500 mr-1" />
+                    <ArrowTrendingUpIcon className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 mr-1" />
                   ) : metric.growth < 0 ? (
-                    <ArrowTrendingDownIcon className="h-4 w-4 text-red-500 mr-1" />
+                    <ArrowTrendingDownIcon className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mr-1" />
                   ) : null}
                   <span
                     className={`text-sm font-medium ${getGrowthColor(
@@ -248,30 +276,32 @@ const Analytics = () => {
                 </div>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">
                   {metric.title}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">
                   {metric.current}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">vs previous period</p>
+                <p className="text-xs text-gray-500 mt-1 hidden sm:block">
+                  vs previous period
+                </p>
               </div>
             </motion.div>
           ))}
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-8">
           {/* Revenue Chart */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6"
           >
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">
               Daily Revenue
             </h3>
-            <div className="h-64">
+            <div className="h-48 sm:h-64">
               {analyticsData?.charts?.dailyRevenue?.length > 0 ? (
                 <div className="h-full flex items-end justify-between space-x-1">
                   {analyticsData.charts.dailyRevenue

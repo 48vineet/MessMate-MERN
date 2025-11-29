@@ -82,13 +82,16 @@ const UserReports = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 pb-24">
         <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-300 rounded w-1/4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="animate-pulse space-y-4 sm:space-y-6">
+            <div className="h-8 bg-gray-300 rounded w-1/3 sm:w-1/4"></div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-300 rounded-lg"></div>
+                <div
+                  key={`loading-card-${i}`}
+                  className="h-24 sm:h-32 bg-gray-300 rounded-lg"
+                ></div>
               ))}
             </div>
           </div>
@@ -98,31 +101,31 @@ const UserReports = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 pb-24">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8">
           <button
             onClick={() => navigate("/admin/reports")}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-3 sm:mb-4 text-sm sm:text-base"
           >
-            <ArrowLeftIcon className="w-5 h-5 mr-2" />
+            <ArrowLeftIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             Back to Reports
           </button>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 User Analytics Report
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 Comprehensive user statistics and insights
               </p>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
               <div className="flex items-center space-x-2">
-                <CalendarDaysIcon className="h-5 w-5 text-gray-400" />
+                <CalendarDaysIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                 <input
                   type="date"
                   value={selectedDateRange.startDate}
@@ -132,7 +135,7 @@ const UserReports = () => {
                       startDate: e.target.value,
                     }))
                   }
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
                 />
                 <span className="text-gray-500">to</span>
                 <input
@@ -144,23 +147,23 @@ const UserReports = () => {
                       endDate: e.target.value,
                     }))
                   }
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
                 />
               </div>
 
               <div className="flex space-x-2">
                 <button
                   onClick={() => downloadUserReport("pdf")}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base touch-target"
                 >
-                  <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                  <ArrowDownTrayIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Download PDF
                 </button>
                 <button
                   onClick={() => downloadUserReport("excel")}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="flex items-center px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base touch-target"
                 >
-                  <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                  <ArrowDownTrayIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Download Excel
                 </button>
               </div>
@@ -171,17 +174,17 @@ const UserReports = () => {
         {userData && (
           <>
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center">
-                  <div className="p-3 bg-blue-100 rounded-full">
-                    <UsersIcon className="h-6 w-6 text-blue-600" />
+                  <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
+                    <UsersIcon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">
                       Total Users
                     </p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                       {userData.summary.totalUsers}
                     </p>
                   </div>
@@ -190,14 +193,14 @@ const UserReports = () => {
 
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center">
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <UserPlusIcon className="h-6 w-6 text-green-600" />
+                  <div className="p-2 sm:p-3 bg-green-100 rounded-full">
+                    <UserPlusIcon className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">
                       New Users
                     </p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                       {userData.summary.newUsers}
                     </p>
                   </div>
@@ -206,14 +209,14 @@ const UserReports = () => {
 
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center">
-                  <div className="p-3 bg-purple-100 rounded-full">
-                    <CheckCircleIcon className="h-6 w-6 text-purple-600" />
+                  <div className="p-2 sm:p-3 bg-purple-100 rounded-full">
+                    <CheckCircleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">
                       Active Users
                     </p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                       {userData.summary.activeUsers}
                     </p>
                   </div>
@@ -222,14 +225,14 @@ const UserReports = () => {
 
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center">
-                  <div className="p-3 bg-orange-100 rounded-full">
-                    <UserGroupIcon className="h-6 w-6 text-orange-600" />
+                  <div className="p-2 sm:p-3 bg-orange-100 rounded-full">
+                    <UserGroupIcon className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">
                       Verified Users
                     </p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                       {userData.summary.verifiedUsers}
                     </p>
                   </div>
@@ -238,9 +241,9 @@ const UserReports = () => {
             </div>
 
             {/* User Distribution by Role */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 mb-6 sm:mb-8">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                   Users by Role
                 </h3>
                 <div className="space-y-4">
@@ -277,7 +280,7 @@ const UserReports = () => {
               </div>
 
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                   User Activity
                 </h3>
                 <div className="space-y-4">
@@ -316,11 +319,11 @@ const UserReports = () => {
             {/* Registration Trends */}
             {userData.registrationTrends &&
               userData.registrationTrends.length > 0 && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                     Registration Trends
                   </h3>
-                  <div className="overflow-x-auto">
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
@@ -336,7 +339,7 @@ const UserReports = () => {
                         {userData.registrationTrends
                           .slice(-10)
                           .map((trend, index) => (
-                            <tr key={index}>
+                            <tr key={`trend-${index}`}>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {trend._id.day}/{trend._id.month}/
                                 {trend._id.year}
@@ -349,15 +352,31 @@ const UserReports = () => {
                       </tbody>
                     </table>
                   </div>
+                  {/* Mobile cards */}
+                  <div className="md:hidden divide-y divide-gray-200">
+                    {userData.registrationTrends.slice(-10).map((trend, i) => (
+                      <div
+                        key={`trend-card-${i}`}
+                        className="py-3 flex items-center justify-between"
+                      >
+                        <div className="text-sm font-medium text-gray-900">
+                          {trend._id.day}/{trend._id.month}/{trend._id.year}
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          {trend.count}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
             {/* Report Metadata */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Report Information
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div>
                   <span className="text-gray-600">Date Range:</span>
                   <p className="font-medium text-gray-900">

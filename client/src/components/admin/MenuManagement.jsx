@@ -248,11 +248,11 @@ const MenuManagement = () => {
 
   if (loading) {
     return (
-      <div className="bg-gray-50 p-6">
+      <div className="bg-gray-50 p-4 sm:p-6 pb-24">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-300 rounded w-1/4 mb-6"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="h-6 sm:h-8 bg-gray-300 rounded w-1/2 sm:w-1/4 mb-4 sm:mb-6"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-64 bg-gray-300 rounded-lg"></div>
               ))}
@@ -264,53 +264,55 @@ const MenuManagement = () => {
   }
 
   return (
-    <div className="bg-gray-50 p-6">
+    <div className="bg-gray-50 p-4 sm:p-6 pb-24">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-4 sm:mb-8"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 Menu Management
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 Create and manage daily menus for your mess
               </p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
               />
-              <button
-                onClick={() => {
-                  setFormData((prev) => ({ ...prev, date: selectedDate }));
-                  setShowAddMenu(true);
-                }}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <PlusIcon className="h-5 w-5 mr-2" />
-                Add Menu
-              </button>
-              <button
-                onClick={() => navigate("/admin/menu/templates")}
-                className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                <DocumentDuplicateIcon className="h-5 w-5 mr-2" />
-                Templates
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setFormData((prev) => ({ ...prev, date: selectedDate }));
+                    setShowAddMenu(true);
+                  }}
+                  className="flex-1 sm:flex-initial flex items-center justify-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base touch-target"
+                >
+                  <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  Add Menu
+                </button>
+                <button
+                  onClick={() => navigate("/admin/menu/templates")}
+                  className="flex-1 sm:flex-initial flex items-center justify-center px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm sm:text-base touch-target"
+                >
+                  <DocumentDuplicateIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  Templates
+                </button>
+              </div>
             </div>
           </div>
         </motion.div>
 
         {/* Menu Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {["breakfast", "lunch", "dinner"].map((mealType) => {
             const menu = menus.find((m) => m.mealType === mealType);
             return (
@@ -321,23 +323,23 @@ const MenuManagement = () => {
                 className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
               >
                 {/* Header */}
-                <div className="p-6 border-b border-gray-200">
+                <div className="p-4 sm:p-6 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <span className="text-2xl mr-3">
+                      <span className="text-xl sm:text-2xl mr-2 sm:mr-3">
                         {getMealIcon(mealType)}
                       </span>
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900 capitalize">
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 capitalize">
                           {mealType}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs sm:text-sm text-gray-600">
                           {getMealTimeRange(mealType)}
                         </p>
                       </div>
                     </div>
                     {menu && (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-1 sm:gap-2">
                         <button
                           onClick={() =>
                             handleToggleAvailability(
@@ -345,7 +347,7 @@ const MenuManagement = () => {
                               !menu.isAvailable
                             )
                           }
-                          className={`p-2 rounded-lg transition-colors ${
+                          className={`p-2 rounded-lg transition-colors touch-target ${
                             menu.isAvailable
                               ? "text-green-600 hover:bg-green-50"
                               : "text-red-600 hover:bg-red-50"
@@ -355,24 +357,24 @@ const MenuManagement = () => {
                           }
                         >
                           {menu.isAvailable ? (
-                            <CheckCircleIcon className="h-5 w-5" />
+                            <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                           ) : (
-                            <XMarkIcon className="h-5 w-5" />
+                            <XMarkIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                           )}
                         </button>
                         <button
                           onClick={() => handleEdit(menu)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors touch-target"
                           title="Edit Menu"
                         >
-                          <PencilIcon className="h-5 w-5" />
+                          <PencilIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(menu._id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-target"
                           title="Delete Menu"
                         >
-                          <TrashIcon className="h-5 w-5" />
+                          <TrashIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                       </div>
                     )}
@@ -380,7 +382,7 @@ const MenuManagement = () => {
                 </div>
 
                 {/* Content */}
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   {menu ? (
                     <div>
                       {/* Availability Status */}
@@ -408,21 +410,21 @@ const MenuManagement = () => {
 
                       {/* Menu Items */}
                       {menu.items && menu.items.length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-gray-900">
+                        <div className="space-y-2 sm:space-y-3">
+                          <h4 className="text-sm sm:text-base font-semibold text-gray-900">
                             Menu Items
                           </h4>
                           {menu.items.map((item, index) => (
                             <div
                               key={index}
-                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                              className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg"
                             >
                               <div className="flex items-center flex-1">
-                                <span className="text-2xl mr-3">
+                                <span className="text-xl sm:text-2xl mr-2 sm:mr-3">
                                   {item.icon || "🍛"}
                                 </span>
                                 <div className="flex-1">
-                                  <p className="font-medium text-gray-900">
+                                  <p className="text-sm sm:text-base font-medium text-gray-900">
                                     {index + 1} {item.name}
                                   </p>
                                   {item.description && (
@@ -438,9 +440,9 @@ const MenuManagement = () => {
                                 </div>
                               </div>
                               {item.price && (
-                                <div className="flex items-center ml-3">
-                                  <CurrencyRupeeIcon className="h-4 w-4 text-green-600 mr-1" />
-                                  <span className="text-sm font-bold text-green-600">
+                                <div className="flex items-center ml-2 sm:ml-3">
+                                  <CurrencyRupeeIcon className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 mr-1" />
+                                  <span className="text-xs sm:text-sm font-bold text-green-600">
                                     ₹{item.price}
                                   </span>
                                 </div>
@@ -460,9 +462,9 @@ const MenuManagement = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <PhotoIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500 mb-4">
+                    <div className="text-center py-6 sm:py-8">
+                      <PhotoIcon className="h-10 w-10 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                      <p className="text-sm sm:text-base text-gray-500 mb-3 sm:mb-4">
                         No menu set for {mealType}
                       </p>
                       <button
@@ -474,7 +476,7 @@ const MenuManagement = () => {
                           }));
                           setShowAddMenu(true);
                         }}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-sm sm:text-base text-blue-600 hover:text-blue-800 font-medium touch-target"
                       >
                         Create Menu
                       </button>
@@ -492,25 +494,25 @@ const MenuManagement = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-screen overflow-y-auto"
+              className="bg-white rounded-xl p-4 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   {editingMenu ? "Edit Menu" : "Add New Menu"}
                 </h3>
                 <button
                   onClick={resetForm}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors touch-target"
                 >
-                  <XMarkIcon className="h-5 w-5" />
+                  <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                 {/* Basic Info */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                       Date
                     </label>
                     <input
@@ -522,12 +524,12 @@ const MenuManagement = () => {
                           date: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                       Meal Type
                     </label>
                     <select
@@ -538,7 +540,7 @@ const MenuManagement = () => {
                           mealType: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
                     >
                       <option value="breakfast">Breakfast</option>
                       <option value="lunch">Lunch</option>
@@ -546,7 +548,7 @@ const MenuManagement = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                       Price (₹)
                     </label>
                     <input
@@ -558,7 +560,7 @@ const MenuManagement = () => {
                           price: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
                       min="0"
                       step="0.01"
                       placeholder="Optional: For single meal pricing"
@@ -571,16 +573,16 @@ const MenuManagement = () => {
 
                 {/* Menu Items */}
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <label className="block text-sm font-medium text-gray-700">
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Menu Items
                     </label>
                     <button
                       type="button"
                       onClick={handleAddItem}
-                      className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm touch-target"
                     >
-                      <PlusIcon className="h-4 w-4 mr-1" />
+                      <PlusIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       Add Item
                     </button>
                   </div>
@@ -705,7 +707,7 @@ const MenuManagement = () => {
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                     Description (Optional)
                   </label>
                   <textarea
@@ -717,7 +719,7 @@ const MenuManagement = () => {
                       }))
                     }
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-target"
                     placeholder="Special notes about this menu..."
                   />
                 </div>
@@ -741,17 +743,17 @@ const MenuManagement = () => {
                 </div>
 
                 {/* Submit Buttons */}
-                <div className="flex space-x-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex-1 py-2 sm:py-3 px-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base touch-target"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex-1 py-2 sm:py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base touch-target"
                   >
                     {editingMenu ? "Update Menu" : "Create Menu"}
                   </button>
