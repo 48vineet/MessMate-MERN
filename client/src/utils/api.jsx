@@ -2,17 +2,9 @@
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
-// Resolve API base URL with multiple fallbacks
-const baseURL =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.MODE === "production"
-    ? "https://messmate-smoky.vercel.app/api"
-    : "http://localhost:5000/api");
-
-// Create axios instance with base configuration
+// Create axios instance with base configuration (original behavior)
 const api = axios.create({
-  baseURL,
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

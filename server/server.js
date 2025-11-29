@@ -1,11 +1,5 @@
 // server/server.js
 require("dotenv").config();
-// Global log suppression (remove all console output in production as requested)
-if (process.env.NODE_ENV === "production") {
-  ["log", "error", "warn", "info", "debug"].forEach((m) => {
-    console[m] = () => {};
-  });
-}
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -43,8 +37,6 @@ const socketHandler = require("./utils/socketHandler");
 
 const app = express();
 const server = createServer(app);
-
-// Socket.IO setup
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL || "http://localhost:3000",
@@ -63,38 +55,22 @@ app.use(
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
         scriptSrc: ["'self'"],
-        connectSrc: ["'self'", "ws://localhost:*", "wss://localhost:*"],
+        // Allow API + WebSocket connections to any host (prod safe)
+        connectSrc: ["'self'", "https:", "http:", "wss:", "ws:"],
       },
     },
   })
 );
 
-// Dynamic CORS configuration
-const explicitOrigins = [
-  "http://localhost:3000",
-  "http://localhost:5173",
-  process.env.CLIENT_URL,
-  ...(process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(",")
-    : []),
-].filter(Boolean);
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl)
-    if (!origin) return callback(null, true);
-    if (explicitOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
-  maxAge: 86400,
-};
-app.use(cors(corsOptions));
-
-// Explicit preflight handler (helps with some edge providers)
-app.options("*", cors(corsOptions));
+// CORS configuration (original simple allowlist)
+app.use(
+  cors({
+    origin: true, // Reflects the request origin, supports credentials
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
+  })
+);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -147,34 +123,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Root info route (friendly)
-app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "MessMate API root",
-    documentation: "Add API docs URL here if available",
-    health: "/api/health",
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development",
-    endpoints: {
-      auth: "/api/auth/*",
-      users: "/api/users/*",
-      menu: "/api/menu/*",
-      bookings: "/api/bookings/*",
-      inventory: "/api/inventory/*",
-      payments: "/api/payments/*",
-      feedback: "/api/feedback/*",
-      analytics: "/api/analytics/*",
-      attendance: "/api/user/attendance/*",
-      notifications: "/api/notifications/*",
-      reports: "/api/reports/*",
-      settings: "/api/settings/*",
-      contact: "/api/contact/*",
-      meals: "/api/meals/*",
-      wallet: "/api/wallet/*",
-    },
-  });
-});
+// (No custom root route)
 
 // Test endpoint for bookings
 app.get("/api/test-bookings", (req, res) => {
@@ -212,20 +161,5 @@ socketHandler(io);
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server (only in non-Vercel environments)
-const PORT = process.env.PORT || 5000;
-const startServer = async () => {
-  await connectDB();
-  server.listen(PORT, () => {
-    console.log(`🚀 MessMate Server running on port ${PORT}`);
-    console.log(`🌐 API URL: http://localhost:${PORT}/api`);
-    console.log(`📡 Socket.IO running on port ${PORT}`);
-  });
-};
-
-// Vercel serverless environment should export the Express app instead of listening
-if (process.env.VERCEL) {
-  module.exports = app; // Export for Vercel's @vercel/node build
-} else {
-  startServer();
-}
+// For Vercel: export the Express app
+module.exports = app;
