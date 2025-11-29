@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "functions": {
+    "api/**.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "routes": [
+    { "src": "/", "dest": "/api" },
+    { "src": "/api(?:/.*)?", "dest": "/api" }
+  ]
+}
