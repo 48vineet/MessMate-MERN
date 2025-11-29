@@ -74,7 +74,9 @@ const explicitOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   process.env.CLIENT_URL,
-  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
+  ...(process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",")
+    : []),
 ].filter(Boolean);
 
 const corsOptions = {
@@ -87,12 +89,12 @@ const corsOptions = {
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
-  maxAge: 86400
+  maxAge: 86400,
 };
 app.use(cors(corsOptions));
 
 // Explicit preflight handler (helps with some edge providers)
-app.options('*', cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
