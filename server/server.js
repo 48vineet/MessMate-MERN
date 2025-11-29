@@ -135,31 +135,31 @@ app.get("/api/health", (req, res) => {
 });
 
 // Root info route (friendly)
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'MessMate API root',
-    documentation: 'Add API docs URL here if available',
-    health: '/api/health',
+    message: "MessMate API root",
+    documentation: "Add API docs URL here if available",
+    health: "/api/health",
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: process.env.NODE_ENV || "development",
     endpoints: {
-      auth: '/api/auth/*',
-      users: '/api/users/*',
-      menu: '/api/menu/*',
-      bookings: '/api/bookings/*',
-      inventory: '/api/inventory/*',
-      payments: '/api/payments/*',
-      feedback: '/api/feedback/*',
-      analytics: '/api/analytics/*',
-      attendance: '/api/user/attendance/*',
-      notifications: '/api/notifications/*',
-      reports: '/api/reports/*',
-      settings: '/api/settings/*',
-      contact: '/api/contact/*',
-      meals: '/api/meals/*',
-      wallet: '/api/wallet/*'
-    }
+      auth: "/api/auth/*",
+      users: "/api/users/*",
+      menu: "/api/menu/*",
+      bookings: "/api/bookings/*",
+      inventory: "/api/inventory/*",
+      payments: "/api/payments/*",
+      feedback: "/api/feedback/*",
+      analytics: "/api/analytics/*",
+      attendance: "/api/user/attendance/*",
+      notifications: "/api/notifications/*",
+      reports: "/api/reports/*",
+      settings: "/api/settings/*",
+      contact: "/api/contact/*",
+      meals: "/api/meals/*",
+      wallet: "/api/wallet/*",
+    },
   });
 });
 
