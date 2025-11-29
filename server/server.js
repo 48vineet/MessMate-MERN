@@ -1,5 +1,11 @@
 // server/server.js
 require("dotenv").config();
+// Global log suppression (remove all console output in production as requested)
+if (process.env.NODE_ENV === "production") {
+  ["log", "error", "warn", "info", "debug"].forEach((m) => {
+    console[m] = () => {};
+  });
+}
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -164,7 +170,7 @@ socketHandler(io);
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server
+// Start server (only in non-Vercel environments)
 const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   await connectDB();
@@ -174,4 +180,10 @@ const startServer = async () => {
     console.log(`📡 Socket.IO running on port ${PORT}`);
   });
 };
-startServer();
+
+// Vercel serverless environment should export the Express app instead of listening
+if (process.env.VERCEL) {
+  module.exports = app; // Export for Vercel's @vercel/node build
+} else {
+  startServer();
+}
