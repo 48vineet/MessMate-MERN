@@ -1,4 +1,6 @@
 // src/components/common/Logo.jsx
+import React from "react";
+
 /**
  * MessMate Logo Component
  * Professional, minimal logo representing a mess/dining app
