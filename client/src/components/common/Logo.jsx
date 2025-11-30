@@ -7,7 +7,7 @@ import React from "react";
  * Features: Fork & Spoon icon in a clean circular design
  */
 
-const Logo = ({ size = "md", showText = true, className = "" }) => {
+function Logo({ size = "md", showText = true, className = "" }) {
   const sizeClasses = {
     xs: { container: "h-6 w-6", text: "text-base" },
     sm: { container: "h-8 w-8", text: "text-lg" },
@@ -68,6 +68,6 @@ const Logo = ({ size = "md", showText = true, className = "" }) => {
       )}
     </div>
   );
-};
+}
 
 export default Logo;
