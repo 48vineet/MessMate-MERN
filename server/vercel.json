@@ -1,12 +1,24 @@
 {
   "version": 2,
-  "functions": {
-    "api/**.js": {
-      "runtime": "nodejs20.x"
+  "builds": [
+    {
+      "src": "api/[[...path]].js",
+      "use": "@vercel/node"
     }
-  },
+  ],
   "routes": [
-    { "src": "/", "dest": "/api" },
-    { "src": "/api(?:/.*)?", "dest": "/api" }
-  ]
+    {
+      "src": "/api/(.*)",
+      "dest": "api/[[...path]].js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "api/[[...path]].js": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  }
 }

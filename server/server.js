@@ -6,9 +6,18 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
-const { createServer } = require("http");
-const { Server } = require("socket.io");
 const path = require("path");
+
+// Check if running on Vercel (serverless)
+const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV;
+
+// Only import Socket.IO if not on Vercel (Socket.IO doesn't work with serverless)
+let httpServer, io;
+if (!isVercel) {
+  const { createServer } = require("http");
+  const { Server } = require("socket.io");
+  // httpServer will be created after app is defined
+}
 
 // Import routes
 const authRoutes = require("./routes/auth");
@@ -33,17 +42,8 @@ const walletRoutes = require("./routes/wallet");
 // Import middleware
 const errorHandler = require("./middleware/errorHandler");
 const notFound = require("./middleware/notFound");
-const socketHandler = require("./utils/socketHandler");
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    credentials: true,
-  },
-});
 
 // Security middleware
 app.use(
@@ -94,23 +94,22 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // Logging
 app.use(morgan("dev"));
 
-// Static files
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/public", express.static(path.join(__dirname, "public")));
-
-// Database connection
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log(`📊 MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error("❌ Database connection failed:", error);
-    process.exit(1);
+// Static files (only if directories exist, Vercel uses cloud storage)
+if (!isVercel) {
+  const fs = require("fs");
+  const uploadsPath = path.join(__dirname, "uploads");
+  const publicPath = path.join(__dirname, "public");
+  
+  if (fs.existsSync(uploadsPath)) {
+    app.use("/uploads", express.static(uploadsPath));
   }
-};
+  if (fs.existsSync(publicPath)) {
+    app.use("/public", express.static(publicPath));
+  }
+}
+
+// Database connection (only for local development, Vercel handles it in api/[[...path]].js)
+// Connection will be handled in the local server startup section
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -154,12 +153,52 @@ app.use("/api/meals", mealsRoutes);
 app.use("/api/wallet", walletRoutes);
 // --------------------------------
 
-// Socket.IO handler
-socketHandler(io);
+// Socket.IO handler is set up in local development section below
 
 // Error handling middleware
 app.use(notFound);
 app.use(errorHandler);
 
 // For Vercel: export the Express app
+// For local development: start the server
+if (!isVercel) {
+  const { createServer } = require("http");
+  const { Server } = require("socket.io");
+  
+  httpServer = createServer(app);
+  io = new Server(httpServer, {
+    cors: {
+      origin: process.env.CLIENT_URL || "http://localhost:3000",
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+      credentials: true,
+    },
+  });
+  
+  // Socket.IO handler
+  const socketHandler = require("./utils/socketHandler");
+  socketHandler(io);
+  
+  const PORT = process.env.PORT || 5000;
+  
+  // Database connection for local development
+  const connectDB = async () => {
+    try {
+      const conn = await mongoose.connect(process.env.MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      console.log(`📊 MongoDB Connected: ${conn.connection.host}`);
+    } catch (error) {
+      console.error("❌ Database connection failed:", error);
+      process.exit(1);
+    }
+  };
+  
+  connectDB().then(() => {
+    httpServer.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  });
+}
+
 module.exports = app;
