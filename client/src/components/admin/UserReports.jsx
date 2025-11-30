@@ -35,12 +35,19 @@ const UserReports = () => {
 
   // Establish a real-time socket connection (without auto-refresh)
   useEffect(() => {
-    const SOCKET_URL =
-      import.meta.env.VITE_SOCKET_URL ||
-      (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(
+    const SOCKET_URL = (() => {
+      const envSocket = import.meta.env.VITE_SOCKET_URL;
+      if (envSocket) return envSocket;
+      const fromApi = (import.meta.env.VITE_API_URL || "/api").replace(
         /\/api$/,
         ""
       );
+      if (import.meta.env.DEV && fromApi === "") {
+        return "http://localhost:5000";
+      }
+      if (fromApi) return fromApi;
+      return `${window.location.protocol}//${window.location.host}`;
+    })();
 
     if (!token) return;
 

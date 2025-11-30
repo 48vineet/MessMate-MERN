@@ -4,7 +4,8 @@ import { toast } from "react-hot-toast";
 
 // Create axios instance with base configuration (original behavior)
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  // Default to relative `/api` so it works on Vercel/Prod. Use VITE_API_URL to override in dev.
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

@@ -52,10 +52,17 @@ export const useRealtimeNotifications = () => {
       };
 
       const defaultDev = "ws://localhost:5000";
+      // In production, derive from current location if no env vars are set
+      const locationBase = (() => {
+        if (typeof window === "undefined") return null;
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        return `${protocol}//${window.location.host}`;
+      })();
+
       const wsBase =
         import.meta.env.VITE_WS_URL ||
         deriveFromApi() ||
-        (import.meta.env.DEV ? defaultDev : null);
+        (import.meta.env.DEV ? defaultDev : locationBase);
 
       if (!wsBase) {
         throw new Error("WebSocket base URL is not configured");
