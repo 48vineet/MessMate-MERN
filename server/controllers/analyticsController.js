@@ -180,7 +180,6 @@ exports.getAnalytics = async (req, res) => {
         { $limit: 5 },
       ]);
     } catch (error) {
-      console.log("Error fetching top meals:", error);
       topMeals = [];
     }
 
@@ -1248,10 +1247,6 @@ exports.getMenuAnalytics = async (req, res) => {
         .lean(),
     ]);
 
-    console.log("Raw meal type distribution from DB:", mealTypeDistribution);
-    console.log("Total menus:", totalMenus);
-    console.log("Total templates:", totalTemplates);
-
     // Calculate percentages for meal type distribution
     const totalMenusForDistribution = mealTypeDistribution.reduce(
       (sum, meal) => sum + meal.count,
@@ -1276,8 +1271,6 @@ exports.getMenuAnalytics = async (req, res) => {
         { mealType: "Dinner", count: 0, percentage: 0 }
       );
     }
-
-    console.log("Meal type distribution:", mealTypeDistributionWithPercentage);
 
     // Format recent activity
     const formattedRecentActivity = recentActivity.map((menu) => ({

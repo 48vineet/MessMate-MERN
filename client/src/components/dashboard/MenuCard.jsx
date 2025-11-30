@@ -46,16 +46,11 @@ const MenuCard = ({ menu, onRefresh }) => {
     try {
       const today = new Date().toISOString().split("T")[0];
       const response = await api.get(`/menu/daily?date=${today}`);
-      console.log("Fetched daily menu:", response.data);
 
       if (response.data?.data && Array.isArray(response.data.data)) {
         // Transform the daily menu array into the format we need
         const menuByType = {};
         response.data.data.forEach((menuItem) => {
-          console.log("Processing menu item:", {
-            id: menuItem._id,
-            mealType: menuItem.mealType,
-          });
           menuByType[menuItem.mealType] = {
             _id: menuItem._id,
             items: menuItem.items || [],
@@ -69,7 +64,6 @@ const MenuCard = ({ menu, onRefresh }) => {
                 : "7:00 PM - 10:00 PM",
           };
         });
-        console.log("Transformed menu by type:", menuByType);
         setTodayMenu(menuByType);
       }
     } catch (error) {
@@ -123,8 +117,6 @@ const MenuCard = ({ menu, onRefresh }) => {
         quantity: 1,
         specialRequests: "",
       };
-
-      console.log("Sending booking data:", bookingData);
 
       try {
         const response = await api.post("/bookings", bookingData);

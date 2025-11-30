@@ -10,13 +10,7 @@ const QRDisplayPage = () => {
   const qrData = location.state?.qrData;
   const bookingData = location.state?.booking;
 
-  console.log('=== QR Display Page Debug ===');
-  console.log('Location state:', location.state);
-  console.log('QR Data:', qrData);
-  console.log('Booking Data:', bookingData);
-
   if (!qrData) {
-    console.log('No QR data found, showing error page');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="p-8 text-center">
@@ -33,9 +27,7 @@ const QRDisplayPage = () => {
   // Parse QR data safely
   const parseQRData = () => {
     try {
-      console.log('Parsing QR data:', qrData.data);
       const parsed = qrData.data ? JSON.parse(qrData.data) : null;
-      console.log('Parsed QR data:', parsed);
       return parsed;
     } catch (error) {
       console.error('Error parsing QR data:', error);
@@ -48,7 +40,6 @@ const QRDisplayPage = () => {
   // Format dates safely
   const formatDate = (dateString) => {
     try {
-      console.log('Formatting date:', dateString);
       if (!dateString) return 'N/A';
       const date = new Date(dateString);
       const formatted = date.toLocaleDateString('en-US', {
@@ -56,7 +47,6 @@ const QRDisplayPage = () => {
         month: 'short',
         day: 'numeric'
       });
-      console.log('Formatted date:', formatted);
       return formatted;
     } catch (error) {
       console.error('Error formatting date:', error);
@@ -66,23 +56,18 @@ const QRDisplayPage = () => {
 
   const formatTime = (dateString) => {
     try {
-      console.log('Formatting time:', dateString);
       if (!dateString) return 'N/A';
       const date = new Date(dateString);
       const formatted = date.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit'
       });
-      console.log('Formatted time:', formatted);
       return formatted;
     } catch (error) {
       console.error('Error formatting time:', error);
       return 'Invalid Time';
     }
   };
-
-  console.log('QR Info:', qrInfo);
-  console.log('QR URL:', qrData.url);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -111,7 +96,7 @@ const QRDisplayPage = () => {
                   e.target.style.display = 'none';
                 }}
                 onLoad={() => {
-                  console.log('QR image loaded successfully');
+                  // QR image loaded
                 }}
               />
             </div>

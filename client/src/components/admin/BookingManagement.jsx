@@ -35,20 +35,12 @@ const BookingManagement = () => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      console.log("Fetching bookings with date filter:", dateFilter);
-
       // Temporarily get all bookings to see if any exist
       const response = await api.get("/bookings");
-      console.log("Bookings API response:", response.data);
-      console.log("Response status:", response.status);
-      console.log("Response headers:", response.headers);
 
       if (response.data.success) {
         setBookings(response.data.data);
         setTotalBookings(response.data.total);
-        console.log("Set bookings:", response.data.data);
-        console.log("Total bookings:", response.data.total);
-        console.log("Bookings array length:", response.data.data.length);
       } else {
         console.error("API returned success: false:", response.data);
       }

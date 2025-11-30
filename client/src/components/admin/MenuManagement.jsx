@@ -101,7 +101,6 @@ const MenuManagement = () => {
 
     try {
       if (editingMenu) {
-        console.log("Updating menu:", editingMenu._id, submitData);
         const response = await api.put(
           `/menu/admin/daily/${editingMenu._id}`,
           submitData
@@ -116,19 +115,11 @@ const MenuManagement = () => {
           .split("T")[0];
         const newDate = new Date(updatedMenu.date).toISOString().split("T")[0];
 
-        console.log("Date comparison:", {
-          originalDate,
-          newDate,
-          selectedDate,
-        });
-
         if (originalDate !== newDate) {
           // Date changed, refetch menus for the current selected date
-          console.log("Date changed, refetching menus");
           fetchMenus();
         } else {
           // Date didn't change, just update the menu in local state
-          console.log("Date unchanged, updating local state");
           setMenus((prev) =>
             prev.map((menu) =>
               menu._id === editingMenu._id ? updatedMenu : menu
@@ -136,7 +127,6 @@ const MenuManagement = () => {
           );
         }
       } else {
-        console.log("Creating new menu:", submitData);
         const response = await api.post("/menu/admin/daily", submitData);
         toast.success("Menu created successfully");
 

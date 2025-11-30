@@ -38,8 +38,6 @@ const WalletRecharge = () => {
     try {
       const response = await api.get('/wallet/details');
       setWalletData(response.data.wallet);
-      console.log("Console 1");
-      console.log(response.data.wallet);
       setCurrentQRCode(response.data.wallet.qrCode);
     } catch (error) {
       console.error('Error fetching wallet data:', error);
@@ -229,9 +227,7 @@ const WalletRecharge = () => {
                 <p className="text-sm text-gray-600 mb-2">UPI ID</p>
                 <div className="flex items-center justify-center space-x-2">
                   <span className="font-mono text-lg font-semibold text-gray-900">
-                    {console.log("this is console 2")}
                     {walletData.upiId}
-                    {console.log(walletData)}
                   </span>
                   <button
                     onClick={() => copyToClipboard(walletData.upiId)}

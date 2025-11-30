@@ -61,10 +61,8 @@ const UserDashboard = () => {
 
       for (const endpoint of endpoints) {
         try {
-          console.log(`Fetching ${endpoint.name}...`);
           const response = await api.get(endpoint.url);
           results[endpoint.name] = response.data;
-          console.log(`${endpoint.name} fetched successfully:`, response.data);
         } catch (error) {
           console.error(`Error fetching ${endpoint.name}:`, error);
           // Don't show toast errors for individual endpoint failures

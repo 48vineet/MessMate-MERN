@@ -20,18 +20,22 @@ exports.getWalletDetails = async (req, res) => {
     res.json({
       success: true,
       wallet: {
-        balance: wallet.balance,
-        monthlySpent: wallet.monthlySpent,
-        totalRecharged: wallet.totalRecharged,
-        totalSpent: wallet.totalSpent,
-        recentTransactions: wallet.recentTransactions.slice(-10), // Last 10 transactions
+        balance: wallet.balance || 0,
+        monthlySpent: wallet.monthlySpent || 0,
+        totalRecharged: wallet.totalRecharged || 0,
+        totalSpent: wallet.totalSpent || 0,
+        recentTransactions: (wallet.recentTransactions || []).slice(-10), // Last 10 transactions
         upiId: '7038738012-2@ybl',
         qrCode: qrResult.success ? qrResult.qrDataUrl : null
       }
     });
   } catch (error) {
     console.error('Error fetching wallet details:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch wallet details' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch wallet details',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
@@ -39,7 +43,6 @@ exports.getWalletDetails = async (req, res) => {
 exports.requestRecharge = async (req, res) => {
   try {
     const { amount, paymentMethod, upiId } = req.body;
-    console.log("Console 3 ", req.body);
     const userId = req.user.id;
 
     if (!amount || amount <= 0) {
@@ -207,29 +210,35 @@ exports.getAllWallets = async (req, res) => {
   try {
     const wallets = await Wallet.find().populate('userId', 'name email phone');
     
-    const walletStats = wallets.map(wallet => ({
-      userId: wallet.userId._id,
-      userName: wallet.userId.name,
-      userEmail: wallet.userId.email,
-      userPhone: wallet.userId.phone,
-      balance: wallet.balance,
-      totalRecharged: wallet.totalRecharged,
-      totalSpent: wallet.totalSpent,
-      monthlySpent: wallet.monthlySpent,
-      transactionCount: wallet.recentTransactions.length,
-      isActive: wallet.isActive
-    }));
+    const walletStats = wallets
+      .filter(wallet => wallet.userId) // Filter out wallets with null userId
+      .map(wallet => ({
+        userId: wallet.userId?._id || wallet.userId,
+        userName: wallet.userId?.name || 'Unknown',
+        userEmail: wallet.userId?.email || 'N/A',
+        userPhone: wallet.userId?.phone || 'N/A',
+        balance: wallet.balance || 0,
+        totalRecharged: wallet.totalRecharged || 0,
+        totalSpent: wallet.totalSpent || 0,
+        monthlySpent: wallet.monthlySpent || 0,
+        transactionCount: wallet.recentTransactions?.length || 0,
+        isActive: wallet.isActive !== false
+      }));
 
     res.json({
       success: true,
       wallets: walletStats,
       totalWallets: walletStats.length,
-      totalBalance: walletStats.reduce((sum, w) => sum + w.balance, 0),
-      totalRecharged: walletStats.reduce((sum, w) => sum + w.totalRecharged, 0)
+      totalBalance: walletStats.reduce((sum, w) => sum + (w.balance || 0), 0),
+      totalRecharged: walletStats.reduce((sum, w) => sum + (w.totalRecharged || 0), 0)
     });
   } catch (error) {
     console.error('Error fetching all wallets:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch wallets' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch wallets',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 

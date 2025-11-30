@@ -140,7 +140,7 @@ exports.register = async (req, res) => {
         `,
       });
     } catch (emailError) {
-      console.log("Welcome email failed to send:", emailError);
+      // Email sending failed, but registration succeeded
     }
 
     sendTokenResponse(user, 201, res, "User registered successfully");
@@ -398,7 +398,7 @@ exports.forgotPassword = async (req, res) => {
         message: "Password reset email sent successfully",
       });
     } catch (emailError) {
-      console.log("Password reset email failed:", emailError);
+      // Email sending failed
 
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
@@ -610,7 +610,7 @@ exports.adminCreateUser = async (req, res) => {
         `,
       });
     } catch (emailError) {
-      console.log("Welcome email failed to send:", emailError);
+      // Email sending failed, but registration succeeded
     }
 
     // Remove password from response

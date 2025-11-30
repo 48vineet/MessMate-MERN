@@ -87,7 +87,6 @@ const BookingsPage = () => {
     try {
       // Fetch daily menus instead of regular menu items
       const response = await api.get("/menu/daily");
-      console.log("Daily Menu API response:", response.data);
       setMenuItems(response.data.data || []);
     } catch (error) {
       console.error("Error fetching daily menu items:", error);
@@ -381,7 +380,6 @@ const BookingsPage = () => {
           toast.error(errorMessage);
         } else {
           // Fallback to local update if API completely fails
-          console.log("Attempting local update...");
           const localBookings = JSON.parse(
             localStorage.getItem("messmate_bookings") || "[]"
           );

@@ -128,7 +128,6 @@ const AdminDashboard = () => {
           !isRefresh &&
           results.every((result) => result.status === "fulfilled")
         ) {
-          console.log("Dashboard data loaded successfully");
         }
       } catch (error) {
         console.error("Error fetching admin dashboard data:", error);

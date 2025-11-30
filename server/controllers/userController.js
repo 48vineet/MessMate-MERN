@@ -353,12 +353,8 @@ exports.bulkUserAction = async (req, res) => {
 // @access  Private
 exports.getUserStats = async (req, res) => {
   try {
-    // Debug logging
-    console.log('DEBUG getUserStats - req.user:', req.user);
-    console.log('DEBUG getUserStats - req.params:', req.params);
     // If no ID parameter, use current user
     const userId = req.params.id || req.user.id;
-    console.log('DEBUG getUserStats - userId:', userId);
 
     // Check authorization
     if (req.user.role !== 'admin' && req.user.id !== userId) {
@@ -369,7 +365,6 @@ exports.getUserStats = async (req, res) => {
     }
 
     const user = await User.findById(userId).select('-password');
-    console.log('DEBUG getUserStats - user:', user);
     if (!user) {
       return res.status(404).json({
         success: false,

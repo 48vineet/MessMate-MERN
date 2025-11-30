@@ -55,7 +55,6 @@ class ErrorBoundary extends React.Component {
     };
 
     // Example: fetch('/api/errors', { method: 'POST', body: JSON.stringify(errorData) })
-    console.log('Error logged:', errorData);
   };
 
   handleReload = () => {
@@ -229,7 +228,6 @@ export const useErrorHandler = () => {
       };
       
       // Example: Send to error tracking service
-      console.log('Error reported:', errorData);
     }
   };
 

@@ -10,9 +10,6 @@ const Wallet = require("../models/Wallet");
 // @access  Private
 exports.getBookings = async (req, res) => {
   try {
-    console.log("Get bookings request received for user:", req.user.id);
-    console.log("User role:", req.user.role);
-    console.log("Query params:", req.query);
 
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
@@ -60,10 +57,7 @@ exports.getBookings = async (req, res) => {
 
     // For admin, temporarily show all bookings
     if (req.user.role === "admin") {
-      console.log("Admin request - showing all bookings without date filter");
     }
-
-    console.log("Final query:", JSON.stringify(query, null, 2));
 
     // Simple query without population to avoid issues
     const bookings = await Booking.find(query)
@@ -72,14 +66,7 @@ exports.getBookings = async (req, res) => {
       .limit(limit)
       .skip(startIndex);
 
-    console.log("Bookings found:", bookings.length);
-
     const total = await Booking.countDocuments(query);
-    console.log("Total bookings count:", total);
-
-    // Also check total bookings without any filters
-    const totalAllBookings = await Booking.countDocuments({});
-    console.log("Total bookings in database (no filters):", totalAllBookings);
 
     res.status(200).json({
       success: true,
@@ -220,14 +207,6 @@ exports.createBooking = async (req, res) => {
     const totalAmount = itemPrice * quantity;
     const finalAmount = totalAmount; // Add any discounts here
 
-    console.log("Wallet balance check:", {
-      userBalance: wallet.balance,
-      finalAmount: finalAmount,
-      itemPrice: itemPrice,
-      itemName: itemName,
-      quantity: quantity,
-    });
-
     // Check wallet balance
     if (wallet.balance < finalAmount) {
       return res.status(400).json({
@@ -258,13 +237,6 @@ exports.createBooking = async (req, res) => {
     });
 
     try {
-      console.log("Starting wallet deduction process...");
-      console.log("Wallet before deduction:", {
-        balance: wallet.balance,
-        totalSpent: wallet.totalSpent,
-        transactionsCount: wallet.recentTransactions.length,
-      });
-
       // Deduct money from wallet
       wallet.balance -= finalAmount;
       wallet.totalSpent += finalAmount;
@@ -281,24 +253,12 @@ exports.createBooking = async (req, res) => {
 
       wallet.recentTransactions.push(transaction);
 
-      console.log("Wallet after deduction (before save):", {
-        balance: wallet.balance,
-        totalSpent: wallet.totalSpent,
-        transactionsCount: wallet.recentTransactions.length,
-      });
-
       await wallet.save();
 
       // Update user stats
       user.stats.totalBookings += 1;
       user.stats.totalSpent += finalAmount;
       await user.save();
-
-      console.log("Wallet deduction successful:", {
-        amount: finalAmount,
-        newBalance: wallet.balance,
-        bookingId: booking.bookingId,
-      });
     } catch (walletError) {
       console.error("Wallet deduction failed:", walletError);
       console.error("Error details:", {
@@ -343,12 +303,6 @@ exports.createBooking = async (req, res) => {
 // @route   PATCH /api/bookings/:id/status
 // @access  Private/Admin
 exports.updateBookingStatus = async (req, res) => {
-  console.log("========================================");
-  console.log("UPDATE BOOKING STATUS CALLED");
-  console.log("Booking ID:", req.params.id);
-  console.log("Requested Status:", req.body.status);
-  console.log("========================================");
-
   try {
     const { status, adminNotes } = req.body;
 
@@ -360,9 +314,6 @@ exports.updateBookingStatus = async (req, res) => {
         message: "Booking not found",
       });
     }
-
-    console.log("Current booking status:", booking.status);
-    console.log("Current payment status:", booking.paymentStatus);
 
     // Check if booking is already in the target status
     if (booking.status === status) {
@@ -396,17 +347,10 @@ exports.updateBookingStatus = async (req, res) => {
 
       case "cancelled":
         // Refund 50% of the amount if payment was made (service charge deduction)
-        console.log("=== CANCELLATION REFUND PROCESS ===");
-        console.log("Booking payment status:", booking.paymentStatus);
-        console.log("Booking final amount:", booking.finalAmount);
-
         if (booking.paymentStatus === "paid") {
           const refundAmount = booking.finalAmount * 0.5; // 50% refund
-          console.log("Refund amount (50%):", refundAmount);
 
           const wallet = await Wallet.findOne({ userId: booking.user });
-          console.log("Wallet found:", wallet ? "YES" : "NO");
-          console.log("Wallet balance before refund:", wallet?.balance);
 
           if (wallet) {
             wallet.balance += refundAmount;
@@ -419,18 +363,11 @@ exports.updateBookingStatus = async (req, res) => {
               transactionId: `REFUND_${booking.bookingId}`,
             });
             await wallet.save();
-            console.log("Wallet balance after refund:", wallet.balance);
-            console.log("Refund transaction added to wallet");
-          } else {
-            console.log("WARNING: Wallet not found for user", booking.user);
           }
-        } else {
-          console.log("No refund: Payment status is not 'paid'");
         }
 
         booking.handledBy = req.user.id;
         await booking.cancel(adminNotes || "Cancelled by admin", req.user.id);
-        console.log("=== CANCELLATION COMPLETE ===");
         break;
 
       default:
@@ -466,16 +403,10 @@ exports.updateBookingStatus = async (req, res) => {
 // @route   DELETE /api/bookings/:id
 // @access  Private
 exports.cancelBooking = async (req, res) => {
-  console.log("=== CANCEL BOOKING CALLED ===");
-  console.log("Request params ID:", req.params.id);
-  console.log("User:", req.user);
-
   try {
     const booking = await Booking.findById(req.params.id);
-    console.log("Booking found:", booking ? "YES" : "NO");
 
     if (!booking) {
-      console.log("Booking not found - returning 404");
       return res.status(404).json({
         success: false,
         message: "Booking not found",
@@ -483,13 +414,7 @@ exports.cancelBooking = async (req, res) => {
     }
 
     // Check authorization
-    console.log("Checking authorization...");
-    console.log("User role:", req.user?.role);
-    console.log("Booking user:", booking.user?.toString());
-    console.log("Request user:", req.user?.id);
-
     if (req.user.role !== "admin" && booking.user.toString() !== req.user.id) {
-      console.log("Authorization failed - returning 403");
       return res.status(403).json({
         success: false,
         message: "Not authorized to cancel this booking",
@@ -497,9 +422,7 @@ exports.cancelBooking = async (req, res) => {
     }
 
     // Check if booking can be cancelled
-    console.log("Current booking status:", booking.status);
     if (["served", "cancelled"].includes(booking.status)) {
-      console.log("Cannot cancel - status is", booking.status);
       return res.status(400).json({
         success: false,
         message: "Cannot cancel this booking",
@@ -508,15 +431,9 @@ exports.cancelBooking = async (req, res) => {
 
     // Capture original payment status before any mutations
     const wasPaid = booking.paymentStatus === "paid";
-    console.log("Original payment status (wasPaid):", wasPaid);
 
     // Cancel booking
     try {
-      console.log("Attempting to cancel booking:", booking._id);
-      console.log("Booking current status:", booking.status);
-      console.log("Booking payment status:", booking.paymentStatus);
-      console.log("Request body:", req.body);
-
       // Safely get cancellation reason (req.body might be undefined for DELETE requests)
       const cancellationReason =
         (req.body && req.body.reason) || "Cancelled by user";
@@ -524,7 +441,6 @@ exports.cancelBooking = async (req, res) => {
       // Try using the cancel method first
       try {
         await booking.cancel(cancellationReason, req.user.id);
-        console.log("Booking cancelled successfully using cancel method");
       } catch (methodError) {
         console.error(
           "Cancel method failed, trying manual update:",
@@ -541,7 +457,6 @@ exports.cancelBooking = async (req, res) => {
           booking.paymentStatus = "refunded";
         }
         await booking.save();
-        console.log("Booking cancelled successfully using manual update");
       }
     } catch (cancelError) {
       console.error("Error cancelling booking:", cancelError);
@@ -571,14 +486,8 @@ exports.cancelBooking = async (req, res) => {
     if (wasPaid) {
       try {
         const refundAmount = booking.finalAmount * 0.5; // 50% refund
-        console.log("=== USER CANCELLATION REFUND ===");
-        console.log("Booking ID:", booking.bookingId);
-        console.log("Booking final amount:", booking.finalAmount);
-        console.log("Refund amount (50%):", refundAmount);
 
         const wallet = await Wallet.findOne({ userId: booking.user });
-        console.log("Wallet found:", wallet ? "YES" : "NO");
-        console.log("Wallet balance before refund:", wallet?.balance);
 
         if (wallet) {
           wallet.balance += refundAmount;
@@ -591,10 +500,7 @@ exports.cancelBooking = async (req, res) => {
             transactionId: `CANCEL_${booking.bookingId}`,
           });
           await wallet.save();
-          console.log("Wallet balance after refund:", wallet.balance);
-          console.log("Refund successful!");
         } else {
-          console.log("Creating new wallet with refund amount");
           // Create wallet if doesn't exist
           await Wallet.create({
             userId: booking.user,
@@ -610,7 +516,6 @@ exports.cancelBooking = async (req, res) => {
               },
             ],
           });
-          console.log("New wallet created with refund");
         }
       } catch (walletError) {
         console.error("Error refunding to wallet:", walletError);
@@ -696,11 +601,6 @@ exports.addFeedback = async (req, res) => {
 exports.quickBook = async (req, res) => {
   try {
     const { mealType, date } = req.body;
-    console.log("Quick booking request:", {
-      mealType,
-      date,
-      userId: req.user.id,
-    });
 
     // Find today's menu for the specified meal type
     const startOfDay = new Date(date);
@@ -733,10 +633,6 @@ exports.quickBook = async (req, res) => {
           isAvailable: true,
           createdBy: req.user.id,
         });
-        console.log(
-          `Created default menu for ${mealType} on ${date}:`,
-          dailyMenu._id
-        );
       } catch (menuError) {
         console.error("Error creating default menu:", menuError);
         return res.status(500).json({
@@ -808,17 +704,7 @@ exports.quickBook = async (req, res) => {
       paymentStatus: "paid",
     };
 
-    console.log("Creating booking with data:", bookingData);
-
     const booking = await Booking.create(bookingData);
-    console.log("Booking created successfully:", booking._id);
-    console.log("Booking details:", {
-      bookingId: booking.bookingId,
-      mealType: booking.mealType,
-      bookingDate: booking.bookingDate,
-      status: booking.status,
-      user: booking.user,
-    });
 
     // Deduct money from wallet
     try {
@@ -838,12 +724,6 @@ exports.quickBook = async (req, res) => {
       user.stats.totalBookings += 1;
       user.stats.totalSpent += finalAmount;
       await user.save();
-
-      console.log("Wallet deduction successful for quick booking:", {
-        amount: finalAmount,
-        newBalance: wallet.balance,
-        bookingId: booking.bookingId,
-      });
     } catch (walletError) {
       console.error("Wallet deduction failed for quick booking:", walletError);
       // If wallet deduction fails, delete the booking
@@ -858,23 +738,9 @@ exports.quickBook = async (req, res) => {
     // Generate QR code for the booking
     try {
       await booking.generateQRCode();
-      console.log("QR code generated for booking:", booking._id);
     } catch (qrError) {
       console.error("QR generation error (non-critical):", qrError);
       // Continue without QR code if generation fails
-    }
-
-    // Verify the booking was saved
-    const savedBooking = await Booking.findById(booking._id);
-    console.log("Verified saved booking:", savedBooking ? "YES" : "NO");
-    if (savedBooking) {
-      console.log("Saved booking details:", {
-        id: savedBooking._id,
-        bookingId: savedBooking.bookingId,
-        mealType: savedBooking.mealType,
-        bookingDate: savedBooking.bookingDate,
-        status: savedBooking.status,
-      });
     }
 
     res.status(201).json({
@@ -897,10 +763,6 @@ exports.quickBook = async (req, res) => {
 // @access  Private
 exports.getCurrentQR = async (req, res) => {
   try {
-    console.log("=== Get current QR request ===");
-    console.log("User ID:", req.user.id);
-    console.log("User role:", req.user.role);
-
     // Find the user's most recent active booking
     const today = new Date();
     const startOfDay = new Date(
@@ -914,15 +776,11 @@ exports.getCurrentQR = async (req, res) => {
       today.getDate() + 1
     );
 
-    console.log("Searching for bookings between:", startOfDay, "and", endOfDay);
-
     const booking = await Booking.findOne({
       user: req.user.id,
       bookingDate: { $gte: startOfDay, $lt: endOfDay },
       status: { $nin: ["cancelled", "no-show"] },
     }).sort({ createdAt: -1 });
-
-    console.log("Found booking:", booking ? booking._id : "No booking found");
 
     if (!booking) {
       return res.status(404).json({
@@ -959,9 +817,6 @@ exports.getCurrentQR = async (req, res) => {
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     };
 
-    console.log("QR code generated for booking:", booking._id);
-    console.log("QR URL length:", qrUrl.length);
-
     res.status(200).json({
       success: true,
       qrCode: qrCode,
@@ -990,24 +845,8 @@ exports.getCurrentQR = async (req, res) => {
 // @access  Private/Admin
 exports.debugBookings = async (req, res) => {
   try {
-    console.log("=== Debug Bookings Request ===");
-
     // Get all bookings without any filters
     const allBookings = await Booking.find({}).sort({ createdAt: -1 });
-
-    console.log("Total bookings in database:", allBookings.length);
-    console.log(
-      "Sample bookings:",
-      allBookings.slice(0, 3).map((b) => ({
-        id: b._id,
-        bookingId: b.bookingId,
-        user: b.user,
-        mealType: b.mealType,
-        bookingDate: b.bookingDate,
-        status: b.status,
-        createdAt: b.createdAt,
-      }))
-    );
 
     res.status(200).json({
       success: true,
@@ -1029,8 +868,6 @@ exports.debugBookings = async (req, res) => {
 // @access  Public
 exports.testWallet = async (req, res) => {
   try {
-    console.log("=== Test Wallet ===");
-
     // Find a user
     const user = await User.findOne({});
     if (!user) {
@@ -1040,22 +877,12 @@ exports.testWallet = async (req, res) => {
       });
     }
 
-    console.log("User:", user.name, user.email);
-
     // Find or create wallet
     let wallet = await Wallet.findOne({ userId: user._id });
     if (!wallet) {
       wallet = new Wallet({ userId: user._id });
       await wallet.save();
-      console.log("Created new wallet for user");
     }
-
-    console.log("Wallet details:", {
-      balance: wallet.balance,
-      totalSpent: wallet.totalSpent,
-      totalRecharged: wallet.totalRecharged,
-      transactionsCount: wallet.recentTransactions.length,
-    });
 
     res.status(200).json({
       success: true,
@@ -1087,8 +914,6 @@ exports.testWallet = async (req, res) => {
 // @access  Public
 exports.testCreateBooking = async (req, res) => {
   try {
-    console.log("=== Test Create Booking ===");
-
     // Find a user to create booking for
     const user = await User.findOne({});
     if (!user) {
@@ -1097,8 +922,6 @@ exports.testCreateBooking = async (req, res) => {
         message: "No users found in database",
       });
     }
-
-    console.log("Using user:", user.name, user.email);
 
     // Find a daily menu item to use
     const dailyMenu = await DailyMenu.findOne({ isAvailable: true });
@@ -1109,25 +932,12 @@ exports.testCreateBooking = async (req, res) => {
       });
     }
 
-    console.log(
-      "Using daily menu:",
-      dailyMenu.name || dailyMenu.mealType,
-      dailyMenu._id
-    );
-
     // Test wallet operations
     let wallet = await Wallet.findOne({ userId: user._id });
     if (!wallet) {
       wallet = new Wallet({ userId: user._id });
       await wallet.save();
-      console.log("Created new wallet for user");
     }
-
-    console.log("Wallet before test:", {
-      balance: wallet.balance,
-      totalSpent: wallet.totalSpent,
-      transactionsCount: wallet.recentTransactions.length,
-    });
 
     // Add some money to wallet for testing
     if (wallet.balance < 100) {
@@ -1142,7 +952,6 @@ exports.testCreateBooking = async (req, res) => {
         transactionId: `TEST_RECHARGE_${Date.now()}`,
       });
       await wallet.save();
-      console.log("Added money to wallet for testing");
     }
 
     // Create a test booking with menu item
@@ -1161,8 +970,6 @@ exports.testCreateBooking = async (req, res) => {
       paymentMethod: "wallet",
     });
 
-    console.log("Test booking created:", testBooking._id);
-
     // Test wallet deduction
     try {
       const finalAmount = dailyMenu.price || 80;
@@ -1178,14 +985,12 @@ exports.testCreateBooking = async (req, res) => {
         createdAt: new Date(),
       });
       await wallet.save();
-      console.log("Wallet deduction successful for test booking");
     } catch (walletError) {
       console.error("Wallet deduction failed for test booking:", walletError);
     }
 
     // Check all bookings
     const allBookings = await Booking.find({});
-    console.log("Total bookings in database:", allBookings.length);
 
     res.status(201).json({
       success: true,

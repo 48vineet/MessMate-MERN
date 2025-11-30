@@ -74,7 +74,6 @@ export const useRealtimeNotifications = () => {
       wsRef.current.onopen = () => {
         setConnected(true);
         setConnectionError(null);
-        console.log("WebSocket connected for notifications");
       };
 
       wsRef.current.onmessage = (event) => {

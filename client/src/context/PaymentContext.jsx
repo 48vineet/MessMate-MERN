@@ -132,8 +132,6 @@ const PaymentContext = createContext();
 export const PaymentProvider = ({ children }) => {
   const [state, dispatch] = useReducer(paymentReducer, initialState);
 
-  console.log("stcnsole 4", state);
-
   // Fetch wallet details
   const fetchWallet = useCallback(async () => {
     try {

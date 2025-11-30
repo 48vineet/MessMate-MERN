@@ -55,7 +55,6 @@ const FeedbackManagement = () => {
 
   const refreshData = async () => {
     setRefreshing(true);
-    console.log("Starting refresh...");
     try {
       // Try to refresh both data sources, but don't fail if one fails
       const results = await Promise.allSettled([
@@ -67,16 +66,12 @@ const FeedbackManagement = () => {
       const statsSuccess = results[1].status === "fulfilled";
 
       if (feedbacksSuccess && statsSuccess) {
-        console.log("Refresh completed successfully");
         toast.success("Data refreshed successfully");
       } else if (feedbacksSuccess) {
-        console.log("Feedbacks refreshed, stats failed");
         toast.success("Feedbacks refreshed");
       } else if (statsSuccess) {
-        console.log("Stats refreshed, feedbacks failed");
         toast.success("Stats refreshed");
       } else {
-        console.log("Both refresh operations failed");
         toast.error("Failed to refresh data");
       }
     } catch (error) {

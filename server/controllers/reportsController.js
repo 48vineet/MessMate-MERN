@@ -749,12 +749,6 @@ const generateUserReport = async (startDate, endDate) => {
     createdAt: { $gte: start, $lte: end },
   });
 
-  console.log("📊 User Report Stats:", {
-    totalUsers,
-    newUsers,
-    dateRange: { start, end },
-  });
-
   const usersByRole = await User.aggregate([
     {
       $group: {
@@ -763,8 +757,6 @@ const generateUserReport = async (startDate, endDate) => {
       },
     },
   ]);
-
-  console.log("👥 Users by Role:", usersByRole);
 
   const activeUsers = await User.countDocuments({ isActive: true });
   const verifiedUsers = await User.countDocuments({ isVerified: true });
@@ -815,9 +807,6 @@ const generateUserReport = async (startDate, endDate) => {
     },
   ]);
 
-  console.log("📈 User Activity Result:", userActivity);
-  console.log("📅 Registration Trends:", registrationTrends);
-
   const reportData = {
     summary: {
       totalUsers,
@@ -839,11 +828,6 @@ const generateUserReport = async (startDate, endDate) => {
     registrationTrends,
     dateRange: { startDate, endDate },
   };
-
-  console.log(
-    "✅ Final User Report Data:",
-    JSON.stringify(reportData, null, 2)
-  );
 
   return reportData;
 };

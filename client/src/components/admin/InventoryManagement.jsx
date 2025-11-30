@@ -73,9 +73,7 @@ const InventoryManagement = () => {
   const fetchInventory = async () => {
     setLoading(true);
     try {
-      console.log("🔄 Fetching inventory...");
       const response = await api.get("/inventory");
-      console.log("📦 Inventory response:", response.data);
 
       if (response.data.success) {
         // Transform server data to match frontend expectations
@@ -96,8 +94,6 @@ const InventoryManagement = () => {
         }));
 
         setInventory(transformedData);
-        console.log("✅ Inventory updated:", transformedData.length, "items");
-        console.log("✅ Transformed data:", transformedData);
       } else {
         console.error("❌ API returned success: false:", response.data);
         toast.error("Failed to load inventory");
@@ -109,7 +105,6 @@ const InventoryManagement = () => {
       toast.error("Failed to load inventory");
     } finally {
       setLoading(false);
-      console.log("🏁 Fetch inventory completed");
     }
   };
 
@@ -184,18 +179,15 @@ const InventoryManagement = () => {
         expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : null,
       };
 
-      console.log("Submitting inventory data:", inventoryData);
 
       if (editingItem) {
         const response = await api.put(
           `/inventory/${editingItem._id}`,
           inventoryData
         );
-        console.log("Update response:", response.data);
         toast.success("Item updated successfully");
       } else {
         const response = await api.post("/inventory", inventoryData);
-        console.log("Create response:", response.data);
         toast.success("Item added successfully");
       }
 

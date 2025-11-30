@@ -96,10 +96,6 @@ exports.sendContactEmail = async (req, res) => {
     // Send email
     await transporter.sendMail(mailOptions);
 
-    console.log(
-      `Contact email sent successfully to ${recipientEmail} from ${email}`
-    );
-
     res.status(200).json({
       success: true,
       message:

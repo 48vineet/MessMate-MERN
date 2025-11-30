@@ -34,8 +34,6 @@ const socketHandler = (io) => {
   });
 
   io.on('connection', (socket) => {
-    console.log(`🔌 User ${socket.user.name} connected: ${socket.id}`);
-    
     // Store user connection
     connectedUsers.set(socket.user.id.toString(), {
       socketId: socket.id,
@@ -61,14 +59,12 @@ const socketHandler = (io) => {
     socket.on('join_room', (room) => {
       socket.join(room);
       socket.emit('joined_room', { room, timestamp: new Date() });
-      console.log(`User ${socket.user.name} joined room: ${room}`);
     });
 
     // Handle leaving custom rooms
     socket.on('leave_room', (room) => {
       socket.leave(room);
       socket.emit('left_room', { room, timestamp: new Date() });
-      console.log(`User ${socket.user.name} left room: ${room}`);
     });
 
     // Handle sending notifications
@@ -86,7 +82,6 @@ const socketHandler = (io) => {
       };
 
       io.to(`user_${data.recipientId}`).emit('notification', notification);
-      console.log(`Notification sent from ${socket.user.name} to user ${data.recipientId}`);
     });
 
     // Handle broadcasting to role
@@ -104,7 +99,6 @@ const socketHandler = (io) => {
       };
 
       socket.to(`role_${data.role}`).emit('broadcast_message', message);
-      console.log(`Broadcast sent to role ${data.role} by ${socket.user.name}`);
     });
 
     // Handle meal booking updates
@@ -129,8 +123,6 @@ const socketHandler = (io) => {
         message: 'Your booking has been submitted successfully',
         timestamp: new Date()
       });
-
-      console.log(`New booking by ${socket.user.name}: ${data.bookingId}`);
     });
 
     // Handle attendance marking
@@ -148,8 +140,6 @@ const socketHandler = (io) => {
 
       // Notify admins
       io.to('role_admin').emit('attendance_update', attendanceData);
-
-      console.log(`Attendance marked by ${socket.user.name} for ${data.mealType}`);
     });
 
     // Handle user status updates
@@ -162,7 +152,6 @@ const socketHandler = (io) => {
       };
 
       socket.broadcast.emit('user_status_updated', statusUpdate);
-      console.log(`Status updated by ${socket.user.name}: ${data.status}`);
     });
 
     // Handle menu updates (Admin only)
@@ -179,7 +168,6 @@ const socketHandler = (io) => {
         };
 
         socket.broadcast.emit('menu_update', menuUpdate);
-        console.log(`Menu updated by admin ${socket.user.name}`);
       }
     });
 
@@ -197,7 +185,6 @@ const socketHandler = (io) => {
         };
 
         io.to('role_admin').emit('inventory_alert', alertData);
-        console.log(`Inventory alert by admin ${socket.user.name}`);
       }
     });
 
@@ -218,8 +205,6 @@ const socketHandler = (io) => {
       
       // Notify admins
       io.to('role_admin').emit('payment_notification', paymentUpdate);
-
-      console.log(`Payment update for ${socket.user.name}: ${data.status}`);
     });
 
     // Handle admin broadcasts
@@ -237,7 +222,6 @@ const socketHandler = (io) => {
 
         // Broadcast to all connected users
         socket.broadcast.emit('admin_announcement', broadcast);
-        console.log(`Admin broadcast by ${socket.user.name}`);
       }
     });
 
@@ -274,14 +258,11 @@ const socketHandler = (io) => {
 
         // Send to all connected users
         io.emit('emergency_alert', emergencyAlert);
-        console.log(`🚨 Emergency alert by admin ${socket.user.name}`);
       }
     });
 
     // Handle disconnect
     socket.on('disconnect', (reason) => {
-      console.log(`🔌 User ${socket.user.name} disconnected: ${socket.id} (${reason})`);
-      
       // Remove from connected users
       connectedUsers.delete(socket.user.id.toString());
       

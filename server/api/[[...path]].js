@@ -28,7 +28,6 @@ async function connectToDatabase() {
     socketTimeoutMS: 45000,
   }).then((conn) => {
     isConnected = conn?.connections?.[0]?.readyState === 1;
-    console.log("Database connected for serverless function");
     return conn;
   }).catch((error) => {
     console.error("Database connection error:", error);

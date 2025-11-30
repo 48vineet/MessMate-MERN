@@ -42,7 +42,6 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log(`📊 MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error("❌ Database connection failed:", error);
     process.exit(1);
@@ -57,29 +56,21 @@ const PORT = process.env.PORT || 5001;
 
 connectDB().then(() => {
   httpServer.listen(PORT, () => {
-    console.log(`🔌 Socket.IO server running on port ${PORT}`);
-    console.log(`🌐 CORS enabled for: ${process.env.CLIENT_URL || "all origins"}`);
   });
 });
 
 // Graceful shutdown
 process.on("SIGTERM", () => {
-  console.log("SIGTERM signal received: closing HTTP server");
   httpServer.close(() => {
-    console.log("HTTP server closed");
     mongoose.connection.close(false, () => {
-      console.log("MongoDB connection closed");
       process.exit(0);
     });
   });
 });
 
 process.on("SIGINT", () => {
-  console.log("SIGINT signal received: closing HTTP server");
   httpServer.close(() => {
-    console.log("HTTP server closed");
     mongoose.connection.close(false, () => {
-      console.log("MongoDB connection closed");
       process.exit(0);
     });
   });

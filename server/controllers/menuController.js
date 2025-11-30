@@ -373,8 +373,6 @@ exports.createDailyMenu = async (req, res) => {
   try {
     const { date, mealType, items, price, description, isAvailable } = req.body;
     
-    console.log('Creating daily menu:', { date, mealType, itemsCount: items?.length });
-    
     // Validate required fields
     if (!date || !mealType) {
       return res.status(400).json({
@@ -435,7 +433,6 @@ exports.createDailyMenu = async (req, res) => {
       createdBy: req.user.id
     });
 
-    console.log('Daily menu created successfully:', menu._id);
     res.status(201).json({
       success: true,
       message: 'Daily menu created successfully',
@@ -457,8 +454,6 @@ exports.createDailyMenu = async (req, res) => {
 exports.updateDailyMenu = async (req, res) => {
   try {
     const { date, mealType, items, price, description, isAvailable } = req.body;
-    
-    console.log('Updating daily menu:', { id: req.params.id, date, mealType, itemsCount: items?.length });
     
     let menu = await DailyMenu.findById(req.params.id);
     if (!menu) {
@@ -521,7 +516,6 @@ exports.updateDailyMenu = async (req, res) => {
       lastUpdatedBy: req.user.id
     }, { new: true, runValidators: true });
 
-    console.log('Daily menu updated successfully:', menu._id);
     res.status(200).json({
       success: true,
       message: 'Daily menu updated successfully',
@@ -620,11 +614,9 @@ exports.deleteDailyMenu = async (req, res) => {
 // @access  Private/Admin
 exports.getMenuTemplates = async (req, res) => {
   try {
-    console.log('Fetching menu templates...');
     const templates = await DailyMenu.find({ isTemplate: true })
       .sort({ createdAt: -1 });
 
-    console.log(`Found ${templates.length} templates`);
     res.status(200).json({
       success: true,
       data: templates
@@ -774,8 +766,6 @@ exports.quickAddMenuItem = async (req, res) => {
       createdBy: req.user.id,
       ratings: { average: 4.5, count: 0 }
     });
-
-    console.log('Menu item created:', menuItem.name);
 
     res.status(201).json({
       success: true,

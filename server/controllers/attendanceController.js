@@ -6,14 +6,11 @@ exports.getUserAttendance = async (req, res) => {
   try {
     // In production, use req.user._id from authentication middleware.
     const userId = req.user?._id || req.query.userId;
-    console.log('DEBUG ATTENDANCE CONTROLLER - req.user:', req.user);
-    console.log('DEBUG ATTENDANCE CONTROLLER - userId:', userId);
     if (!userId) return res.status(400).json({ message: 'User ID is required' });
 
     // Find all attendance for this user, most recent at the top
     const attendances = await Attendance.find({ user: userId })
       .sort({ date: -1 });
-    console.log('DEBUG ATTENDANCE CONTROLLER - attendances:', attendances);
 
     // If no attendance records, return empty attendance data
     if (!attendances || attendances.length === 0) {

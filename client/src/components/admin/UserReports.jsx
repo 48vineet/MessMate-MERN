@@ -90,11 +90,8 @@ const UserReports = () => {
         includeCharts: true,
       });
 
-      console.log("📥 Client received response:", response.data);
-
       // The server returns report.data directly, not nested
       const payload = response?.data?.report?.data || response?.data?.report;
-      console.log("📊 Client payload:", payload);
 
       setUserData(payload || buildEmptyUserData());
     } catch (error) {

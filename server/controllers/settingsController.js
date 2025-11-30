@@ -90,7 +90,6 @@ exports.updateSettings = async (req, res) => {
 
     // In a real application, you would save these to a database
     // For now, we'll just return the merged settings
-    console.log('Settings updated:', mergedSettings);
 
     res.status(200).json({
       success: true,
@@ -123,7 +122,6 @@ exports.testNotification = async (req, res) => {
     }
 
     // Simulate sending a test notification
-    console.log(`Test notification sent: ${type}`);
     
     // In a real application, you would actually send the notification
     // based on the type (email, SMS, push, etc.)
