@@ -122,7 +122,35 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// (No custom root route)
+// Root route - API information
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "MessMate API Server",
+    version: process.env.API_VERSION || "v1",
+    environment: process.env.NODE_ENV || "development",
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: "/api/health",
+      auth: "/api/auth/*",
+      users: "/api/users/*",
+      menu: "/api/menu/*",
+      bookings: "/api/bookings/*",
+      inventory: "/api/inventory/*",
+      payments: "/api/payments/*",
+      feedback: "/api/feedback/*",
+      analytics: "/api/analytics/*",
+      attendance: "/api/user/attendance/*",
+      notifications: "/api/notifications/*",
+      reports: "/api/reports/*",
+      settings: "/api/settings/*",
+      contact: "/api/contact/*",
+      meals: "/api/meals/*",
+      wallet: "/api/wallet/*"
+    },
+    documentation: "All API endpoints are prefixed with /api"
+  });
+});
 
 // Test endpoint for bookings
 app.get("/api/test-bookings", (req, res) => {
