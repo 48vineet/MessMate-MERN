@@ -4,6 +4,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   MagnifyingGlassIcon,
+  MinusIcon,
   PlusIcon,
   QrCodeIcon,
   StarIcon,
@@ -844,19 +845,52 @@ const BookingsPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Quantity
                     </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={newBooking.quantity}
-                      onChange={(e) =>
-                        setNewBooking({
-                          ...newBooking,
-                          quantity: parseInt(e.target.value),
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                    <div className="flex items-center space-x-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNewBooking({
+                            ...newBooking,
+                            quantity: Math.max(1, newBooking.quantity - 1),
+                          })
+                        }
+                        disabled={newBooking.quantity <= 1}
+                        className={`p-3 rounded-lg transition-all ${
+                          newBooking.quantity <= 1
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            : "bg-white text-blue-600 hover:bg-blue-100 border-2 border-blue-300 shadow-sm"
+                        }`}
+                      >
+                        <MinusIcon className="h-5 w-5" />
+                      </button>
+
+                      <div className="flex-1 bg-white px-6 py-3 rounded-lg border-2 border-gray-300 text-center">
+                        <span className="text-xl font-bold text-gray-900">
+                          {newBooking.quantity}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNewBooking({
+                            ...newBooking,
+                            quantity: Math.min(10, newBooking.quantity + 1),
+                          })
+                        }
+                        disabled={newBooking.quantity >= 10}
+                        className={`p-3 rounded-lg transition-all ${
+                          newBooking.quantity >= 10
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            : "bg-white text-blue-600 hover:bg-blue-100 border-2 border-blue-300 shadow-sm"
+                        }`}
+                      >
+                        <PlusIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Max 10 items per booking
+                    </p>
                   </div>
 
                   {/* Special Requests */}
@@ -877,6 +911,74 @@ const BookingsPage = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
+
+                  {/* Total Amount Display */}
+                  {newBooking.menuItem && (
+                    <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">
+                          Total Amount:
+                        </span>
+                        <div className="flex items-center">
+                          <span className="text-2xl font-bold text-green-600">
+                            ₹
+                            {(() => {
+                              const selectedMenu = menuItems.find(
+                                (m) => m._id === newBooking.menuItem
+                              );
+                              if (!selectedMenu) return "0.00";
+
+                              let itemPrice = selectedMenu.price || 80;
+
+                              // If a specific item is selected with its own price
+                              if (
+                                newBooking.selectedItemIndex !== null &&
+                                selectedMenu.items &&
+                                selectedMenu.items[newBooking.selectedItemIndex]
+                              ) {
+                                const selectedItem =
+                                  selectedMenu.items[
+                                    newBooking.selectedItemIndex
+                                  ];
+                                itemPrice =
+                                  selectedItem.price ||
+                                  selectedMenu.price ||
+                                  80;
+                              }
+
+                              return (itemPrice * newBooking.quantity).toFixed(
+                                2
+                              );
+                            })()}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {newBooking.quantity} item(s) × ₹
+                        {(() => {
+                          const selectedMenu = menuItems.find(
+                            (m) => m._id === newBooking.menuItem
+                          );
+                          if (!selectedMenu) return "0.00";
+
+                          let itemPrice = selectedMenu.price || 80;
+
+                          if (
+                            newBooking.selectedItemIndex !== null &&
+                            selectedMenu.items &&
+                            selectedMenu.items[newBooking.selectedItemIndex]
+                          ) {
+                            const selectedItem =
+                              selectedMenu.items[newBooking.selectedItemIndex];
+                            itemPrice =
+                              selectedItem.price || selectedMenu.price || 80;
+                          }
+
+                          return itemPrice.toFixed(2);
+                        })()}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex space-x-3 mt-6">

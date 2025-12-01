@@ -99,7 +99,7 @@ if (!isVercel) {
   const fs = require("fs");
   const uploadsPath = path.join(__dirname, "uploads");
   const publicPath = path.join(__dirname, "public");
-  
+
   if (fs.existsSync(uploadsPath)) {
     app.use("/uploads", express.static(uploadsPath));
   }
@@ -146,9 +146,9 @@ app.get("/", (req, res) => {
       settings: "/api/settings/*",
       contact: "/api/contact/*",
       meals: "/api/meals/*",
-      wallet: "/api/wallet/*"
+      wallet: "/api/wallet/*",
     },
-    documentation: "All API endpoints are prefixed with /api"
+    documentation: "All API endpoints are prefixed with /api",
   });
 });
 
@@ -192,7 +192,7 @@ app.use(errorHandler);
 if (!isVercel) {
   const { createServer } = require("http");
   const { Server } = require("socket.io");
-  
+
   httpServer = createServer(app);
   io = new Server(httpServer, {
     cors: {
@@ -201,13 +201,41 @@ if (!isVercel) {
       credentials: true,
     },
   });
-  
+
+  // Optional Redis adapter for horizontal scaling
+  if (process.env.REDIS_URL) {
+    try {
+      const { createAdapter } = require("@socket.io/redis-adapter");
+      const { createClient } = require("redis");
+      const pubClient = createClient({ url: process.env.REDIS_URL });
+      const subClient = pubClient.duplicate();
+      pubClient.on("error", (e) => console.warn("Redis pub error", e.message));
+      subClient.on("error", (e) => console.warn("Redis sub error", e.message));
+      Promise.all([pubClient.connect(), subClient.connect()])
+        .then(() => {
+          io.adapter(createAdapter(pubClient, subClient));
+          console.log("✅ Redis adapter attached for Socket.IO clustering");
+        })
+        .catch((err) =>
+          console.warn(
+            "Redis adapter init failed (continuing without clustering):",
+            err.message
+          )
+        );
+    } catch (e) {
+      console.warn("Redis adapter not loaded:", e.message);
+    }
+  }
+
+  // Make io accessible to controllers via req.app.get('io')
+  app.set("io", io);
+
   // Socket.IO handler
   const socketHandler = require("./utils/socketHandler");
   socketHandler(io);
-  
+
   const PORT = process.env.PORT || 5000;
-  
+
   // Database connection for local development
   const connectDB = async () => {
     try {
@@ -220,10 +248,9 @@ if (!isVercel) {
       process.exit(1);
     }
   };
-  
+
   connectDB().then(() => {
-    httpServer.listen(PORT, () => {
-    });
+    httpServer.listen(PORT, () => {});
   });
 }
 

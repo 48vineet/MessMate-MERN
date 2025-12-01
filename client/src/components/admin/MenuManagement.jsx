@@ -498,6 +498,28 @@ const MenuManagement = () => {
                 </button>
               </div>
 
+              {/* Helpful Guide */}
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                  📋 How to Structure Meals
+                </h4>
+                <div className="text-xs text-blue-800 space-y-1">
+                  <p>
+                    <strong>Breakfast:</strong> Add separate items like Samosa
+                    (₹10), Kachori (₹15), Tea (₹5). Each with individual prices.
+                  </p>
+                  <p>
+                    <strong>Lunch/Dinner:</strong> Add combo items like Chapati,
+                    Palak Paneer, Salad, Dal, Rice. Set ONE meal price (e.g.,
+                    ₹85) for the entire thali.
+                  </p>
+                  <p className="mt-2 text-blue-600">
+                    💡 Tip: Leave item prices empty if using meal-level pricing
+                    for combos.
+                  </p>
+                </div>
+              </div>
+
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                 {/* Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">

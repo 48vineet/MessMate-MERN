@@ -4,13 +4,13 @@ const Menu = require("../models/Menu");
 const DailyMenu = require("../models/DailyMenu");
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
+const EVENTS = require("../events");
 
 // @desc    Get all bookings
 // @route   GET /api/bookings
 // @access  Private
 exports.getBookings = async (req, res) => {
   try {
-
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const startIndex = (page - 1) * limit;
@@ -284,6 +284,33 @@ exports.createBooking = async (req, res) => {
       .populate("menuItem", "name price mealType description")
       .populate("user", "name email");
 
+    // Broadcast real-time booking update to admins (if socket available)
+    try {
+      const io = req.app.get("io");
+      if (io) {
+        io.to("role_admin").emit(EVENTS.BOOKING_UPDATE, {
+          bookingId: booking._id.toString(),
+          user: {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+          },
+          mealType: booking.mealType,
+          quantity: booking.quantity,
+          totalAmount: booking.totalAmount,
+          bookingDate: booking.bookingDate,
+          createdAt: booking.createdAt,
+          message: `New ${booking.mealType} booking from ${user.name}`,
+          type: "booking_update",
+        });
+      }
+    } catch (socketError) {
+      console.warn(
+        "Socket broadcast failed (non-critical):",
+        socketError.message
+      );
+    }
+
     res.status(201).json({
       success: true,
       message: "Booking created successfully",
@@ -330,6 +357,21 @@ exports.updateBookingStatus = async (req, res) => {
         booking.handledBy = req.user.id;
         if (adminNotes) booking.adminNotes = adminNotes;
         await booking.confirm();
+        try {
+          const io = req.app.get("io");
+          if (io) {
+            io.to("role_admin").emit(EVENTS.BOOKING_STATUS, {
+              bookingId: booking._id.toString(),
+              status: "confirmed",
+              mealType: booking.mealType,
+              userId: booking.user.toString(),
+              timestamp: new Date(),
+              message: `Booking ${booking._id.toString()} confirmed`,
+            });
+          }
+        } catch (e) {
+          console.warn("Status socket emit failed:", e.message);
+        }
         break;
 
       case "prepared":
@@ -337,12 +379,42 @@ exports.updateBookingStatus = async (req, res) => {
         if (adminNotes) booking.adminNotes = adminNotes;
         booking.preparationStartTime = new Date();
         await booking.markPrepared();
+        try {
+          const io = req.app.get("io");
+          if (io) {
+            io.to("role_admin").emit(EVENTS.BOOKING_STATUS, {
+              bookingId: booking._id.toString(),
+              status: "prepared",
+              mealType: booking.mealType,
+              userId: booking.user.toString(),
+              timestamp: new Date(),
+              message: `Booking ${booking._id.toString()} prepared`,
+            });
+          }
+        } catch (e) {
+          console.warn("Status socket emit failed:", e.message);
+        }
         break;
 
       case "served":
         booking.handledBy = req.user.id;
         if (adminNotes) booking.adminNotes = adminNotes;
         await booking.markServed();
+        try {
+          const io = req.app.get("io");
+          if (io) {
+            io.to("role_admin").emit(EVENTS.BOOKING_STATUS, {
+              bookingId: booking._id.toString(),
+              status: "served",
+              mealType: booking.mealType,
+              userId: booking.user.toString(),
+              timestamp: new Date(),
+              message: `Booking ${booking._id.toString()} served`,
+            });
+          }
+        } catch (e) {
+          console.warn("Status socket emit failed:", e.message);
+        }
         break;
 
       case "cancelled":

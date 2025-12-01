@@ -6,71 +6,64 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import api from "../utils/api";
+import { useNotification } from "../context/NotificationContext";
 
 const NotificationsPage = () => {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    notifications,
+    loading,
+    fetchNotifications,
+    markAsRead: markAsReadServer,
+    markAllAsRead: markAllAsReadServer,
+    deleteNotification: deleteNotificationServer,
+  } = useNotification();
+  const [localNotifications, setLocalNotifications] = useState([]);
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const { data } = await api.get("/notifications", {
-          params: { limit: 50 },
-        });
-        if (data.success) {
-          const mapped = (data.notifications || []).map((n) => ({
-            id: n._id,
-            title: n.title || "Notification",
-            message: n.message || "",
-            type: n.type || "info",
-            read: n.isRead || false,
-            createdAt: n.createdAt ? new Date(n.createdAt) : new Date(),
-          }));
-          setNotifications(mapped);
-        } else {
-          setNotifications([]);
-        }
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-        toast.error(
-          error.response?.data?.message || "Failed to load notifications"
-        );
-        setNotifications([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchNotifications(50);
+  }, [fetchNotifications]);
 
-    fetchNotifications();
-  }, []);
+  useEffect(() => {
+    const mapped = (notifications || []).map((n) => ({
+      id: n._id,
+      title: n.title || "Notification",
+      message: n.message || "",
+      type: n.type || "info",
+      read: n.isRead || false,
+      createdAt: n.createdAt ? new Date(n.createdAt) : new Date(),
+    }));
+    setLocalNotifications(mapped);
+  }, [notifications]);
 
-  const markAsRead = (notificationId) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
-        notification.id === notificationId
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
-    toast.success("Marked as read");
+  const markAsRead = async (notificationId) => {
+    const res = await markAsReadServer(notificationId);
+    if (res?.success) {
+      setLocalNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+      );
+      toast.success("Marked as read");
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications((prev) =>
-      prev.map((notification) => ({ ...notification, read: true }))
-    );
-    toast.success("All notifications marked as read");
+  const markAllAsRead = async () => {
+    const res = await markAllAsReadServer();
+    if (res?.success) {
+      setLocalNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      toast.success("All notifications marked as read");
+    }
   };
 
-  const deleteNotification = (notificationId) => {
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== notificationId)
-    );
-    toast.success("Notification deleted");
+  const deleteNotification = async (notificationId) => {
+    const res = await deleteNotificationServer(notificationId);
+    if (res?.success) {
+      setLocalNotifications((prev) =>
+        prev.filter((notification) => notification.id !== notificationId)
+      );
+      toast.success("Notification deleted");
+    }
   };
 
   const getTypeColor = (type) => {
@@ -115,13 +108,16 @@ const NotificationsPage = () => {
     }
   };
 
-  const filteredNotifications = notifications.filter((notification) => {
+  const filteredNotifications = localNotifications.filter((notification) => {
     if (filter === "all") return true;
     if (filter === "unread") return !notification.read;
     return notification.type === filter;
   });
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = useMemo(
+    () => localNotifications.filter((n) => !n.read).length,
+    [localNotifications]
+  );
 
   if (loading) {
     return (

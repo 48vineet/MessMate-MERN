@@ -19,6 +19,8 @@ const BookingCard = ({ upcomingBookings = [], onRefresh }) => {
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState(null);
+  const [qrPayload, setQrPayload] = useState("");
+  const [qrSvg, setQrSvg] = useState("");
   const [generatingQR, setGeneratingQR] = useState(false);
 
   // Use real bookings data
@@ -84,28 +86,53 @@ const BookingCard = ({ upcomingBookings = [], onRefresh }) => {
         }
       };
 
-      // Create QR code data with booking information
+      // Create compact, scanner-friendly QR payload
       const qrData = {
+        v: 1, // payload version
         bookingId: booking._id,
-        userId: booking.user, // Changed from booking.userId to booking.user
+        user:
+          typeof booking.user === "string"
+            ? booking.user
+            : booking.user?._id || "",
         mealType: booking.mealType,
-        date: formatDate(booking.bookingDate), // Changed from booking.date to booking.bookingDate
-        mealTime: formatTime(booking.mealTime),
+        bookingDate: booking.bookingDate
+          ? new Date(booking.bookingDate).toISOString()
+          : null,
+        mealTime:
+          typeof booking.mealTime === "string" ? booking.mealTime : null,
         status: booking.status,
-        timestamp: new Date().toISOString(),
+        ts: Date.now(),
       };
 
-      // Generate QR code as data URL
-      const qrDataUrl = await QRCode.toDataURL(JSON.stringify(qrData), {
-        width: 200,
-        margin: 2,
-        color: {
-          dark: "#000000",
-          light: "#FFFFFF",
-        },
-      });
+      const payload = JSON.stringify(qrData);
+      setQrPayload(payload);
 
-      setQrCodeDataUrl(qrDataUrl);
+      // Generate SVG (inline) for reliable rendering on React 19
+      try {
+        const svgString = await QRCode.toString(payload, {
+          type: "svg",
+          errorCorrectionLevel: "M",
+          margin: 2,
+          width: 256,
+          color: { dark: "#000000", light: "#FFFFFF" },
+        });
+        setQrSvg(svgString);
+      } catch (e) {
+        console.warn("SVG QR generation failed; will fall back to PNG.", e);
+      }
+
+      // Best-effort: also pre-generate a PNG data URL for download fallback
+      try {
+        const qrDataUrl = await QRCode.toDataURL(payload, {
+          width: 256,
+          margin: 2,
+          color: { dark: "#000000", light: "#FFFFFF" },
+        });
+        setQrCodeDataUrl(qrDataUrl);
+      } catch (e) {
+        // Non-fatal: SVG renderer below will still show the QR
+        console.warn("PNG QR generation failed; using SVG only.", e);
+      }
     } catch (error) {
       console.error("Error generating QR code:", error);
       toast.error("Failed to generate QR code");
@@ -350,7 +377,10 @@ const BookingCard = ({ upcomingBookings = [], onRefresh }) => {
             </div>
 
             <div className="text-center">
-              <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <div
+                className="bg-gray-50 rounded-lg flex items-center justify-center mx-auto mb-4"
+                style={{ width: 272, height: 272 }}
+              >
                 {generatingQR ? (
                   <div className="flex flex-col items-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-2"></div>
@@ -358,6 +388,11 @@ const BookingCard = ({ upcomingBookings = [], onRefresh }) => {
                       Generating QR Code...
                     </p>
                   </div>
+                ) : qrSvg ? (
+                  <div
+                    className="w-[256px] h-[256px]"
+                    dangerouslySetInnerHTML={{ __html: qrSvg }}
+                  />
                 ) : qrCodeDataUrl ? (
                   <img
                     src={qrCodeDataUrl}
@@ -368,6 +403,31 @@ const BookingCard = ({ upcomingBookings = [], onRefresh }) => {
                   <QrCodeIcon className="h-24 w-24 text-gray-400" />
                 )}
               </div>
+
+              {/* Actions under QR */}
+              {(qrCodeDataUrl || qrPayload) && (
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  {qrCodeDataUrl && (
+                    <a
+                      href={qrCodeDataUrl}
+                      download={`messmate-qr-${
+                        selectedBooking?._id || "booking"
+                      }.png`}
+                      className="text-sm px-3 py-1.5 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50"
+                    >
+                      Download PNG
+                    </a>
+                  )}
+                  {qrPayload && (
+                    <button
+                      onClick={() => navigator.clipboard.writeText(qrPayload)}
+                      className="text-sm px-3 py-1.5 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50"
+                    >
+                      Copy Payload
+                    </button>
+                  )}
+                </div>
+              )}
 
               <div className="text-sm text-gray-600">
                 <p className="font-medium">

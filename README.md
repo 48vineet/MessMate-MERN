@@ -9,12 +9,19 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-brightgreen.svg)](https://www.mongodb.com/)
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-4.8.1-black.svg)](https://socket.io/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-red.svg)](https://github.com/48vineet/MessMate-MERN)
 
 _A modern, full-stack web application for seamless mess and dining hall management_
 
 [Features](#-features) • [Tech Stack](#-tech-stack) • [Installation](#-installation) • [Usage](#-usage) • [API Documentation](#-api-documentation) • [Contributing](#-contributing)
 
 </div>
+
+---
+
+> **📢 Notice:** This is an open-source project under active development. Some features are currently being upgraded and improved. We welcome contributions from the community! Feel free to report issues, suggest features, or submit pull requests.
+
+---
 
 ---
 

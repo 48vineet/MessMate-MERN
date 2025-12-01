@@ -1,6 +1,7 @@
 // server/utils/socketHandler.js
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+const EVENTS = require("../events");
 
 const socketHandler = (io) => {
   // Store connected users
@@ -10,274 +11,319 @@ const socketHandler = (io) => {
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth.token;
-      
+
       if (!token) {
-        throw new Error('No token provided');
+        throw new Error("No token provided");
       }
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id).select('-password');
-      
+      const user = await User.findById(decoded.id).select("-password");
+
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
 
       if (!user.isActive) {
-        throw new Error('User account is deactivated');
+        throw new Error("User account is deactivated");
       }
 
       socket.user = user;
       next();
     } catch (error) {
-      next(new Error('Authentication failed'));
+      next(new Error("Authentication failed"));
     }
   });
 
-  io.on('connection', (socket) => {
+  io.on(EVENTS.CONNECTION, (socket) => {
+    // Simple per-socket rate limiting (burst + sustained)
+    const limits = { windowMs: 60000, max: 120 }; // 120 events/minute
+    let eventCount = 0;
+    let windowStart = Date.now();
+
+    const checkRate = () => {
+      const now = Date.now();
+      if (now - windowStart > limits.windowMs) {
+        windowStart = now;
+        eventCount = 0;
+      }
+      eventCount++;
+      if (eventCount > limits.max) {
+        socket.emit(EVENTS.SOCKET_ERROR, {
+          code: "RATE_LIMIT",
+          message: "Too many realtime events; slow down.",
+        });
+        return false;
+      }
+      return true;
+    };
+
     // Store user connection
     connectedUsers.set(socket.user.id.toString(), {
       socketId: socket.id,
       user: socket.user,
-      connectedAt: new Date()
+      connectedAt: new Date(),
     });
-    
+
     // Join user-specific room
     socket.join(`user_${socket.user.id}`);
-    
+
     // Join role-specific room
     socket.join(`role_${socket.user.role}`);
-    
+
     // Update user's online status
-    socket.broadcast.emit('user_online', {
+    socket.broadcast.emit(EVENTS.USER_ONLINE, {
       userId: socket.user.id,
       userName: socket.user.name,
       userRole: socket.user.role,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     // Handle joining custom rooms
-    socket.on('join_room', (room) => {
+    socket.on("join_room", (room) => {
       socket.join(room);
-      socket.emit('joined_room', { room, timestamp: new Date() });
+      socket.emit("joined_room", { room, timestamp: new Date() });
     });
 
     // Handle leaving custom rooms
-    socket.on('leave_room', (room) => {
+    socket.on("leave_room", (room) => {
       socket.leave(room);
-      socket.emit('left_room', { room, timestamp: new Date() });
+      socket.emit("left_room", { room, timestamp: new Date() });
     });
 
     // Handle sending notifications
-    socket.on('send_notification', (data) => {
+    socket.on("send_notification", (data) => {
+      if (!checkRate()) return;
+
       const notification = {
         ...data.notification,
         id: `notif_${Date.now()}`,
         from: {
           id: socket.user.id,
           name: socket.user.name,
-          role: socket.user.role
+          role: socket.user.role,
         },
         timestamp: new Date(),
-        read: false
+        read: false,
       };
 
-      io.to(`user_${data.recipientId}`).emit('notification', notification);
+      io.to(`user_${data.recipientId}`).emit(EVENTS.NOTIFICATION, notification);
     });
 
     // Handle broadcasting to role
-    socket.on('broadcast_to_role', (data) => {
+    socket.on("broadcast_to_role", (data) => {
+      if (!checkRate()) return;
+
       const message = {
         ...data.message,
         id: `broadcast_${Date.now()}`,
         from: {
           id: socket.user.id,
           name: socket.user.name,
-          role: socket.user.role
+          role: socket.user.role,
         },
         timestamp: new Date(),
-        type: 'broadcast'
+        type: "broadcast",
       };
 
-      socket.to(`role_${data.role}`).emit('broadcast_message', message);
+      socket.to(`role_${data.role}`).emit(EVENTS.ADMIN_ANNOUNCEMENT, message);
     });
 
     // Handle meal booking updates
-    socket.on('new_booking', (data) => {
+    socket.on("new_booking", (data) => {
+      if (!checkRate()) return;
+
       const bookingUpdate = {
         ...data,
         user: {
           id: socket.user.id,
           name: socket.user.name,
-          studentId: socket.user.studentId
+          studentId: socket.user.studentId,
         },
         timestamp: new Date(),
-        type: 'new_booking'
+        type: "new_booking",
       };
 
       // Notify all admins
-      io.to('role_admin').emit('booking_update', bookingUpdate);
-      
+      io.to("role_admin").emit(EVENTS.BOOKING_UPDATE, bookingUpdate);
+
       // Confirm to user
-      socket.emit('booking_confirmed', {
+      socket.emit("booking_confirmed", {
         bookingId: data.bookingId,
-        message: 'Your booking has been submitted successfully',
-        timestamp: new Date()
+        message: "Your booking has been submitted successfully",
+        timestamp: new Date(),
       });
     });
 
     // Handle attendance marking
-    socket.on('mark_attendance', (data) => {
+    socket.on("mark_attendance", (data) => {
+      if (!checkRate()) return;
+
       const attendanceData = {
         ...data,
         user: {
           id: socket.user.id,
           name: socket.user.name,
-          studentId: socket.user.studentId
+          studentId: socket.user.studentId,
         },
         timestamp: new Date(),
-        type: 'attendance_marked'
+        type: "attendance_marked",
       };
 
       // Notify admins
-      io.to('role_admin').emit('attendance_update', attendanceData);
+      io.to("role_admin").emit("attendance_update", attendanceData);
     });
 
     // Handle user status updates
-    socket.on('update_user_status', (data) => {
+    socket.on("update_user_status", (data) => {
+      if (!checkRate()) return;
+
       const statusUpdate = {
         userId: socket.user.id,
         userName: socket.user.name,
         status: data.status,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
-      socket.broadcast.emit('user_status_updated', statusUpdate);
+      socket.broadcast.emit("user_status_updated", statusUpdate);
     });
 
     // Handle menu updates (Admin only)
-    socket.on('menu_updated', (data) => {
-      if (socket.user.role === 'admin') {
+    socket.on("menu_updated", (data) => {
+      if (!checkRate()) return;
+
+      if (socket.user.role === "admin") {
         const menuUpdate = {
           ...data,
           updatedBy: {
             id: socket.user.id,
-            name: socket.user.name
+            name: socket.user.name,
           },
           timestamp: new Date(),
-          type: 'menu_update'
+          type: "menu_update",
         };
 
-        socket.broadcast.emit('menu_update', menuUpdate);
+        socket.broadcast.emit(EVENTS.MENU_UPDATE, menuUpdate);
       }
     });
 
     // Handle inventory alerts (Admin only)
-    socket.on('inventory_alert', (data) => {
-      if (socket.user.role === 'admin') {
+    socket.on("inventory_alert", (data) => {
+      if (!checkRate()) return;
+
+      if (socket.user.role === "admin") {
         const alertData = {
           ...data,
           alertedBy: {
             id: socket.user.id,
-            name: socket.user.name
+            name: socket.user.name,
           },
           timestamp: new Date(),
-          type: 'inventory_alert'
+          type: "inventory_alert",
         };
 
-        io.to('role_admin').emit('inventory_alert', alertData);
+        io.to("role_admin").emit(EVENTS.INVENTORY_ALERT, alertData);
       }
     });
 
     // Handle payment updates
-    socket.on('payment_update', (data) => {
+    socket.on("payment_update", (data) => {
+      if (!checkRate()) return;
+
       const paymentUpdate = {
         ...data,
         user: {
           id: socket.user.id,
-          name: socket.user.name
+          name: socket.user.name,
         },
         timestamp: new Date(),
-        type: 'payment_update'
+        type: "payment_update",
       };
 
       // Notify user
-      io.to(`user_${socket.user.id}`).emit('payment_status', paymentUpdate);
-      
+      io.to(`user_${socket.user.id}`).emit(
+        EVENTS.PAYMENT_STATUS,
+        paymentUpdate
+      );
+
       // Notify admins
-      io.to('role_admin').emit('payment_notification', paymentUpdate);
+      io.to("role_admin").emit(EVENTS.PAYMENT_STATUS, paymentUpdate);
     });
 
     // Handle admin broadcasts
-    socket.on('admin_broadcast', (data) => {
-      if (socket.user.role === 'admin') {
+    socket.on("admin_broadcast", (data) => {
+      if (!checkRate()) return;
+
+      if (socket.user.role === "admin") {
         const broadcast = {
           ...data,
           from: {
             id: socket.user.id,
-            name: socket.user.name
+            name: socket.user.name,
           },
           timestamp: new Date(),
-          type: 'admin_announcement'
+          type: "admin_announcement",
         };
 
         // Broadcast to all connected users
-        socket.broadcast.emit('admin_announcement', broadcast);
+        socket.broadcast.emit(EVENTS.ADMIN_ANNOUNCEMENT, broadcast);
       }
     });
 
     // Handle typing indicators
-    socket.on('typing_start', (data) => {
-      socket.to(data.room).emit('user_typing', {
+    socket.on("typing_start", (data) => {
+      socket.to(data.room).emit("user_typing", {
         userId: socket.user.id,
         userName: socket.user.name,
-        isTyping: true
+        isTyping: true,
       });
     });
 
-    socket.on('typing_stop', (data) => {
-      socket.to(data.room).emit('user_typing', {
+    socket.on("typing_stop", (data) => {
+      socket.to(data.room).emit("user_typing", {
         userId: socket.user.id,
         userName: socket.user.name,
-        isTyping: false
+        isTyping: false,
       });
     });
 
     // Handle emergency alerts (Admin only)
-    socket.on('emergency_alert', (data) => {
-      if (socket.user.role === 'admin') {
+    socket.on("emergency_alert", (data) => {
+      if (!checkRate()) return;
+
+      if (socket.user.role === "admin") {
         const emergencyAlert = {
           ...data,
           alertedBy: {
             id: socket.user.id,
-            name: socket.user.name
+            name: socket.user.name,
           },
           timestamp: new Date(),
-          type: 'emergency',
-          priority: 'critical'
+          type: "emergency",
+          priority: "critical",
         };
 
         // Send to all connected users
-        io.emit('emergency_alert', emergencyAlert);
+        io.emit(EVENTS.EMERGENCY_ALERT, emergencyAlert);
       }
     });
 
     // Handle disconnect
-    socket.on('disconnect', (reason) => {
+    socket.on(EVENTS.DISCONNECT, (reason) => {
       // Remove from connected users
       connectedUsers.delete(socket.user.id.toString());
-      
+
       // Update user's offline status
-      socket.broadcast.emit('user_offline', {
+      socket.broadcast.emit(EVENTS.USER_OFFLINE, {
         userId: socket.user.id,
         userName: socket.user.name,
         userRole: socket.user.role,
         timestamp: new Date(),
-        reason: reason
+        reason: reason,
       });
     });
 
     // Handle connection errors
-    socket.on('error', (error) => {
+    socket.on("error", (error) => {
       console.error(`Socket error for user ${socket.user.name}:`, error);
     });
   });
@@ -309,7 +355,7 @@ const socketHandler = (io) => {
     broadcastToUser,
     broadcastToAll,
     getConnectedUsers,
-    getUserConnectionInfo
+    getUserConnectionInfo,
   };
 };
 

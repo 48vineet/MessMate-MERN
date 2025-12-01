@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
+import { SOCKET_EVENTS } from "../../utils/socketEvents";
 
 const UserReports = () => {
   const navigate = useNavigate();
@@ -59,8 +60,8 @@ const UserReports = () => {
 
     socketRef.current = socket;
 
-    socket.on("connect", () => setLive(true));
-    socket.on("disconnect", () => setLive(false));
+    socket.on(SOCKET_EVENTS.CONNECTION, () => setLive(true));
+    socket.on(SOCKET_EVENTS.DISCONNECT, () => setLive(false));
 
     // Removed auto-refresh on user events and periodic polling
     // Users can manually click "Generate Again" to refresh
