@@ -296,11 +296,7 @@ const MenuCard = ({ menu: _menu, onRefresh }) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-    >
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
@@ -430,11 +426,8 @@ const MenuCard = ({ menu: _menu, onRefresh }) => {
                       const isSelected = selectedBreakfastItems.includes(index);
 
                       return (
-                        <motion.div
+                        <div
                           key={index}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
                           onClick={() =>
                             isAvailable && toggleBreakfastItem(index)
                           }
@@ -532,7 +525,7 @@ const MenuCard = ({ menu: _menu, onRefresh }) => {
                               </div>
                             )}
                           </div>
-                        </motion.div>
+                        </div>
                       );
                     })}
                   </div>
@@ -550,11 +543,8 @@ const MenuCard = ({ menu: _menu, onRefresh }) => {
                       const isSelected = selectedItemIndex === index;
 
                       return (
-                        <motion.div
+                        <div
                           key={index}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
                           onClick={() =>
                             isAvailable && setSelectedItemIndex(index)
                           }
@@ -611,7 +601,7 @@ const MenuCard = ({ menu: _menu, onRefresh }) => {
                               </div>
                             )}
                           </div>
-                        </motion.div>
+                        </div>
                       );
                     })}
                   </div>
@@ -624,11 +614,7 @@ const MenuCard = ({ menu: _menu, onRefresh }) => {
               (selectedMeal === "breakfast" &&
                 selectedBreakfastItems.length > 0) ||
               selectedItemIndex !== null) && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-blue-200"
-              >
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-blue-200">
                 {selectedMeal === "breakfast" &&
                 selectedBreakfastItems.length > 0 ? (
                   <div>
@@ -728,7 +714,7 @@ const MenuCard = ({ menu: _menu, onRefresh }) => {
                     </span>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* Booking Button */}
@@ -840,7 +826,7 @@ const MenuCard = ({ menu: _menu, onRefresh }) => {
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };
 
