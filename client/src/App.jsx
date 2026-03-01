@@ -40,6 +40,7 @@ import WalletRecharge from "./components/payments/WalletRecharge";
 import BookingsPage from "./pages/BookingsPage";
 import ContactPage from "./pages/ContactPage";
 import HelpSupportPage from "./pages/HelpSupportPage";
+import LandingPage from "./pages/LandingPage";
 import MenuPage from "./pages/MenuPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -147,11 +148,7 @@ const App = () => {
                           {/* Public Routes */}
                           <Route
                             path="/"
-                            element={
-                              <PublicRoute>
-                                <Navigate to="/login" replace />
-                              </PublicRoute>
-                            }
+                            element={<LandingPage />}
                           />
 
                           <Route

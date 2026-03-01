@@ -2,9 +2,22 @@
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
-// Create axios instance with base configuration (original behavior)
+const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password"];
+
+const isPublicPath = (path) => PUBLIC_PATHS.includes(path);
+
+const isPublicRequest = (url = "") => {
+  const normalizedUrl = String(url);
+  return (
+    normalizedUrl.includes("/public/") ||
+    normalizedUrl.includes("/auth/login") ||
+    normalizedUrl.includes("/auth/register") ||
+    normalizedUrl.includes("/auth/forgot-password") ||
+    normalizedUrl.includes("/auth/reset-password")
+  );
+};
+
 const api = axios.create({
-  // Default to relative `/api` so it works on Vercel/Prod. Use VITE_API_URL to override in dev.
   baseURL: import.meta.env.VITE_API_URL || "/api",
   timeout: 10000,
   headers: {
@@ -12,7 +25,6 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("messmate_token");
@@ -21,7 +33,6 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Add timestamp to prevent caching
     config.params = {
       ...config.params,
       _t: Date.now(),
@@ -35,36 +46,42 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     const { response } = error;
 
-    // Handle network errors
     if (!response) {
       toast.error("Network error. Please check your internet connection.");
       return Promise.reject(error);
     }
 
-    // Handle different status codes
     switch (response.status) {
-      case 401:
-        // Unauthorized - clear token and redirect to login
+      case 401: {
         localStorage.removeItem("messmate_token");
-        delete api.defaults.headers.common["Authorization"];
+        delete api.defaults.headers.common.Authorization;
 
-        if (window.location.pathname !== "/login") {
+        const currentPath = window.location.pathname;
+        const requestUrl = error.config?.url || "";
+        const shouldStayOnPublicPage =
+          isPublicPath(currentPath) || isPublicRequest(requestUrl);
+
+        if (!shouldStayOnPublicPage) {
           toast.error("Session expired. Please login again.");
           window.location.href = "/login";
         }
         break;
+      }
+
+      case 400: {
+        const message = response.data?.message;
+        if (message && !response.data?.silent) {
+          toast.error(message);
+        }
+        break;
+      }
 
       case 403: {
-        // Only show access denied for admin routes or specific cases
-        // This prevents "Access denied" popups for students on student routes
         const currentPath = window.location.pathname;
         const isAdminRoute = currentPath.startsWith("/admin");
         const isStudentRoute =
@@ -74,34 +91,27 @@ api.interceptors.response.use(
           currentPath.startsWith("/wallet") ||
           currentPath.startsWith("/profile");
 
-        // Don't show access denied for student routes - they should have access
         if (isAdminRoute) {
           toast.error("Access denied. You do not have permission.");
         } else if (!isStudentRoute) {
-          // Only show for non-student routes that might legitimately deny access
           toast.error("Access denied. You do not have permission.");
         }
-        // For student routes, silently handle the error without showing popup
         break;
       }
 
-      case 404: {
+      case 404:
         toast.error("Requested resource not found.");
         break;
-      }
 
-      case 429: {
+      case 429:
         toast.error("Too many requests. Please try again later.");
         break;
-      }
 
-      case 500: {
+      case 500:
         toast.error("Server error. Please try again later.");
         break;
-      }
 
       default: {
-        // Handle other errors with custom message or fallback
         const errorMessage =
           response.data?.message || "An unexpected error occurred.";
         if (!response.data?.silent) {
@@ -114,7 +124,6 @@ api.interceptors.response.use(
   }
 );
 
-// Helper function to handle file uploads
 export const uploadFile = async (file, endpoint, onProgress = null) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -135,13 +144,12 @@ export const uploadFile = async (file, endpoint, onProgress = null) => {
     });
 
     return response;
-  } catch (error) {
-    console.error("File upload error:", error);
-    throw error;
+  } catch (uploadError) {
+    console.error("File upload error:", uploadError);
+    throw uploadError;
   }
 };
 
-// Helper function for downloading files
 export const downloadFile = async (url, filename) => {
   try {
     const response = await api.get(url, {
@@ -159,9 +167,9 @@ export const downloadFile = async (url, filename) => {
     window.URL.revokeObjectURL(downloadUrl);
 
     return true;
-  } catch (error) {
-    console.error("File download error:", error);
-    throw error;
+  } catch (downloadError) {
+    console.error("File download error:", downloadError);
+    throw downloadError;
   }
 };
 
