@@ -109,16 +109,28 @@ const LandingPage = () => {
           <Logo size="md" showText={true} />
 
           <nav className="hidden items-center gap-7 md:flex">
-            <a href="#features" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            <a
+              href="#features"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
               Features
             </a>
-            <a href="#how-it-works" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            <a
+              href="#how-it-works"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
               How It Works
             </a>
-            <a href="#solutions" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            <a
+              href="#solutions"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
               Solutions
             </a>
-            <a href="#faq" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            <a
+              href="#faq"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
               FAQ
             </a>
           </nav>
@@ -254,7 +266,9 @@ const LandingPage = () => {
                 </div>
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                   <p className="text-xs text-gray-500">Daily bookings</p>
-                  <p className="mt-1 text-xl font-bold text-gray-900">12,000+</p>
+                  <p className="mt-1 text-xl font-bold text-gray-900">
+                    12,000+
+                  </p>
                 </div>
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                   <p className="text-xs text-gray-500">Satisfaction score</p>
@@ -270,7 +284,8 @@ const LandingPage = () => {
               <ul className="mt-4 space-y-3 text-sm leading-6 text-gray-700">
                 <li className="flex items-start gap-2">
                   <CheckCircleIcon className="mt-0.5 h-5 w-5 text-green-600" />
-                  Accurate pre-booking helps control wastage and improve planning.
+                  Accurate pre-booking helps control wastage and improve
+                  planning.
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircleIcon className="mt-0.5 h-5 w-5 text-green-600" />
@@ -282,14 +297,16 @@ const LandingPage = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircleIcon className="mt-0.5 h-5 w-5 text-green-600" />
-                  Student communication, menu updates, and feedback stay aligned.
+                  Student communication, menu updates, and feedback stay
+                  aligned.
                 </li>
               </ul>
 
               <div className="mt-6 rounded-lg border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900">
                 <p className="font-semibold">Built for real workflows</p>
                 <p className="mt-1 text-indigo-800">
-                  Faster service, better forecasting, and smoother shift handovers.
+                  Faster service, better forecasting, and smoother shift
+                  handovers.
                 </p>
               </div>
             </div>
@@ -318,7 +335,10 @@ const LandingPage = () => {
           </div>
         </section>
 
-        <section id="features" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <section
+          id="features"
+          className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
+        >
           <div className="mb-8 max-w-2xl">
             <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
               Powerful features for modern dining operations
@@ -338,7 +358,9 @@ const LandingPage = () => {
                 <div className="mb-4 inline-flex rounded-lg bg-violet-50 p-2.5 text-violet-700">
                   <feature.icon className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900">{feature.title}</h3>
+                <h3 className="text-base font-semibold text-gray-900">
+                  {feature.title}
+                </h3>
                 <p className="mt-2 text-sm leading-6 text-gray-600">
                   {feature.description}
                 </p>
@@ -347,7 +369,10 @@ const LandingPage = () => {
           </div>
         </section>
 
-        <section id="how-it-works" className="border-y border-slate-200 bg-white">
+        <section
+          id="how-it-works"
+          className="border-y border-slate-200 bg-white"
+        >
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <div className="mb-8 max-w-2xl">
               <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
@@ -363,24 +388,33 @@ const LandingPage = () => {
                   key={step.title}
                   className="rounded-xl border border-slate-200 bg-slate-50 p-6"
                 >
-                  <p className="text-sm font-semibold text-indigo-700">Step {index + 1}</p>
+                  <p className="text-sm font-semibold text-indigo-700">
+                    Step {index + 1}
+                  </p>
                   <h3 className="mt-2 text-lg font-semibold text-slate-900">
                     {step.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{step.text}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {step.text}
+                  </p>
                 </article>
               ))}
             </div>
           </div>
         </section>
 
-        <section id="solutions" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <section
+          id="solutions"
+          className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
+        >
           <div className="grid gap-5 lg:grid-cols-2">
             <article className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
               <div className="mb-4 inline-flex rounded-lg bg-violet-50 p-2.5 text-violet-700">
                 <UserGroupIcon className="h-5 w-5" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-900">For Students</h3>
+              <h3 className="text-xl font-semibold text-slate-900">
+                For Students
+              </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 Manage meals on time, avoid missing slots, and use fast QR
                 check-in with transparent payment history.
@@ -405,7 +439,9 @@ const LandingPage = () => {
               <div className="mb-4 inline-flex rounded-lg bg-indigo-50 p-2.5 text-indigo-700">
                 <BuildingOffice2Icon className="h-5 w-5" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-900">For Admin Teams</h3>
+              <h3 className="text-xl font-semibold text-slate-900">
+                For Admin Teams
+              </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 Control menus, monitor attendance in real time, and improve cost
                 planning with accurate booking data.
@@ -435,27 +471,36 @@ const LandingPage = () => {
                 Reliability and controls
               </h2>
               <p className="mt-3 text-slate-600">
-                Built for consistent daily usage and secure handling of user data.
+                Built for consistent daily usage and secure handling of user
+                data.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <ShieldCheckIcon className="h-6 w-6 text-violet-700" />
-                <h3 className="mt-3 font-semibold text-slate-900">Secure access</h3>
+                <h3 className="mt-3 font-semibold text-slate-900">
+                  Secure access
+                </h3>
                 <p className="mt-2 text-sm text-slate-600">
-                  Token-based auth and role-bound routes for students and admins.
+                  Token-based auth and role-bound routes for students and
+                  admins.
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <ClockIcon className="h-6 w-6 text-violet-700" />
-                <h3 className="mt-3 font-semibold text-slate-900">Operational speed</h3>
+                <h3 className="mt-3 font-semibold text-slate-900">
+                  Operational speed
+                </h3>
                 <p className="mt-2 text-sm text-slate-600">
-                  Faster check-in and live attendance visibility at serving points.
+                  Faster check-in and live attendance visibility at serving
+                  points.
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <ChartBarIcon className="h-6 w-6 text-violet-700" />
-                <h3 className="mt-3 font-semibold text-slate-900">Decision support</h3>
+                <h3 className="mt-3 font-semibold text-slate-900">
+                  Decision support
+                </h3>
                 <p className="mt-2 text-sm text-slate-600">
                   Clear reports for usage trends, payment flow, and planning.
                 </p>
@@ -481,8 +526,12 @@ const LandingPage = () => {
                     <StarIcon key={index} className="h-4 w-4 text-amber-500" />
                   ))}
                 </div>
-                <p className="text-sm leading-6 text-slate-700">"{testimonial.quote}"</p>
-                <p className="mt-4 font-semibold text-slate-900">{testimonial.name}</p>
+                <p className="text-sm leading-6 text-slate-700">
+                  "{testimonial.quote}"
+                </p>
+                <p className="mt-4 font-semibold text-slate-900">
+                  {testimonial.name}
+                </p>
                 <p className="text-xs text-slate-500">{testimonial.role}</p>
               </article>
             ))}
@@ -535,7 +584,8 @@ const LandingPage = () => {
                 Ready to modernize your dining operations?
               </h2>
               <p className="mt-2 text-violet-100">
-                Launch with MessMate and deliver a better student dining experience.
+                Launch with MessMate and deliver a better student dining
+                experience.
               </p>
             </div>
             {isAuthenticated ? (

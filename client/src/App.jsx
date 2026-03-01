@@ -52,14 +52,14 @@ import SettingsPage from "./pages/SettingsPage";
 const AddUser = lazy(() => import("./components/admin/AddUser"));
 const AdminDashboard = lazy(() => import("./components/admin/AdminDashboard"));
 const Analytics = lazy(() => import("./components/admin/Analytics"));
-const BookingManagement = lazy(() =>
-  import("./components/admin/BookingManagement")
+const BookingManagement = lazy(
+  () => import("./components/admin/BookingManagement"),
 );
-const FeedbackManagement = lazy(() =>
-  import("./components/admin/FeedbackManagement")
+const FeedbackManagement = lazy(
+  () => import("./components/admin/FeedbackManagement"),
 );
-const InventoryManagement = lazy(() =>
-  import("./components/admin/InventoryManagement")
+const InventoryManagement = lazy(
+  () => import("./components/admin/InventoryManagement"),
 );
 const MenuAnalytics = lazy(() => import("./components/admin/MenuAnalytics"));
 const MenuManagement = lazy(() => import("./components/admin/MenuManagement"));
@@ -68,8 +68,8 @@ const ReportsPanel = lazy(() => import("./components/admin/ReportsPanel"));
 const SystemSettings = lazy(() => import("./components/admin/SystemSettings"));
 const UserManagement = lazy(() => import("./components/admin/UserManagement"));
 const UserReports = lazy(() => import("./components/admin/UserReports"));
-const WalletManagementAdmin = lazy(() =>
-  import("./components/admin/WalletManagement")
+const WalletManagementAdmin = lazy(
+  () => import("./components/admin/WalletManagement"),
 );
 
 // Hooks
@@ -146,10 +146,7 @@ const App = () => {
                       <AnimatePresence mode="wait">
                         <Routes>
                           {/* Public Routes */}
-                          <Route
-                            path="/"
-                            element={<LandingPage />}
-                          />
+                          <Route path="/" element={<LandingPage />} />
 
                           <Route
                             path="/login"
